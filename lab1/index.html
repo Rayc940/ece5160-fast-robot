@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+  <title>Lab 1 | Ray Chang</title>
+
+  <!-- same theme as homepage; note ../ because we are inside /lab1/ -->
+  <link href="../vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+  <link href="../vendor/font-awesome/css/font-awesome.min.css" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700" rel="stylesheet" type="text/css">
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700,400italic,700italic" rel="stylesheet" type="text/css">
+  <link href="../css/freelancer.min.css" rel="stylesheet">
+
+  <style>
+    /* makes markdown look like a nice report */
+    #lab-content h2 { margin-top: 30px; }
+    #lab-content img { max-width: 100%; height: auto; border-radius: 8px; }
+    #lab-content pre { padding: 12px; border-radius: 8px; overflow-x: auto; }
+  </style>
+</head>
+
+<body>
+  <div class="container" style="padding-top: 60px; padding-bottom: 60px;">
+    <div class="row">
+      <div class="col-lg-8 mx-auto">
+
+        <h2 class="text-center">Lab 1</h2>
+        <h3 class="text-center text-warning" style="margin-top:-10px;">
+          The Artemis Board and Bluetooth
+        </h3>
+        <hr class="star-primary">
+
+        <!-- Markdown will render here -->
+        <div id="lab-content"></div>
+
+        <div class="text-center" style="margin-top:30px;">
+          <a class="btn btn-success" href="../index.html#portfolio">
+            <i class="fa fa-arrow-left"></i> Back to Home
+          </a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="../vendor/jquery/jquery.min.js"></script>
+  <script src="../vendor/popper/popper.min.js"></script>
+  <script src="../vendor/bootstrap/js/bootstrap.min.js"></script>
+  <script src="../vendor/jquery-easing/jquery.easing.min.js"></script>
+
+  <!-- Markdown renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script>
+    fetch('lab.md')
+      .then(r => r.text())
+      .then(md => {
+        document.getElementById('lab-content').innerHTML = marked.parse(md);
+      });
+  </script>
+</body>
+</html>
