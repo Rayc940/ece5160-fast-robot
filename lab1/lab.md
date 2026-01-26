@@ -1,9 +1,5 @@
 # Lab 1: The Artemis Board and Bluetooth
 
-**Course:** ECE 5160 – Fast Robots  
-**Name:** Ray Chang  
-**Semester:** Spring 2026  
-
 ---
 
 ## Objective
