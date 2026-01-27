@@ -117,6 +117,7 @@ const char* getFreq(uint32_t freq)
     else if (freq >= 625 && freq <= 690) return "E5"; // 659 Hz
     else return ""; // no matching note
 }
+```
 
 The video shows serial monitor printing the three different notes, which was played from a tuner app that can select frequencies to play.
 
