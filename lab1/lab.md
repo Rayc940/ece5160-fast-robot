@@ -11,15 +11,13 @@ The goal of this lab was to become familiar with the SparkFun RedBoard Artemis N
 
 ---
 
-## Prelab
-
-#### Computer and Software Setup
+## Prelab 1A
 
 The Arduino IDE was installed and updated to the latest version. The SparkFun Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
 
 ---
 
-## Lab Tasks
+## Lab 1A Tasks
 
 <br>
 
@@ -38,7 +36,7 @@ This ensures that the board was properly connected and that we could successfull
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Blink example.
+  <b>Video 1:</b> Blink Example.
 </p>
 <br>
 
@@ -58,7 +56,7 @@ The serial monitor was opened to see the output and send input to the board.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 2:</b> Serial Communication example.
+  <b>Video 2:</b> Serial Communication Example.
 </p>
 <br>
 
@@ -78,7 +76,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 3:</b> Temperature Sensor example.
+  <b>Video 3:</b> Temperature Sensor Example.
 </p>
 <br>
 
@@ -98,7 +96,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 4:</b> Microphone example.
+  <b>Video 4:</b> Microphone Example.
 </p>
 <br>
 
@@ -131,9 +129,32 @@ The video shows serial monitor printing the three different notes, which was pla
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 5:</b> Simple Electronic Tuner example.
+  <b>Video 5:</b> Simple Electronic Tuner Example.
 </p>
 <br>
+
+---
+
+## Prelab 1B
+
+Python 3.13 was installed and configured. In addition, to ensure package isolation, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
+
+'''cpp
+source FastRobots_ble/bin/activate
+deactivate
+'''
+
+After activating the virtual environment, the following Python packages were installed inside the virtual environment:
+- **numpy**
+- **pyyaml**
+- **colorama**
+- **nest_asyncio**
+- **bleak**
+- **jupyterlab**
+
+After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory, allowing access to the provided Jupyter notebooks used for BLE communication.
+
+---
 
 #### Codebase Overview and Bluetooth Communication
 
@@ -223,17 +244,3 @@ This lab provided hands-on experience with embedded programming, BLE communicati
 Buffered data transmission proved more efficient for high-rate sampling, while real-time transmission was useful for debugging and quick feedback. These techniques will be critical for future labs involving sensor data and robot control.
 
 ---
-
-## Code Snippets
-
-Relevant code snippets used in this lab are shown below. Full source code is available in the GitHub repository.
-
-```cpp
-// Example Arduino command handler snippet
-case ECHO:
-  tx_estring.clear();
-  tx_estring.append("Robot says -> ");
-  tx_estring.append(rx_string);
-  tx_estring.append(" :)");
-  tx_characteristic.writeValue(tx_estring.c_str());
-  break;
