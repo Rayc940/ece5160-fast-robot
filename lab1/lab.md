@@ -37,7 +37,7 @@ This ensures that the board was properly connected and that we could successfull
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video:</b> Blink example.
+  <b>Video 1:</b> Blink example.
 </p>
 
 
@@ -57,7 +57,7 @@ The serial monitor was opened to see the output and send input to the board.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video:</b> Serial Communication example.
+  <b>Video 2:</b> Serial Communication example.
 </p>
 
 
@@ -77,7 +77,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video:</b> Temperature Sensor example.
+  <b>Video 3:</b> Temperature Sensor example.
 </p>
 
 
@@ -97,7 +97,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video:</b> Microphone example.
+  <b>Video 4:</b> Microphone example.
 </p>
 
 
@@ -123,13 +123,13 @@ The video shows serial monitor printing the three different notes, which was pla
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/Xg3e2T56aas"
+    src="https://www.youtube.com/embed/eilouPZ5N54"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video:</b> Simple Electronic Tuner example.
+  <b>Video 5:</b> Simple Electronic Tuner example.
 </p>
 
 
