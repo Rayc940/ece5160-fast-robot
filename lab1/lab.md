@@ -21,6 +21,7 @@ The Arduino IDE was installed and updated to the latest version. The SparkFun Ap
 
 ## Lab Tasks
 
+<br>
 
 #### Blink
 
@@ -39,7 +40,7 @@ This ensures that the board was properly connected and that we could successfull
 <p style="text-align:center;">
   <b>Video 1:</b> Blink example.
 </p>
-
+<br>
 
 #### Serial Communication Test
 
@@ -59,7 +60,7 @@ The serial monitor was opened to see the output and send input to the board.
 <p style="text-align:center;">
   <b>Video 2:</b> Serial Communication example.
 </p>
-
+<br>
 
 #### Temperature Sensor Test
 
@@ -79,7 +80,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 <p style="text-align:center;">
   <b>Video 3:</b> Temperature Sensor example.
 </p>
-
+<br>
 
 #### Microphone Test
 
@@ -99,7 +100,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
 <p style="text-align:center;">
   <b>Video 4:</b> Microphone example.
 </p>
-
+<br>
 
 #### Additional Task: Simple Electronic Tuner
 
@@ -131,7 +132,7 @@ The video shows serial monitor printing the three different notes, which was pla
 <p style="text-align:center;">
   <b>Video 5:</b> Simple Electronic Tuner example.
 </p>
-
+<br>
 
 #### Codebase Overview and Bluetooth Communication
 
