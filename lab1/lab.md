@@ -4,26 +4,123 @@
 
 ## Objective
 
-The goal of this lab was to become familiar with the SparkFun RedBoard Artemis Nano and to establish reliable communication between the Artemis board and a computer. This lab was divided into two parts:
+The goal of this lab was to become familiar with the SparkFun RedBoard Artemis Nano and to establish communication between the Artemis board and the computer. This lab was divided into two parts:
 
-- **Lab 1A:** Arduino IDE setup and onboard peripherals  
+- **Lab 1A:** Arduino IDE setup and programming the Artemis  
 - **Lab 1B:** Bluetooth Low Energy (BLE) communication using Python and Jupyter
 
 ---
 
 ## Prelab
 
-### Computer and Software Setup
+#### Computer and Software Setup
 
-The Arduino IDE was installed and updated to the latest version. The SparkFun Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the correct board and serial port were selected.
-
-Once the BLE Arduino sketch was uploaded, the board successfully printed its MAC address to the serial monitor, confirming correct setup.
-
-📷 *(Insert screenshot of MAC address here)*
+The Arduino IDE was installed and updated to the latest version. The SparkFun Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
 
 ---
 
-### Codebase Overview and Bluetooth Communication
+## Lab Tasks
+
+#### Blink
+
+We first ran the Blink example from File → Examples → 01.Basics.
+This ensures that the board was properly connected and that we could successfully upload code.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/dTsu4LU6gek"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<p style="text-align:center;">
+  <b>Video.</b> Blink example.
+</p>
+
+#### Serial Communication Test
+
+Next, we ran Example4_Serial from File → Examples → Apollo3.
+This example was used to test serial communication between the Artemis board and the computer.
+The serial monitor was opened to see the output and send input to the board.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/66WNAS3cpZ8"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<p style="text-align:center;">
+  <b>Video.</b> Serial Communication example.
+</p>
+
+#### Temperature Sensor Test
+
+We then ran Example2_analogRead from File → Examples → Apollo3.
+This example was used to test the onboard temperature sensor.
+By blowing warm air on the chip, we were able to observe increases in the temperature values.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/_jkc4uSTeV0"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<p style="text-align:center;">
+  <b>Video.</b> Temperature Sensor example.
+</p>
+
+#### Microphone Test
+
+Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
+This example was used to test the onboard microphone.
+Speaking or whistling near the board changed the detected frequency content, confirming that the microphone and PDM interface were functioning correctly.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/HzKOsx0vtjQ"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<p style="text-align:center;">
+  <b>Video.</b> Microphone example.
+</p>
+
+#### Additional Task: Simple Electronic Tuner
+
+For the additional task, we combined the microphone input with serial output to create a simple electronic tuner.
+The program detected three predefined frequency ranges and printed the corresponding musical note to the serial monitor.
+This demonstrated basic frequency analysis and real-time feedback using the Artemis microphone.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/Xg3e2T56aas"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+
+<p style="text-align:center;">
+  <b>Video.</b> Simple Electronic Tuner example.
+</p>
+
+#### Codebase Overview and Bluetooth Communication
 
 Bluetooth Low Energy (BLE) enables low-power wireless communication between the Artemis board and a computer. The provided lab codebase establishes this communication using:
 
