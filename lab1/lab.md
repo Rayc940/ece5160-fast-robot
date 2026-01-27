@@ -84,7 +84,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 
 Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
 This example was used to test the onboard microphone.
-Speaking or whistling near the board changed the detected frequency content, confirming that the microphone and PDM interface were functioning correctly.
+A C major scale audio from YouTube was played near the board, and serial monitor showed changing detected frequency content. This confirms that the microphone and PDM interface were functioning correctly.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -103,8 +103,20 @@ Speaking or whistling near the board changed the detected frequency content, con
 #### Additional Task: Simple Electronic Tuner
 
 For the additional task, we combined the microphone input with serial output to create a simple electronic tuner.
-The program detected three predefined frequency ranges and printed the corresponding musical note to the serial monitor.
-This demonstrated basic frequency analysis and real-time feedback using the Artemis microphone.
+The code can detect three frequency ranges and print the corresponding musical note to the serial monitor. The three chosen frequencies were C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
+
+The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match. If there is a match, the serial monitor will print the detected musical note.
+
+```cpp
+const char* getFreq(uint32_t freq)
+{
+    if (freq >= 250 && freq <= 275) return "C4";   // 262 Hz
+    else if (freq >= 420 && freq <= 460) return "A4"; // 440 Hz
+    else if (freq >= 625 && freq <= 690) return "E5"; // 659 Hz
+    else return ""; // no matching note
+}
+
+The video shows serial monitor printing the three different notes, which was played from a tuner app that can select frequencies to play.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
