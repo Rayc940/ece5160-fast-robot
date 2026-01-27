@@ -137,6 +137,8 @@ The video shows serial monitor printing the three different notes, which was pla
 
 ## Prelab 1B
 
+#### Setup
+
 Python 3.13 was installed and configured. In addition, to ensure package isolation, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
 
 '''cpp
@@ -152,28 +154,64 @@ After activating the virtual environment, the following Python packages were ins
 - **bleak**
 - **jupyterlab**
 
-After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory, allowing access to the provided Jupyter notebooks used for BLE communication.
+After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory, which can be used for BLE communication.
+
+ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed:
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/MAC Address.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 1:</b> Artemis MAC Address Printed on Serial Monitor.
+</p>
 
 ---
 
-#### Codebase Overview and Bluetooth Communication
+#### Codebase Overview
 
-Bluetooth Low Energy (BLE) enables low-power wireless communication between the Artemis board and a computer. The provided lab codebase establishes this communication using:
+##### Overall Architecture
 
-- **ArduinoBLE** on the Artemis side  
-- **Bleak (Python)** on the computer side  
+The provided codebase is divided into two main components:
 
-Commands are sent from the computer to the Artemis as formatted strings, and the Artemis responds by writing data to BLE characteristics. These characteristics act as communication channels identified by UUIDs.
+- Arduino code running on the Artemis board
+- Python code running on the computer
 
-The codebase separates responsibilities clearly:
-- Python handles connection, commands, and data logging
-- Arduino handles command parsing and sensor interaction
+These two components communicate using BLE. BLE provides a low power communication tool that allows the computer to send commands to the Artemis board and receive sensor data or responses in return.
+
+##### BLE Communication
+
+Communication between the computer and the Artemis board is implemented using GATT characteristics, each identified by a different UUID. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings, and the Artemis processes the command and sends back a response.
+
+On the computer side, commands are sent using the function:
+
+```cpp
+ble.send_command(cmd_type, data)
+```
+
+The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data.
+
+##### Arduino Side Code (Artemis)
+
+The Arduino sketch (ble_arduino.ino) is responsible for:
+- Setting up the BLE service and characteristics
+- Receiving command strings from the computer
+- Parsing commands using the RobotCommand class
+- Sending responses back to computer. EString is used for building outgoing response strings on the Artemis side. It provides functions like c_str() to construct messages before sending.
+
+##### Python Side Code (Computer)
+
+On the computer side, BLE communication is handled by the ArtemisBLEController class. This class provides simple functions to:
+- Connect to the Artemis board
+- Send commands
+- Read values from BLE characteristics
+- Receive asynchronous data using notifications
 
 ---
 
-## Lab Tasks
+## Lab 1B Tasks
 
-### Configuration
+#### Configuration
+BLE configuration values such as the Artemis MAC address and UUIDs are stored in connections.yaml. These values must match the UUIDs defined in the Arduino sketch. After changing the configuration file, it must be reloaded before reconnecting.
 
 Before running the tasks, several configurations were required:
 - Updated the Artemis MAC address in `connections.yaml`
