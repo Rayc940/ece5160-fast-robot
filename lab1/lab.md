@@ -677,8 +677,69 @@ As the reply size increases to 120 bytes, the effective data rate improves, reac
 
 #### Additional Task 10: Reliability
 
-Reliability: What happens when you send data at a higher rate from the robot to the computer? Does the computer read all the data published (without missing anything) from the Artemis board? Include your answer in the write-up.
+To evaluate the reliability of communication between the Artemis board and the computer, a new test that aimed at sending information at increasingly high rates is used. This test tracks if all messages sent by the Artemis are received by computer, or if there is some loss and missing data.
 
+On the Artemis side, a new command RELIABILITY_TEST is used to send how ever many data points the computer told it to send. The format it sends is "T: i", where i increments from 0 to M−1.
+
+```cpp
+case RELIABILITY_TEST:
+            int m;
+
+            success = robot_cmd.get_next_value(m);
+            if (!success)
+                return;
+
+            for (int i = 0; i < m; i++) {
+                tx_estring_value.clear();
+                tx_estring_value.append("T:");
+                tx_estring_value.append(i);
+                tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+                }
+            break;
+```
+
+On the computer side, the sequence numbers received are stored in a set to ensure that each number is only counted once. After telling the Artemis to send M numbers, the computer listens for incoming data for a fixed duration (12 seconds). Once data collection is complete, the received sequence numbers are compared against the expected range from 0 to M−1. Any missing numbers indicate that they were not successfully received. The loss percentage is then calculated as the ratio of missing number to the total number of numbers sent. 
+
+```cpp
+# Task 10
+received = set()
+M = 1000
+
+def notification_handler_10(uuid, data: bytearray):
+    global received
+    s = data.decode()
+    if s[:2] == "T:":
+        received.add(int(s[2:]))
+
+ble.start_notify(ble.uuid["RX_STRING"], notification_handler_10)
+ble.send_command(CMD.RELIABILITY_TEST, M)
+
+time.sleep(12)
+
+ble.stop_notify(ble.uuid["RX_STRING"])
+
+missing = []
+
+for i in range (M):
+    if i not in received:
+        missing.append(i)
+loss = 100.0 * len(missing) / M
+
+print("Expected:", M)
+print("Total Received:", len(received))
+print("Missing:", missing)
+print("Loss %:", loss)
+```
+
+From Figure 11, the computer does reaed all the data from Artemis, without missing any number.
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task10.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 11:</b> Jupyter Lab Output Showing No Missing Number.
+</p>
 
 ---
 
