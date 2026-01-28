@@ -677,6 +677,7 @@ As the reply size increases to 120 bytes, the effective data rate improves, reac
 
 #### Additional Task 10: Reliability
 
+Reliability: What happens when you send data at a higher rate from the robot to the computer? Does the computer read all the data published (without missing anything) from the Artemis board? Include your answer in the write-up.
 
 
 ---
