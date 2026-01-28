@@ -304,7 +304,7 @@ case SEND_THREE_FLOATS:
   <img src="../img/lab1/Task2.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 3:</b> Jupyter Lab Showing Response from Artemis for SEND_THREE_FLOATS.
+  <b>Figure 3:</b> Serial Monitor Showing Response from Artemis for SEND_THREE_FLOATS.
 </p>
 
 ---
@@ -370,7 +370,7 @@ print("Times:", times)
 
 #### Task 5: Notification Handler
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A timed loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
 
 ```cpp
 # Task 5
@@ -410,7 +410,8 @@ print("Data Transfer Rate: ", rate)
   <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
 </p>
 
-From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes / sec.
+The total elapsed time was calculated from the last time data subtract the first time data.
+From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes/sec.
 
 ---
 
@@ -419,34 +420,36 @@ From the shown calculation in Figure 6, the effective data transfer rate is 113 
 The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A timed loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
 
 ```cpp
-# Task 5
+# Task 6
 times = []
 total_bytes = 0
-def notification_handler_5(uuid, data: bytearray):
-    global total_bytes
+N = 0
+
+def notification_handler_6(uuid, data: bytearray):
+    global total_bytes, N
     s = data.decode()
     total_bytes += len(data)
+    
+    if s[:2] == "N:":
+        N = int(s[2:])
+        
     if s[:2] == "T:":
         times.append(int(s[2:]))
 
-ble.start_notify(ble.uuid['RX_STRING'], notification_handler_5)
+ble.start_notify(ble.uuid['RX_STRING'], notification_handler_6)
+ble.send_command(CMD.RECORD_TIME_DATA, "")
+ble.send_command(CMD.SEND_TIME_DATA, "")
 
-# Run for < 3s
-start = time.time()
-while time.time() - start < 3.0:
-    ble.send_command(CMD.GET_TIME_MILLIS, "")
-    time.sleep(0.02)
+# Artemis recording ~3s
+time.sleep(3.2) 
+
+while len(times) < N:
+    time.sleep(0.01)
 
 ble.stop_notify(ble.uuid["RX_STRING"])
+
 print("Times:", times)
-
-# Calculate Data Transfer Rate
-duration = (times[-1] - times[0])/1000.0
-rate = total_bytes / duration
-
 print("Samples: ", len(times))
-print("Duration: ", duration)
-print("Data Transfer Rate: ", rate)
 ```
 
 <div style="text-align:center; margin:20px 0;">
@@ -455,8 +458,6 @@ print("Data Transfer Rate: ", rate)
 <p style="text-align:center;">
   <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
 </p>
-
-From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes / sec.
 
 ---
 
