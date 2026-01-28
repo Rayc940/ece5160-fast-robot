@@ -418,24 +418,65 @@ From the shown calculation in Figure 6, the effective data transfer rate is 113 
 
 ---
 
-#### Task 6: ???
+#### Task 6: Send Time Data
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A timed loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+A second method to task 5 was to create a global array that can store timestamps. Instead of looping over each time and sending times, task 6 was implemented to loop over each time and store times inside the global array. The command SEND_TIME_DATA was used to send over the array.
+
+Two additional methods were implemented in the switch statement, SEND_TIME_DATA and RECORD_TIME_DATA.
+
+For SEND_TIME_DATA, the code iterates through the recorded timestamp array and formats each entry as a string started with "T:", same as in GET_TIME_MILLIS. Each timestamp is sent, and the total number of samples sent is printed to the serial monitor.
+
+For RECORD_TIME_DATA, the code initializes the array index and records timestamp and temperature samples for a fixed duration of around three seconds. Each iteration stores the current time from millis() and the corresponding temperature reading into arrays until either the time limit is reached or the buffer is full.
+
+```cpp
+case SEND_TIME_DATA:
+            for (int i = 0; i < time_buf_len; i++) {
+                tx_estring_value.clear();
+                tx_estring_value.append("T:");
+                tx_estring_value.append(time_buf[i]);
+                tx_characteristic_string.writeValue(tx_estring_value.c_str());
+            }
+
+            Serial.print("Sent time data count: ");
+            Serial.println(time_buf_len);
+        
+            break;
+```
+
+```cpp
+case RECORD_TIME_DATA:
+        {
+            time_buf_len = 0;
+            unsigned long start = millis();
+            while ((millis() - start) < 3000) {
+                if (time_buf_len < TIME_BUF_SIZE){
+                    time_buf[time_buf_len] = (int) millis();
+                    temp_buf[time_buf_len] = getTempDegF();
+                    time_buf_len++;
+                } else {
+                    break;
+                }
+            }
+
+            Serial.print("Recorded samples: ");
+            Serial.println(time_buf_len);
+
+            break;
+        }
+```
+
+On the computer side, the notification handler records incoming timestamp while also tracking the total number of bytes received. RECORD_TIME_DATA and SEND_TIME_DATA commands were sent to Artemis, and the system sleeps for 3.2 seconds for Artemis to record and send before stopping notification. After sending is completed, the collected timestamps and total data volume are used to calculate the effective data transfer rate.
 
 ```cpp
 # Task 6
 times = []
 total_bytes = 0
-N = 0
 
 def notification_handler_6(uuid, data: bytearray):
-    global total_bytes, N
+    global total_bytes
     s = data.decode()
     total_bytes += len(data)
-    
-    if s[:2] == "N:":
-        N = int(s[2:])
-        
+
     if s[:2] == "T:":
         times.append(int(s[2:]))
 
@@ -444,15 +485,63 @@ ble.send_command(CMD.RECORD_TIME_DATA, "")
 ble.send_command(CMD.SEND_TIME_DATA, "")
 
 # Artemis recording ~3s
-time.sleep(3.2) 
-
-while len(times) < N:
-    time.sleep(0.01)
+time.sleep(3.2)
 
 ble.stop_notify(ble.uuid["RX_STRING"])
 
 print("Times:", times)
+
+# Calculate Data Transfer Rate
+duration = (times[-1] - times[0])/1000.0
+rate = total_bytes / duration
+
 print("Samples: ", len(times))
+print("Duration: ", duration)
+print("Data Transfer Rate: ", rate)
+```
+
+As shown from Figure 7, the data transfer rate is 17978 bytes/sec.
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task6.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 7:</b> Jupyter Lab Showing Time Samples and Data Transfer Rate
+</p>
+
+---
+#### Task 7: Get Temp Readings
+
+The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+
+```cpp
+# Task 7
+times = []
+temps = []
+
+def notification_handler_7(uuid, data: bytearray):
+    s = data.decode()
+
+    if s[:2] == "T:":
+        result = s[2:]
+        t, temp = result.split(",")
+        times.append(int(t))
+        temps.append(float(temp))
+
+ble.start_notify(ble.uuid["RX_STRING"], notification_handler_7)
+
+ble.send_command(CMD.RECORD_TIME_DATA, "")
+ble.send_command(CMD.GET_TEMP_READINGS, "")
+
+# Artemis recording ~3s
+time.sleep(3.2)
+
+ble.stop_notify(ble.uuid["RX_STRING"])
+
+print("Times Samples Size:", len(times))
+print("Temps Samples Size:", len(temps))
+print("Times:", times)
+print("Temps:", temps)
 ```
 
 <div style="text-align:center; margin:20px 0;">
