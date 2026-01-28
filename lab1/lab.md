@@ -141,18 +141,18 @@ The video shows serial monitor printing the three different notes, which was pla
 
 Python 3.13 was installed and configured. In addition, to ensure package isolation, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
 
-'''cpp
+```cpp
 source FastRobots_ble/bin/activate
 deactivate
-'''
+```
 
 After activating the virtual environment, the following Python packages were installed inside the virtual environment:
-- **numpy**
-- **pyyaml**
-- **colorama**
-- **nest_asyncio**
-- **bleak**
-- **jupyterlab**
+- numpy
+- pyyaml
+- colorama
+- nest_asyncio
+- bleak
+- jupyterlab
 
 After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory, which can be used for BLE communication.
 
@@ -188,7 +188,7 @@ On the computer side, commands are sent using the function:
 ble.send_command(cmd_type, data)
 ```
 
-The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data.
+The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data. The helper function handle_commmand() was used to help with switching commands.
 
 ##### Arduino Side Code (Artemis)
 
@@ -196,74 +196,267 @@ The Arduino sketch (ble_arduino.ino) is responsible for:
 - Setting up the BLE service and characteristics
 - Receiving command strings from the computer
 - Parsing commands using the RobotCommand class
-- Sending responses back to computer. EString is used for building outgoing response strings on the Artemis side. It provides functions like c_str() to construct messages before sending.
+- Sending responses back to computer. EString is used for building response strings on the Artemis side. It provides functions like c_str() to construct messages before sending.
 
 ##### Python Side Code (Computer)
 
-On the computer side, BLE communication is handled by the ArtemisBLEController class. This class provides simple functions to:
-- Connect to the Artemis board
-- Send commands
-- Read values from BLE characteristics
-- Receive asynchronous data using notifications
+On the computer side, BLE communication is handled by the ArtemisBLEController class. This class is responsible for:
+- Connecting to the Artemis board
+- Sending commands
+- Reading values from BLE characteristics
+- Receiving asynchronous data using notifications
 
 ---
 
 ## Lab 1B Tasks
 
 #### Configuration
-BLE configuration values such as the Artemis MAC address and UUIDs are stored in connections.yaml. These values must match the UUIDs defined in the Arduino sketch. After changing the configuration file, it must be reloaded before reconnecting.
 
-Before running the tasks, several configurations were required:
-- Updated the Artemis MAC address in `connections.yaml`
-- Generated and synchronized a new BLE service UUID
-- Verified command types matched between Arduino and Python
-- Set the serial baud rate to 115200 bps
+Before doing the lab tasks, some configuration steps were required. First, the MAC address printed by the Artemis board in the serial monitor was copied into the computer side configuration file `connections.yaml`.
 
-These steps ensured that the computer connected to the correct Artemis board and avoided cross-connections with nearby devices.
+Next, a new BLE service UUID was generated and updated on both the Arduino and Python sides using the code:
+
+```cpp
+from uuid import uuid4
+uuid4()
+```
+
+This prevents connections to other students’ Artemis boards that may be advertising the default service UUID. The newly generated UUID replaced the original BLE service UUID in the Arduino sketch and the Python configuration file `connections.yaml`.
+
+The command type definitions in the Arduino enum CommandTypes and cmd_types.py were matched exactly, and ble_arduino.ino was reuploaded to Artemis. Finally, the provided Jupyter notebook demo.ipynb was opened and all cells were tested to confirm that BLE communication was functioning before proceeding to the lab tasks.
 
 ---
 
-### Task 1: ECHO Command
+#### Task 1: ECHO Command
 
-A string was sent from the computer to the Artemis using the `ECHO` command. The Artemis augmented the string and transmitted it back to the computer.
+A string was sent from the computer to the Artemis using the `ECHO` command. The Artemis added onto the string and responded it back to the computer.
 
 **Example:**
 - Sent: `HiHello`
 - Received: `Robot says -> HiHello :)`
 
-This confirmed successful two-way BLE communication.
+The code shown below uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending multiple string components before sending the final array through the BLE string characteristic. The response is printed to serial monitor for verification.
 
-📷 *(Insert Jupyter output screenshot here)*
+```cpp
+case ECHO:
+            char char_arr[MAX_MSG_SIZE];
+            // Extract the next value from the command string as a character array
+            success = robot_cmd.get_next_value(char_arr);
+            if (!success)
+                return;
+            
+            tx_estring_value.clear();
+            tx_estring_value.append("Robot says -> ");
+            tx_estring_value.append(char_arr);
+            tx_estring_value.append(" :)");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+            Serial.print("Sent back: ");
+            Serial.println(tx_estring_value.c_str());
+            
+            break;
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task1.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 2:</b> Jupyter Lab Showing Response from Artemis for ECHO.
+</p>
 
 ---
 
-### Task 2: Sending Three Floats
+#### Task 2: Send Three Floats
 
-The `SEND_THREE_FLOATS` command was used to transmit three floating-point values from the computer to the Artemis. These values were parsed correctly on the Arduino side and printed to the serial monitor.
+The `SEND_THREE_FLOATS` command was used to send three float values from the computer to the Artemis. These values were printed to the serial monitor.
 
-This demonstrated that structured numerical data could be reliably transmitted over BLE.
+The code shown below extracts three float values from the received command string using RobotCommand:get_next_value(). Each value is stored in a separate variable.
 
-📷 *(Insert serial monitor screenshot here)*
+```cpp
+case SEND_THREE_FLOATS:
+            float float_a, float_b, float_c;
+
+            // Extract the next value from the command string as an integer
+            success = robot_cmd.get_next_value(float_a);
+            if (!success)
+                return;
+
+            // Extract the next value from the command string as an integer
+            success = robot_cmd.get_next_value(float_b);
+            if (!success)
+                return;
+
+            success = robot_cmd.get_next_value(float_c);
+            if (!success)
+                return;
+
+            Serial.print("Three Floats: ");
+            Serial.print(float_a);
+            Serial.print(", ");
+            Serial.print(float_b);
+            Serial.print(", ");
+            Serial.print(float_c);
+            
+            break;
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task2.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 3:</b> Jupyter Lab Showing Response from Artemis for SEND_THREE_FLOATS.
+</p>
 
 ---
 
-### Task 3: Time Stamping and Notification Handling
+#### Task 3: Get Time Millis
 
-A new command `GET_TIME_MILLIS` was implemented to return the current time in milliseconds. A Python notification handler was set up to asynchronously receive these messages and extract the timestamp.
+A new command `GET_TIME_MILLIS` was implemented to return the current time in milliseconds using the string format `T:123456`.
 
-A loop was used to repeatedly send timestamps to the computer for several seconds. The received data was logged and used to estimate the effective data transfer rate.
+The code shown below builds the response string using EString by appending a prefix and the current system time obtained from millis(). The formatted string is transmitted to the computer through the BLE string characteristic and printed to the serial monitor.
 
-📈 *(Insert plot of timestamps vs. packet count here)*
+```cpp
+case GET_TIME_MILLIS:
+            tx_estring_value.clear();
+            tx_estring_value.append("T:");
+            tx_estring_value.append(String(millis()).c_str());
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+
+            Serial.print("Current Time: ");
+            Serial.print(tx_estring_value.c_str());
+            
+            break;
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task3 Python.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 4:</b> Jupyter Lab Showing Response from Artemis for GET_TIME_MILLIS
+</p>
 
 ---
 
-### Task 4: Buffered Data Transfer
+#### Task 4: Notification Handler
 
-Instead of sending timestamps immediately, timestamps were stored in a fixed-size array on the Artemis. Once the array was full, a `SEND_TIME_DATA` command transmitted the buffered data to the computer.
+The code shown below defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers each time a notification is received. Notifications are enabled on the string characteristic, and repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp samples before stopping notifications.
 
-A second array was added to store temperature readings recorded at the same timestamps. These paired values were transmitted together and reconstructed on the computer.
+```cpp
+# Task 4
+times = []
+def notification_handler(uuid, data: bytearray):
+    s = data.decode()
+    if s[:2] == "T:":
+        times.append(int(s[2:]))
 
-This approach reduced BLE overhead and enabled higher-rate data collection.
+ble.start_notify(ble.uuid['RX_STRING'], notification_handler)
+
+# Testing
+for _ in range(10):
+    ble.send_command(CMD.GET_TIME_MILLIS, "")
+    time.sleep(0.02)
+ble.stop_notify(ble.uuid["RX_STRING"])
+print("Times:", times)
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task4.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 5:</b> Jupyter Lab Showing Notification Handler and Printed Times
+</p>
+
+---
+
+#### Task 5: Notification Handler
+
+The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A timed loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+
+```cpp
+# Task 5
+times = []
+total_bytes = 0
+def notification_handler_5(uuid, data: bytearray):
+    global total_bytes
+    s = data.decode()
+    total_bytes += len(data)
+    if s[:2] == "T:":
+        times.append(int(s[2:]))
+
+ble.start_notify(ble.uuid['RX_STRING'], notification_handler_5)
+
+# Run for < 3s
+start = time.time()
+while time.time() - start < 3.0:
+    ble.send_command(CMD.GET_TIME_MILLIS, "")
+    time.sleep(0.02)
+
+ble.stop_notify(ble.uuid["RX_STRING"])
+print("Times:", times)
+
+# Calculate Data Transfer Rate
+duration = (times[-1] - times[0])/1000.0
+rate = total_bytes / duration
+
+print("Samples: ", len(times))
+print("Duration: ", duration)
+print("Data Transfer Rate: ", rate)
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task5.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
+</p>
+
+From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes / sec.
+
+---
+
+#### Task 6: ???
+
+The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A timed loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+
+```cpp
+# Task 5
+times = []
+total_bytes = 0
+def notification_handler_5(uuid, data: bytearray):
+    global total_bytes
+    s = data.decode()
+    total_bytes += len(data)
+    if s[:2] == "T:":
+        times.append(int(s[2:]))
+
+ble.start_notify(ble.uuid['RX_STRING'], notification_handler_5)
+
+# Run for < 3s
+start = time.time()
+while time.time() - start < 3.0:
+    ble.send_command(CMD.GET_TIME_MILLIS, "")
+    time.sleep(0.02)
+
+ble.stop_notify(ble.uuid["RX_STRING"])
+print("Times:", times)
+
+# Calculate Data Transfer Rate
+duration = (times[-1] - times[0])/1000.0
+rate = total_bytes / duration
+
+print("Samples: ", len(times))
+print("Duration: ", duration)
+print("Data Transfer Rate: ", rate)
+```
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task5.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
+</p>
+
+From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes / sec.
 
 ---
 
