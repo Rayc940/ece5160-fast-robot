@@ -177,6 +177,7 @@ The provided codebase is divided into two main components:
 - Python code running on the computer
 
 These two components communicate using BLE. BLE provides a low power communication tool that allows the computer to send commands to the Artemis board and receive sensor data or responses in return.
+
 <br>
 
 ##### BLE Communication
@@ -190,6 +191,7 @@ ble.send_command(cmd_type, data)
 ```
 
 The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data. The helper function handle_commmand() was used to help with switching commands.
+
 <br>
 
 ##### Arduino Side Code (Artemis)
@@ -335,7 +337,7 @@ case GET_TIME_MILLIS:
   <img src="../img/lab1/Task3 Python.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 4:</b> Jupyter Lab Showing Response from Artemis for GET_TIME_MILLIS
+  <b>Figure 4:</b> Jupyter Lab Showing Response from Artemis for GET_TIME_MILLIS.
 </p>
 
 ---
@@ -366,7 +368,7 @@ print("Times:", times)
   <img src="../img/lab1/Task4.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 5:</b> Jupyter Lab Showing Notification Handler and Printed Times
+  <b>Figure 5:</b> Jupyter Lab Showing Notification Handler and Printed Times.
 </p>
 
 ---
@@ -410,7 +412,7 @@ print("Data Transfer Rate: ", rate)
   <img src="../img/lab1/Task5.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
+  <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate.
 </p>
 
 The total elapsed time was calculated from the last time data subtract the first time data.
@@ -506,13 +508,33 @@ As shown from Figure 7, the data transfer rate is 17978 bytes/sec.
   <img src="../img/lab1/Task6.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 7:</b> Jupyter Lab Showing Time Samples and Data Transfer Rate
+  <b>Figure 7:</b> Jupyter Lab Showing Time Samples and Data Transfer Rate.
 </p>
 
 ---
+
 #### Task 7: Get Temp Readings
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+A second array was added to store temperature readings at the same time with time readings. The first temperature reading corresponds to the first time reading. A new command GET_TEMP_READINGS was implemented in the switch statement. The overall structure was similar to SEND_TIME_DATA, but there was an additional temperature reading that was appended to the temperature array, separated by a ",". Print statements were again added at the end for verification.
+
+```cpp
+case GET_TEMP_READINGS:            
+            for (int i = 0; i < time_buf_len; i++) {
+                tx_estring_value.clear();
+                tx_estring_value.append("T:");
+                tx_estring_value.append(time_buf[i]);
+                tx_estring_value.append(",");
+                tx_estring_value.append(temp_buf[i]);
+                tx_characteristic_string.writeValue(tx_estring_value.c_str());
+            }
+
+            Serial.print("Sent time, temp data count: ");
+            Serial.println(time_buf_len);
+        
+            break;
+```
+
+On the computer side, the notification handler decodes incoming string data and parses into timestamp and temperature values. Each received message is split into time and temperature components, which are then appended to separate arrays. The overall structure is similar to task 6, and print statements are added at the end for verification.
 
 ```cpp
 # Task 7
@@ -545,26 +567,124 @@ print("Temps:", temps)
 ```
 
 <div style="text-align:center; margin:20px 0;">
-  <img src="../img/lab1/Task5.png" width="600">
+  <img src="../img/lab1/Task7.png" width="600">
 </div>
 <p style="text-align:center;">
-  <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate
+  <b>Figure 8:</b> Jupyter Lab Showing Time and Temp Samples.
 </p>
 
 ---
 
-## Results
+#### Task 8: Discussion
 
-The BLE communication was reliable for both real-time and buffered data transmission. Buffered transmission significantly reduced overhead and allowed faster data acquisition without packet loss.
+Discuss the differences between these two methods, the advantages and disadvantages of both and the potential scenarios that you might choose one method over the other. How “quickly” can the second method record data? The Artemis board has 384 kB of RAM. Approximately how much data can you store to send without running out of memory?
 
-📷 *(Insert plots, screenshots, and videos as needed)*
+---
+
+#### Additional Task 9: Effective Data Rate And Overhead
+
+To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, telling the Artemis to reply with a specified number of bytes. The timestamps of sent commands and received replies were recorded to calculate the effective data transfer rate. By testing reply sizes ranging from very small packets (5 bytes) to larger packets (120 bytes), the effect of packet size on transfer rate and overhead were examined. 
+
+On the Artemis side, a new command REPLY_N is added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters before being sent over. This allows controlled testing by varying the number of bytes sent in each reply.
+
+```cpp
+case REPLY_N:            
+            char arr[MAX_MSG_SIZE];
+            int n;
+
+            success = robot_cmd.get_next_value(n);
+            if (!success)
+                return;
+
+            for (int i = 0; i < n; i++) {
+                arr[i] = 'a' + (i%26);
+            }
+            arr[n] = '\0';
+            tx_characteristic_string.writeValue(arr);
+
+            Serial.print("n: ");
+            Serial.println(n);
+
+            break;
+```
+
+On the computer side, the code shown below implements the test by repeatedly requesting the Artemis to reply with a specified number of bytes. For each size, 20 messages are sent while BLE notifications record the received data size and times. The total number of bytes received and the duration are used to compute the effective data rate. The results are then plotted for visualization.
+
+```cpp
+# Task 9
+rx_times = []
+rx_sizes = []
+n_sizes = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
+rates = []
+
+def notification_handler_8(uuid, data: bytearray):
+    rx_times.append(time.time())
+    rx_sizes.append(len(data))
+
+for n in n_sizes:
+    rx_times.clear()
+    rx_sizes.clear()
+
+    ble.start_notify(ble.uuid['RX_STRING'], notification_handler_8)
+
+    start = time.time()
+    for _ in range(20):
+        ble.send_command(CMD.REPLY_N, n)
+        time.sleep(0.02)
+    end = time.time()
+
+    ble.stop_notify(ble.uuid['RX_STRING'])
+
+    total_bytes = sum(rx_sizes)
+    duration = end - start
+    rate = total_bytes / duration
+    
+    rates.append(rate)
+
+    print("Number of Bytes:", n)
+    print("Total Bytes Received:", total_bytes)
+    print("Duration:", duration)
+    print("Effective data rate:", rate)
+
+plt.figure()
+plt.plot(n_sizes, rates, marker='o')
+plt.xlabel("n size (bytes)")
+plt.ylabel("Effective data rate (bytes/sec)")
+plt.title("BLE Effective Data Rate vs n Size")
+plt.grid(True)
+plt.show()
+```
+
+The plot in Figure 9 shows that the effective data rate increases almost linearly as the reply size n increases. For small packets like 5 bytes, the effective data rate is very low, indicating that a large portion of the time is dominated by overhead.
+
+As the reply size increases to 120 bytes, the effective data rate improves, reaching nearly 1800 bytes/sec at 120 bytes. This shows that larger replies reduce the relative impact of overhead. While the total duration increases slightly, the efficiency improves.
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task9.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 9:</b> Effective Data Rate vs. N Size.
+</p>
+
+<div style="text-align:center; margin:20px 0;">
+  <img src="../img/lab1/Task9 Output.png" width="600">
+</div>
+<p style="text-align:center;">
+  <b>Figure 10:</b> Number of Bytes, Total Bytesm Duration, and Data Rate Data.
+</p>
+
+---
+
+#### Additional Task 10: Reliability
+
+
 
 ---
 
 ## Discussion
 
-This lab provided hands-on experience with embedded programming, BLE communication, and asynchronous data handling. One challenge was ensuring consistent UUIDs between Arduino and Python, but once resolved, communication was stable.
-
-Buffered data transmission proved more efficient for high-rate sampling, while real-time transmission was useful for debugging and quick feedback. These techniques will be critical for future labs involving sensor data and robot control.
+Briefly describe what you’ve learned, challenges that you faced, and/or any unique solutions used to fix problems. It is important to keep these writeups succinct. You will not get extra points for writing more words if the content doesn’t contribute to communicating your understanding of the lab material.
 
 ---
+
+## Reference
