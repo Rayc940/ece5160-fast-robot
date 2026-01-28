@@ -177,6 +177,7 @@ The provided codebase is divided into two main components:
 - Python code running on the computer
 
 These two components communicate using BLE. BLE provides a low power communication tool that allows the computer to send commands to the Artemis board and receive sensor data or responses in return.
+<br>
 
 ##### BLE Communication
 
@@ -189,6 +190,7 @@ ble.send_command(cmd_type, data)
 ```
 
 The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data. The helper function handle_commmand() was used to help with switching commands.
+<br>
 
 ##### Arduino Side Code (Artemis)
 
@@ -197,6 +199,7 @@ The Arduino sketch (ble_arduino.ino) is responsible for:
 - Receiving command strings from the computer
 - Parsing commands using the RobotCommand class
 - Sending responses back to computer. EString is used for building response strings on the Artemis side. It provides functions like c_str() to construct messages before sending.
+<br>
 
 ##### Python Side Code (Computer)
 
