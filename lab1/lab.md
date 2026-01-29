@@ -311,23 +311,6 @@ case GET_TIME_MILLIS:
 
 The code defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
 
-```cpp
-# Task 4
-times = []
-def notification_handler(uuid, data: bytearray):
-    s = data.decode()
-    if s[:2] == "T:":
-        times.append(int(s[2:]))
-
-ble.start_notify(ble.uuid['RX_STRING'], notification_handler)
-
-# Testing
-for _ in range(10):
-    ble.send_command(CMD.GET_TIME_MILLIS, "")
-    time.sleep(0.02)
-ble.stop_notify(ble.uuid["RX_STRING"])
-```
-
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task4.png" width="600">
 </div>
@@ -339,35 +322,8 @@ ble.stop_notify(ble.uuid["RX_STRING"])
 
 #### Task 5: Notification Handler
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration. The total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+The notification handler records incoming timestamp while also tracking the total number of bytes received. A while loop repeatedly sends GET_TIME_MILLIS commands. The total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
 
-```cpp
-# Task 5
-times = []
-total_bytes = 0
-def notification_handler_5(uuid, data: bytearray):
-    global total_bytes
-    s = data.decode()
-    total_bytes += len(data)
-    if s[:2] == "T:":
-        times.append(int(s[2:]))
-
-ble.start_notify(ble.uuid['RX_STRING'], notification_handler_5)
-
-# Run for < 3s
-start = time.time()
-while time.time() - start < 3.0:
-    ble.send_command(CMD.GET_TIME_MILLIS, "")
-    time.sleep(0.02)
-
-ble.stop_notify(ble.uuid["RX_STRING"])
-
-# Calculate Data Transfer Rate
-duration = (times[-1] - times[0])/1000.0
-rate = total_bytes / duration
-```
-
-The total elapsed time was calculated using the last time data subtracted by the first time data.
 From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes/sec.
 
 <div style="text-align:center; margin:20px 0;">
