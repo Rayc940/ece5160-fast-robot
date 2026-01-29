@@ -4,7 +4,7 @@
 
 ## Objective
 
-The goal of this lab was to become familiar with the SparkFun RedBoard Artemis Nano and to establish communication between the Artemis board and the computer. This lab was divided into two parts:
+The goal of this lab is to become familiar with the Artemis Nano board and to establish communication between the Artemis board and the computer. This lab is divided into two parts:
 
 - **Lab 1A:** Arduino IDE setup and programming the Artemis  
 - **Lab 1B:** Bluetooth Low Energy (BLE) communication using Python and Jupyter
@@ -13,7 +13,7 @@ The goal of this lab was to become familiar with the SparkFun RedBoard Artemis N
 
 ## Prelab 1A
 
-The Arduino IDE was installed and updated to the latest version. The SparkFun Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
+The Arduino IDE was installed and updated to the latest version. The Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
 
 ---
 
@@ -24,7 +24,7 @@ The Arduino IDE was installed and updated to the latest version. The SparkFun Ap
 #### Blink
 
 We first ran the Blink example from File → Examples → 01.Basics.
-This ensures that the board was properly connected and that we could successfully upload code.
+This ensured that the board was properly connected and that we could successfully upload code.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -43,8 +43,8 @@ This ensures that the board was properly connected and that we could successfull
 #### Serial Communication Test
 
 Next, we ran Example4_Serial from File → Examples → Apollo3.
-This example was used to test serial communication between the Artemis board and the computer.
-The serial monitor was opened to see the output and send input to the board.
+This example was used to test serial communication between the Artemis and the computer.
+The serial monitor was opened to see the output and send input.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -84,7 +84,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 
 Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
 This example was used to test the onboard microphone.
-A C major scale audio from YouTube was played near the board, and serial monitor showed changing detected frequency content. This confirms that the microphone and PDM interface were functioning correctly.
+A C major scale audio from YouTube was played near the board, and serial monitor showed changing detected frequency content.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -103,7 +103,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
 #### Additional Task: Simple Electronic Tuner
 
 For the additional task, we combined the microphone input with serial output to create a simple electronic tuner.
-The code can detect three frequency ranges and print the corresponding musical note to the serial monitor. The three chosen frequencies were C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
+The code can detect three frequency ranges and print the corresponding musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
 
 The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match. If there is a match, the serial monitor will print the detected musical note.
 
@@ -117,7 +117,7 @@ const char* getFreq(uint32_t freq)
 }
 ```
 
-The video shows serial monitor printing the three different notes, which was played from a tuner app that can select frequencies to play.
+Video 5 shows serial monitor printing the three different notes, which was played from a tuner app that can select frequencies.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -139,7 +139,7 @@ The video shows serial monitor printing the three different notes, which was pla
 
 #### Setup
 
-Python 3.13 was installed and configured. In addition, to ensure package isolation, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
+Python 3.13 was installed and configured. In addition, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
 
 ```cpp
 source FastRobots_ble/bin/activate
@@ -154,9 +154,9 @@ After activating the virtual environment, the following Python packages were ins
 - bleak
 - jupyterlab
 
-After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory, which can be used for BLE communication.
+After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory.
 
-ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed:
+ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed in Figure 1.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/MAC Address.png" width="600">
@@ -176,21 +176,19 @@ The provided codebase is divided into two main components:
 - Arduino code running on the Artemis board
 - Python code running on the computer
 
-These two components communicate using BLE. BLE provides a low power communication tool that allows the computer to send commands to the Artemis board and receive sensor data or responses in return.
-
 <br>
 
 ##### BLE Communication
 
-Communication between the computer and the Artemis board is implemented using GATT characteristics, each identified by a different UUID. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings, and the Artemis processes the command and sends back a response.
+Communication between the computer and the Artemis board is implemented using GATT characteristics, each identified by a different UUID. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings.
 
-On the computer side, commands are sent using the function:
+On the computer side, commands are sent using this function:
 
 ```cpp
 ble.send_command(cmd_type, data)
 ```
 
-The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command, such as responding to a PING or sending data. The helper function handle_commmand() was used to help with switching commands.
+The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command. The helper function handle_commmand() was used to help with switching commands.
 
 <br>
 
@@ -205,7 +203,7 @@ The Arduino sketch (ble_arduino.ino) is responsible for:
 
 ##### Python Side Code (Computer)
 
-On the computer side, BLE communication is handled by the ArtemisBLEController class. This class is responsible for:
+The Jupyter Lab (Python) is responsible for:
 - Connecting to the Artemis board
 - Sending commands
 - Reading values from BLE characteristics
@@ -228,7 +226,7 @@ uuid4()
 
 This prevents connections to other students’ Artemis boards that may be advertising the default service UUID. The newly generated UUID replaced the original BLE service UUID in the Arduino sketch and the Python configuration file `connections.yaml`.
 
-The command type definitions in the Arduino enum CommandTypes and cmd_types.py were matched exactly, and ble_arduino.ino was reuploaded to Artemis. Finally, the provided Jupyter notebook demo.ipynb was opened and all cells were tested to confirm that BLE communication was functioning before proceeding to the lab tasks.
+The command type definitions in the Arduino enum CommandTypes and cmd_types.py were matched exactly, and ble_arduino.ino was reuploaded to Artemis. Finally, the provided Jupyter notebook demo.ipynb was opened and all cells were tested to confirm that BLE communication was functioning.
 
 ---
 
@@ -240,7 +238,7 @@ A string was sent from the computer to the Artemis using the `ECHO` command. The
 - Sent: `HiHello`
 - Received: `Robot says -> HiHello :)`
 
-The code shown below uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending multiple string components before sending the final array through the BLE string characteristic. The response is printed to serial monitor for verification.
+The code shown below uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending multiple string components. The response is printed to serial monitor for verification.
 
 ```cpp
 case ECHO:
@@ -274,8 +272,6 @@ case ECHO:
 #### Task 2: Send Three Floats
 
 The `SEND_THREE_FLOATS` command was used to send three float values from the computer to the Artemis. These values were printed to the serial monitor.
-
-The code shown below extracts three float values from the received command string using RobotCommand:get_next_value(). Each value is stored in a separate variable.
 
 ```cpp
 case SEND_THREE_FLOATS:
@@ -318,7 +314,7 @@ case SEND_THREE_FLOATS:
 
 A new command `GET_TIME_MILLIS` was implemented to return the current time in milliseconds using the string format `T:123456`.
 
-The code shown below builds the response string using EString by appending a prefix and the current system time obtained from millis(). The formatted string is transmitted to the computer through the BLE string characteristic and printed to the serial monitor.
+The code shown below builds the response string using EString by appending a prefix and the current time obtained from millis(). The formatted string is sent to the computer and printed to the serial monitor.
 
 ```cpp
 case GET_TIME_MILLIS:
@@ -344,7 +340,7 @@ case GET_TIME_MILLIS:
 
 #### Task 4: Notification Handler
 
-The code shown below defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers each time a notification is received. Notifications are enabled on the string characteristic, and repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp samples before stopping notifications.
+The code shown below defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers each time a notification is received. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
 
 ```cpp
 # Task 4
@@ -375,7 +371,7 @@ print("Times:", times)
 
 #### Task 5: Notification Handler
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration, allowing multiple samples to be collected through notifications. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
 
 ```cpp
 # Task 5
@@ -408,15 +404,15 @@ print("Duration: ", duration)
 print("Data Transfer Rate: ", rate)
 ```
 
+The total elapsed time was calculated from the last time data subtract the first time data.
+From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes/sec.
+
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task5.png" width="600">
 </div>
 <p style="text-align:center;">
   <b>Figure 6:</b> Jupyter Lab Showing Looped Time Samples and Data Transfer Rate.
 </p>
-
-The total elapsed time was calculated from the last time data subtract the first time data.
-From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes/sec.
 
 ---
 
@@ -427,8 +423,6 @@ A second method to task 5 was to create a global array that can store timestamps
 Two additional methods were implemented in the switch statement, SEND_TIME_DATA and RECORD_TIME_DATA.
 
 For SEND_TIME_DATA, the code iterates through the recorded timestamp array and formats each entry as a string started with "T:", same as in GET_TIME_MILLIS. Each timestamp is sent, and the total number of samples sent is printed to the serial monitor.
-
-For RECORD_TIME_DATA, the code initializes the array index and records timestamp and temperature samples for a fixed duration of around three seconds. Each iteration stores the current time from millis() and the corresponding temperature reading into arrays until either the time limit is reached or the buffer is full.
 
 ```cpp
 case SEND_TIME_DATA:
@@ -444,6 +438,8 @@ case SEND_TIME_DATA:
         
             break;
 ```
+
+For RECORD_TIME_DATA, the code initializes the array index and records timestamp and temperature samples for a fixed duration of three seconds. Each iteration stores the current time from millis() and the corresponding temperature reading into arrays.
 
 ```cpp
 case RECORD_TIME_DATA:
@@ -467,7 +463,7 @@ case RECORD_TIME_DATA:
         }
 ```
 
-On the computer side, the notification handler records incoming timestamp while also tracking the total number of bytes received. RECORD_TIME_DATA and SEND_TIME_DATA commands were sent to Artemis, and the system sleeps for 3.2 seconds for Artemis to record and send before stopping notification. After sending is completed, the collected timestamps and total data volume are used to calculate the effective data transfer rate.
+On the computer side, the notification handler records incoming timestamp while also tracking the total number of bytes received. RECORD_TIME_DATA and SEND_TIME_DATA commands were sent to Artemis, and the system sleeps for 3.2 seconds for Artemis to record and send before stopping notification. After sending is completed, the collected timestamps and total bytes are used to calculate the effective data transfer rate.
 
 ```cpp
 # Task 6
@@ -502,7 +498,7 @@ print("Duration: ", duration)
 print("Data Transfer Rate: ", rate)
 ```
 
-As shown from Figure 7, the data transfer rate is 17978 bytes/sec.
+As shown from Figure 7, the data transfer rate is 17978 bytes/sec, a significant increase from the previous method.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task6.png" width="600">
@@ -515,7 +511,7 @@ As shown from Figure 7, the data transfer rate is 17978 bytes/sec.
 
 #### Task 7: Get Temp Readings
 
-A second array was added to store temperature readings at the same time with time readings. The first temperature reading corresponds to the first time reading. A new command GET_TEMP_READINGS was implemented in the switch statement. The overall structure was similar to SEND_TIME_DATA, but there was an additional temperature reading that was appended to the temperature array, separated by a ",". Print statements were again added at the end for verification.
+A second array was added to store temperature readings at the same time with time readings. The first temperature reading corresponds to the first time reading. A new command GET_TEMP_READINGS was implemented in the switch statement. The overall structure was similar to SEND_TIME_DATA, but there was an additional temperature reading that was appended to the temperature array, separated by a ",".
 
 ```cpp
 case GET_TEMP_READINGS:            
@@ -534,7 +530,7 @@ case GET_TEMP_READINGS:
             break;
 ```
 
-On the computer side, the notification handler decodes incoming string data and parses into timestamp and temperature values. Each received message is split into time and temperature components, which are then appended to separate arrays. The overall structure is similar to task 6, and print statements are added at the end for verification.
+On the computer side, the notification handler decodes incoming string data and parses into timestamp and temperature values, each appended to separate arrays.
 
 ```cpp
 # Task 7
@@ -577,22 +573,19 @@ print("Temps:", temps)
 
 #### Task 8: Discussion
 
-The two methods mainly differ in when the data is sent over Bluetooth. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging, since the computer sees the data immediately. However, this method is slow because every sample must go through BLE communication, which has a lot of overhead. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
+The two methods mainly differ in when the data is sent over. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging, since the computer sees the data immediately. However, this method is slow because every sample must go through BLE communication, which has a lot of overhead. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
 
-In the second method, the Artemis stores the data locally in arrays first and only sends it later. This allows the Artemis to record data much faster, since no BLE communication happens during the recording loop. The recording speed is mainly limited by how fast millis() and the temperature sensor can be read, so it can reach much higher sampling rates than the first method. The downside is that the data is not available in real time. In addition, it is important to make sure the array size isn't filled and being overwritten.
+In the second method, the Artemis stores the data locally in arrays first and sends it later. This allows the Artemis to record data much faster, since no BLE communication happens during recording. The recording speed is mainly limited by how fast millis() can be read, so it can reach much higher sampling rates than the first method. The downside is that the data is not available in real time. In addition, it is important to make sure the array size isn't filled and being overwritten.
 
-In the buffered method, the Artemis stores timestamps and temperature readings locally before sending them over BLE. Each sample consists of a timestamp (4 bytes) and a temperature value (4 bytes), for a total of 8 bytes per sample. The Artemis has 384 kB of RAM, which corresponds to 393,216 bytes. In theory, this allows up to 49,152 samples to be stored. However, since memory is also used by the program, BLE stack, and other variables, only part of the RAM can be safely used for data buffers. Assuming roughly half of the RAM is available, about 196,608 bytes can be used, allowing approximately 24,576 samples to be stored without running out of memory. This demonstrates that the buffered method supports much faster data collection than real-time BLE transmission, at the cost of increased memory usage.
-
-
-The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there is around 4 bytes for each time, and ideally the maximum number of samples that can be stored is 393,216/4 = 98,304 samples. If there are timestamps and temperature, there is around 8 bytes per sample, and the maximum number of samples that can be stored is 393,216/8 = 49,152 samples. However, in practice not all RAM storage can be used, so the actual samples that can be stored is less than the calculated number.
+The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there is around 4 bytes for each time, and the maximum number of samples that can be stored is 393,216/4 = 98,304 samples. If there are timestamps and temperature, there is around 8 bytes per sample, and the maximum number of samples that can be stored is 393,216/8 = 49,152 samples. However, in practice not all RAM storage can be used, so the actual samples that can be stored is less than the calculated number.
 
 ---
 
 #### Additional Task 9: Effective Data Rate And Overhead
 
-To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, telling the Artemis to reply with a specified number of bytes. The timestamps of sent commands and received replies were recorded to calculate the effective data transfer rate. By testing reply sizes ranging from very small packets (5 bytes) to larger packets (120 bytes), the effect of packet size on transfer rate and overhead were examined. 
+To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, telling the Artemis to reply with a certain number of bytes. The timestamps of sent commands and received replies were recorded to calculate the transfer rate. Different reply sizes ranging from very small packets (5 bytes) to larger packets (120 bytes) were tested.
 
-On the Artemis side, a new command REPLY_N is added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters before being sent over. This allows controlled testing by varying the number of bytes sent in each reply.
+On the Artemis side, a new command REPLY_N was added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters before being sent over.
 
 ```cpp
 case REPLY_N:            
@@ -615,7 +608,7 @@ case REPLY_N:
             break;
 ```
 
-On the computer side, the code shown below implements the test by repeatedly requesting the Artemis to reply with a specified number of bytes. For each size, 20 messages are sent while BLE notifications record the received data size and times. The total number of bytes received and the duration are used to compute the effective data rate. The results are then plotted for visualization.
+On the computer side, the code shown below implements the test by repeatedly requesting the Artemis to reply with a specified size. For each size, 20 messages are sent while BLE notifications record. The total number of bytes received and the duration are used to compute the effective data rate.
 
 ```cpp
 # Task 9
@@ -684,9 +677,9 @@ As the reply size increases to 120 bytes, the effective data rate improves, reac
 
 #### Additional Task 10: Reliability
 
-To evaluate the reliability of communication between the Artemis board and the computer, a new test that aimed at sending information at increasingly high rates is used. This test tracks if all messages sent by the Artemis are received by computer, or if there is some loss and missing data.
+To evaluate the reliability of communication between the Artemis board and the computer, a new test was implemented to send information at high rates. This test tracks if all messages sent by the Artemis are received, or if there is some missing data.
 
-On the Artemis side, a new command RELIABILITY_TEST is used to send how ever many data points the computer told it to send. The format it sends is "T: i", where i increments from 0 to M−1.
+On the Artemis side, a new command RELIABILITY_TEST is used to send how ever many data points the computer told it to send. The format it sends is "T: i", where i increments from 0 to m−1.
 
 ```cpp
 case RELIABILITY_TEST:
@@ -706,7 +699,7 @@ case RELIABILITY_TEST:
             break;
 ```
 
-On the computer side, the sequence numbers received are stored in a set to ensure that each number is only counted once. After telling the Artemis to send M numbers, the computer listens for incoming data for a fixed duration (12 seconds). Once data collection is complete, the received sequence numbers are compared against the expected range from 0 to M−1. Any missing numbers indicate that they were not successfully received. The loss percentage is then calculated as the ratio of missing number to the total number of numbers sent. 
+On the computer side, the numbers received are stored in a set to ensure that each number is only counted once. After telling the Artemis to send M numbers, the computer listens for incoming data for a fixed duration. Once data collection is done, the received sequence are compared against the expected range. Any missing numbers indicate that they were not successfully received. The loss percentage is then calculated.
 
 ```cpp
 # Task 10
@@ -739,7 +732,7 @@ print("Missing:", missing)
 print("Loss %:", loss)
 ```
 
-From Figure 11, the computer does reaed all the data from Artemis, without missing any number.
+From Figure 11, the computer does read all the data from Artemis, without missing any number.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task10.png" width="600">
@@ -752,7 +745,7 @@ From Figure 11, the computer does reaed all the data from Artemis, without missi
 
 ## Discussion
 
-This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. We practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. We also learned the difference between sending data in real time versus storing data in an array and sending it all at once. Sending data immediately is easier and useful for debugging, but it is slower due to BLE overhead. Storing data on the Artemis and sending it later is much faster and better for collecting lots of sensor data, as long as memory limits are considered.
+This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. We practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. We also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
 
 There was no siginificant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
 
