@@ -14,7 +14,7 @@ The Arduino IDE was installed and updated to the latest version. The Apollo3 boa
 
 #### Blink
 
-We first ran the Blink example from File → Examples → 01.Basics.
+I first ran the Blink example from File → Examples → 01.Basics.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -32,7 +32,7 @@ We first ran the Blink example from File → Examples → 01.Basics.
 
 #### Serial Communication Test
 
-Next, we ran Example4_Serial from File → Examples → Apollo3.
+Next, I ran Example4_Serial from File → Examples → Apollo3.
 The serial monitor was opened to see the output and send input.
 
 <div style="text-align:center; margin:30px 0;">
@@ -51,8 +51,8 @@ The serial monitor was opened to see the output and send input.
 
 #### Temperature Sensor Test
 
-We then ran Example2_analogRead from File → Examples → Apollo3.
-By blowing warm air on the chip, we were able to observe increases in the temperature values.
+I then ran Example2_analogRead from File → Examples → Apollo3.
+By blowing warm air on the chip, I was able to observe increases in the temperature values.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -70,7 +70,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 
 #### Microphone Test
 
-Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
+Next, I ran Example1_MicrophoneOutput from File → Examples → PDM.
 A YouTube Video of C major scale audio was played, and serial monitor showed changing detected frequency content.
 
 <div style="text-align:center; margin:30px 0;">
@@ -126,16 +126,8 @@ Video 5 shows serial monitor printing the three different notes, which was playe
 #### Setup
 
 Python 3.13 was installed and configured. In addition, a virtual environment named FastRobots_ble was created using venv.
-These commands were used for activating or deactivating the virtual environment.
 
-```cpp
-source FastRobots_ble/bin/activate
-deactivate
-```
-
-After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory.
-
-ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed in Figure 1.
+After installation, the lab codebase was downloaded and unzipped inside project directory. ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed in Figure 1.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/MAC Address.png" width="600">
@@ -167,7 +159,7 @@ On the Artemis side, the command string is received and parsed to determine what
 The Arduino sketch (ble_arduino.ino) is responsible for:
 - Setting up the BLE service and characteristics
 - Parsing command strings using the RobotCommand class
-- Sending responses back to computer. EString is used for building response strings on the Artemis side.
+- Sending responses back to computer. EString is used for building response strings.
 
 <br>
 
@@ -309,7 +301,7 @@ case GET_TIME_MILLIS:
 
 #### Task 4: Notification Handler
 
-The code defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
+The notification handler decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task4.png" width="600">
@@ -634,7 +626,7 @@ From Figure 11, the computer does read all the data from Artemis, without missin
 
 ## Discussion
 
-This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. We practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. We also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
+This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. I practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. I also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
 
 There was no significant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
 
@@ -642,6 +634,6 @@ There was no significant challenge encountered during this lab. Overall, this la
 
 ## Acknowledgment
 
-I referenced [Jeffrey Cai](https://jcai2565.github.io/2025/02/02/lab1.html) and [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year for reference.
+I referenced [Jeffrey Cai](https://jcai2565.github.io/2025/02/02/lab1.html) and [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
