@@ -577,7 +577,14 @@ print("Temps:", temps)
 
 #### Task 8: Discussion
 
-Discuss the differences between these two methods, the advantages and disadvantages of both and the potential scenarios that you might choose one method over the other. How “quickly” can the second method record data? The Artemis board has 384 kB of RAM. Approximately how much data can you store to send without running out of memory?
+The two methods mainly differ in when the data is sent over Bluetooth. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging, since the computer sees the data immediately. However, this method is slow because every sample must go through BLE communication, which has a lot of overhead. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
+
+In the second method, the Artemis stores the data locally in arrays first and only sends it later. This allows the Artemis to record data much faster, since no BLE communication happens during the recording loop. The recording speed is mainly limited by how fast millis() and the temperature sensor can be read, so it can reach much higher sampling rates than the first method. The downside is that the data is not available in real time. In addition, it is important to make sure the array size isn't filled and being overwritten.
+
+In the buffered method, the Artemis stores timestamps and temperature readings locally before sending them over BLE. Each sample consists of a timestamp (4 bytes) and a temperature value (4 bytes), for a total of 8 bytes per sample. The Artemis has 384 kB of RAM, which corresponds to 393,216 bytes. In theory, this allows up to 49,152 samples to be stored. However, since memory is also used by the program, BLE stack, and other variables, only part of the RAM can be safely used for data buffers. Assuming roughly half of the RAM is available, about 196,608 bytes can be used, allowing approximately 24,576 samples to be stored without running out of memory. This demonstrates that the buffered method supports much faster data collection than real-time BLE transmission, at the cost of increased memory usage.
+
+
+The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there is around 4 bytes for each time, and ideally the maximum number of samples that can be stored is 393,216/4 = 98,304 samples. If there are timestamps and temperature, there is around 8 bytes per sample, and the maximum number of samples that can be stored is 393,216/8 = 49,152 samples. However, in practice not all RAM storage can be used, so the actual samples that can be stored is less than the calculated number.
 
 ---
 
@@ -745,8 +752,14 @@ From Figure 11, the computer does reaed all the data from Artemis, without missi
 
 ## Discussion
 
-Briefly describe what you’ve learned, challenges that you faced, and/or any unique solutions used to fix problems. It is important to keep these writeups succinct. You will not get extra points for writing more words if the content doesn’t contribute to communicating your understanding of the lab material.
+This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. We practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. We also learned the difference between sending data in real time versus storing data in an array and sending it all at once. Sending data immediately is easier and useful for debugging, but it is slower due to BLE overhead. Storing data on the Artemis and sending it later is much faster and better for collecting lots of sensor data, as long as memory limits are considered.
+
+There was no siginificant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
 
 ---
 
-## Reference
+## Acknowledgment
+
+I referenced [Jeffrey Cai](https://jcai2565.github.io/2025/02/02/lab1.html) and [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year for reference.
+
+Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
