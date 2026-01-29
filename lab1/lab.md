@@ -2,18 +2,9 @@
 
 ---
 
-## Objective
-
-The goal of this lab is to become familiar with the Artemis Nano board and to establish communication between the Artemis board and the computer. This lab is divided into two parts:
-
-- **Lab 1A:** Arduino IDE setup and programming the Artemis  
-- **Lab 1B:** Bluetooth Low Energy (BLE) communication using Python and Jupyter
-
----
-
 ## Prelab 1A
 
-The Arduino IDE was installed and updated to the latest version. The Apollo3 board package was added through the Boards Manager using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
+The Arduino IDE was installed and updated to the latest version. The Apollo3 board package was added using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
 
 ---
 
@@ -80,7 +71,7 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 #### Microphone Test
 
 Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
-A C major scale audio from YouTube was played near the board, and serial monitor showed changing detected frequency content.
+A YouTube Video of C major scale audio was played, and serial monitor showed changing detected frequency content.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -98,8 +89,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
 
 #### Additional Task: Simple Electronic Tuner
 
-For the additional task, we combined the microphone input with serial output to create a simple electronic tuner.
-The code can detect three frequency ranges and print the corresponding musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
+The sketch can detect three frequencies and print the corresponding musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
 
 The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match.
 
@@ -113,7 +103,7 @@ const char* getFreq(uint32_t freq)
 }
 ```
 
-Video 5 shows serial monitor printing the three different notes, which was played from a tuner app that can select frequencies.
+Video 5 shows serial monitor printing the three different notes, which was played from a tuner app.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -143,14 +133,6 @@ source FastRobots_ble/bin/activate
 deactivate
 ```
 
-After activating the virtual environment, the following Python packages were installed inside the virtual environment:
-- numpy
-- pyyaml
-- colorama
-- nest_asyncio
-- bleak
-- jupyterlab
-
 After installation, the lab codebase was downloaded and unzipped inside project directory. JupyterLab was launched from the project directory.
 
 ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch was burned and loaded. The MAC address of the Artemis was printed in Figure 1.
@@ -168,7 +150,7 @@ ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch w
 
 ##### BLE Communication
 
-Communication between the computer and the Artemis board is implemented using GATT characteristics. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings.
+Communication between the computer and the Artemis board is implemented using GATT characteristics. Different characteristics are used for different data types. Commands are sent from the computer to the Artemis as strings.
 
 On the computer side, commands are sent using this function:
 
@@ -219,7 +201,7 @@ The command type definitions in the Arduino enum CommandTypes and cmd_types.py w
 
 #### Task 1: ECHO Command
 
-A string was sent from the computer to the Artemis using the `ECHO` command. The Artemis added onto the string and responded it back to the computer.
+A string was sent from the computer to the Artemis using the `ECHO` command. The Artemis added onto the string and responded.
 
 **Example:**
 - Sent: `HiHello`
@@ -543,7 +525,7 @@ ble.stop_notify(ble.uuid["RX_STRING"])
 
 #### Task 8: Discussion
 
-The two methods differ in when the data is sent over. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging. However, this method is slow because every sample must go through BLE communication. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
+The two methods differ in when the data is sent over. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging. However, this method is slow because every sample must go through BLE communication. As a result, the sampling speed is limited by Bluetooth.
 
 In the second method, the Artemis stores the data locally in arrays first and sends it later. This allows the Artemis to record data much faster. The recording speed is mainly limited by how fast millis() can be read, so it can reach much higher sampling rates. However, it is important to make sure the array size isn't filled and being overwritten.
 
@@ -553,7 +535,7 @@ The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there
 
 #### Additional Task 9: Effective Data Rate And Overhead
 
-To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, and the Artemis replied with the specified size. The timestamps of sent commands and received replies were recorded to calculate the transfer rate. Different reply sizes ranging from small packets (5 bytes) to larger packets (120 bytes) were tested.
+To test for effective data rate and overhead, messages of different sizes were sent to Artemis, and Artemis replied with the specified size. The timestamps of sent commands and received replies were recorded to calculate the transfer rate. Different reply sizes ranging from small packets (5 bytes) to larger packets (120 bytes) were tested.
 
 On the Artemis side, a new command REPLY_N was added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters.
 
@@ -614,7 +596,7 @@ for n in n_sizes:
 
 The plot in Figure 9 shows that the effective data rate increases almost linearly as the reply size n increases. For small packets like 5 bytes, the effective data rate is very low, indicating that a large portion of the time is dominated by overhead.
 
-As the reply size increases to 120 bytes, the effective data rate improves, reaching nearly 1800 bytes/sec at 120 bytes. This shows that larger replies reduce the relative impact of overhead. While the total duration increases slightly, the efficiency improves.
+As the reply size increases to 120 bytes, the effective data rate improves. This shows that larger replies reduce the relative impact of overhead. While the total duration increases slightly, the efficiency improves.
 
 <div style="text-align:center; margin:20px 0;">
   <img src="../img/lab1/Task9.png" width="600">
@@ -656,7 +638,7 @@ case RELIABILITY_TEST:
             break;
 ```
 
-On the computer side, the numbers received are stored in a set. The computer listens for incoming data for a fixed duration. Once data collection is done, the received sequence are compared against the expected range. Any missing numbers indicate that they were not successfully received.
+On the computer side, the numbers received are stored in a set. The computer listens for incoming data for a fixed duration. The received sequence are then compared against the expected range. Any missing numbers indicate that they were not successfully received.
 
 ```cpp
 # Task 10
@@ -698,7 +680,7 @@ From Figure 11, the computer does read all the data from Artemis, without missin
 
 This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. We practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. We also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
 
-There was no siginificant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
+There was no significant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
 
 ---
 
