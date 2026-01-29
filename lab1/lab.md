@@ -24,7 +24,6 @@ The Arduino IDE was installed and updated to the latest version. The Apollo3 boa
 #### Blink
 
 We first ran the Blink example from File → Examples → 01.Basics.
-This ensured that the board was properly connected and that we could successfully upload code.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -43,7 +42,6 @@ This ensured that the board was properly connected and that we could successfull
 #### Serial Communication Test
 
 Next, we ran Example4_Serial from File → Examples → Apollo3.
-This example was used to test serial communication between the Artemis and the computer.
 The serial monitor was opened to see the output and send input.
 
 <div style="text-align:center; margin:30px 0;">
@@ -63,7 +61,6 @@ The serial monitor was opened to see the output and send input.
 #### Temperature Sensor Test
 
 We then ran Example2_analogRead from File → Examples → Apollo3.
-This example was used to test the onboard temperature sensor.
 By blowing warm air on the chip, we were able to observe increases in the temperature values.
 
 <div style="text-align:center; margin:30px 0;">
@@ -83,7 +80,6 @@ By blowing warm air on the chip, we were able to observe increases in the temper
 #### Microphone Test
 
 Next, we ran Example1_MicrophoneOutput from File → Examples → PDM.
-This example was used to test the onboard microphone.
 A C major scale audio from YouTube was played near the board, and serial monitor showed changing detected frequency content.
 
 <div style="text-align:center; margin:30px 0;">
@@ -105,7 +101,7 @@ A C major scale audio from YouTube was played near the board, and serial monitor
 For the additional task, we combined the microphone input with serial output to create a simple electronic tuner.
 The code can detect three frequency ranges and print the corresponding musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
 
-The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match. If there is a match, the serial monitor will print the detected musical note.
+The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match.
 
 ```cpp
 const char* getFreq(uint32_t freq)
@@ -139,7 +135,8 @@ Video 5 shows serial monitor printing the three different notes, which was playe
 
 #### Setup
 
-Python 3.13 was installed and configured. In addition, a virtual environment named FastRobots_ble was created using venv. This virtual environment was activated before installing any required packages. These commands were used for activating or deactivating the virtual environment.
+Python 3.13 was installed and configured. In addition, a virtual environment named FastRobots_ble was created using venv.
+These commands were used for activating or deactivating the virtual environment.
 
 ```cpp
 source FastRobots_ble/bin/activate
@@ -169,18 +166,9 @@ ArduinoBLE was then installed from library manager, and ble_arduino.ino sketch w
 
 #### Codebase Overview
 
-##### Overall Architecture
-
-The provided codebase is divided into two main components:
-
-- Arduino code running on the Artemis board
-- Python code running on the computer
-
-<br>
-
 ##### BLE Communication
 
-Communication between the computer and the Artemis board is implemented using GATT characteristics, each identified by a different UUID. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings.
+Communication between the computer and the Artemis board is implemented using GATT characteristics. Different characteristics are used for different data types, such as integers, floats, and strings. Commands are sent from the computer to the Artemis as strings.
 
 On the computer side, commands are sent using this function:
 
@@ -188,7 +176,7 @@ On the computer side, commands are sent using this function:
 ble.send_command(cmd_type, data)
 ```
 
-The command is sent as a formatted string over BLE. On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement is then used to execute the correct command. The helper function handle_commmand() was used to help with switching commands.
+On the Artemis side, the command string is received and parsed to determine what action to take. A switch statement, handle_command(), is then used to execute the correct command.
 
 <br>
 
@@ -196,15 +184,14 @@ The command is sent as a formatted string over BLE. On the Artemis side, the com
 
 The Arduino sketch (ble_arduino.ino) is responsible for:
 - Setting up the BLE service and characteristics
-- Receiving command strings from the computer
-- Parsing commands using the RobotCommand class
-- Sending responses back to computer. EString is used for building response strings on the Artemis side. It provides functions like c_str() to construct messages before sending.
+- Parsing command strings using the RobotCommand class
+- Sending responses back to computer. EString is used for building response strings on the Artemis side.
+
 <br>
 
 ##### Python Side Code (Computer)
 
 The Jupyter Lab (Python) is responsible for:
-- Connecting to the Artemis board
 - Sending commands
 - Reading values from BLE characteristics
 - Receiving asynchronous data using notifications
@@ -217,7 +204,7 @@ The Jupyter Lab (Python) is responsible for:
 
 Before doing the lab tasks, some configuration steps were required. First, the MAC address printed by the Artemis board in the serial monitor was copied into the computer side configuration file `connections.yaml`.
 
-Next, a new BLE service UUID was generated and updated on both the Arduino and Python sides using the code:
+Next, a new BLE service UUID was generated using the code:
 
 ```cpp
 from uuid import uuid4
@@ -238,7 +225,7 @@ A string was sent from the computer to the Artemis using the `ECHO` command. The
 - Sent: `HiHello`
 - Received: `Robot says -> HiHello :)`
 
-The code shown below uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending multiple string components. The response is printed to serial monitor for verification.
+The code uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending string components.
 
 ```cpp
 case ECHO:
@@ -312,9 +299,9 @@ case SEND_THREE_FLOATS:
 
 #### Task 3: Get Time Millis
 
-A new command `GET_TIME_MILLIS` was implemented to return the current time in milliseconds using the string format `T:123456`.
+A new command `GET_TIME_MILLIS` was implemented to return the current time in milliseconds using the string format "T:123456".
 
-The code shown below builds the response string using EString by appending a prefix and the current time obtained from millis(). The formatted string is sent to the computer and printed to the serial monitor.
+The code builds the response string using EString by appending a prefix and the current time obtained from millis(). The formatted string is sent to the computer and printed to the serial monitor.
 
 ```cpp
 case GET_TIME_MILLIS:
@@ -340,7 +327,7 @@ case GET_TIME_MILLIS:
 
 #### Task 4: Notification Handler
 
-The code shown below defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers each time a notification is received. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
+The code defines a notification handler that decodes incoming data and extracts timestamp values prefixed with "T:". These timestamps are appended to a list as integers. Repeated GET_TIME_MILLIS commands are sent to collect multiple timestamp before stopping notifications.
 
 ```cpp
 # Task 4
@@ -357,7 +344,6 @@ for _ in range(10):
     ble.send_command(CMD.GET_TIME_MILLIS, "")
     time.sleep(0.02)
 ble.stop_notify(ble.uuid["RX_STRING"])
-print("Times:", times)
 ```
 
 <div style="text-align:center; margin:20px 0;">
@@ -371,7 +357,7 @@ print("Times:", times)
 
 #### Task 5: Notification Handler
 
-The notification handler records incoming timestamp while also tracking the total number of bytes received over BLE. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration. After completion, the total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
+The notification handler records incoming timestamp while also tracking the total number of bytes received. A while loop repeatedly sends GET_TIME_MILLIS commands for a fixed duration. The total bytes and elapsed time are used to estimate the effective BLE data transfer rate.
 
 ```cpp
 # Task 5
@@ -393,18 +379,13 @@ while time.time() - start < 3.0:
     time.sleep(0.02)
 
 ble.stop_notify(ble.uuid["RX_STRING"])
-print("Times:", times)
 
 # Calculate Data Transfer Rate
 duration = (times[-1] - times[0])/1000.0
 rate = total_bytes / duration
-
-print("Samples: ", len(times))
-print("Duration: ", duration)
-print("Data Transfer Rate: ", rate)
 ```
 
-The total elapsed time was calculated from the last time data subtract the first time data.
+The total elapsed time was calculated using the last time data subtracted by the first time data.
 From the shown calculation in Figure 6, the effective data transfer rate is 113 bytes/sec.
 
 <div style="text-align:center; margin:20px 0;">
@@ -418,11 +399,11 @@ From the shown calculation in Figure 6, the effective data transfer rate is 113 
 
 #### Task 6: Send Time Data
 
-A second method to task 5 was to create a global array that can store timestamps. Instead of looping over each time and sending times, task 6 was implemented to loop over each time and store times inside the global array. The command SEND_TIME_DATA was used to send over the array.
+Instead of looping over each time and sending times, task 6 was implemented to store times inside a global array. The command SEND_TIME_DATA was used to send over the array.
 
 Two additional methods were implemented in the switch statement, SEND_TIME_DATA and RECORD_TIME_DATA.
 
-For SEND_TIME_DATA, the code iterates through the recorded timestamp array and formats each entry as a string started with "T:", same as in GET_TIME_MILLIS. Each timestamp is sent, and the total number of samples sent is printed to the serial monitor.
+For SEND_TIME_DATA, the code iterates through the recorded timestamp array and formats each entry as a string started with "T:", same as in GET_TIME_MILLIS.
 
 ```cpp
 case SEND_TIME_DATA:
@@ -439,7 +420,7 @@ case SEND_TIME_DATA:
             break;
 ```
 
-For RECORD_TIME_DATA, the code initializes the array index and records timestamp and temperature samples for a fixed duration of three seconds. Each iteration stores the current time from millis() and the corresponding temperature reading into arrays.
+For RECORD_TIME_DATA, the code initializes the array index and records timestamp and temperature samples for a fixed duration. Each iteration stores the current time from millis() and the corresponding temperature reading into arrays.
 
 ```cpp
 case RECORD_TIME_DATA:
@@ -463,7 +444,7 @@ case RECORD_TIME_DATA:
         }
 ```
 
-On the computer side, the notification handler records incoming timestamp while also tracking the total number of bytes received. RECORD_TIME_DATA and SEND_TIME_DATA commands were sent to Artemis, and the system sleeps for 3.2 seconds for Artemis to record and send before stopping notification. After sending is completed, the collected timestamps and total bytes are used to calculate the effective data transfer rate.
+On the computer side, RECORD_TIME_DATA and SEND_TIME_DATA commands were sent to Artemis, and the system sleeps for 3.2 seconds for Artemis to record and send before stopping notification. The collected timestamps and total bytes are used to calculate the effective data transfer rate.
 
 ```cpp
 # Task 6
@@ -487,15 +468,9 @@ time.sleep(3.2)
 
 ble.stop_notify(ble.uuid["RX_STRING"])
 
-print("Times:", times)
-
 # Calculate Data Transfer Rate
 duration = (times[-1] - times[0])/1000.0
 rate = total_bytes / duration
-
-print("Samples: ", len(times))
-print("Duration: ", duration)
-print("Data Transfer Rate: ", rate)
 ```
 
 As shown from Figure 7, the data transfer rate is 17978 bytes/sec, a significant increase from the previous method.
@@ -511,7 +486,7 @@ As shown from Figure 7, the data transfer rate is 17978 bytes/sec, a significant
 
 #### Task 7: Get Temp Readings
 
-A second array was added to store temperature readings at the same time with time readings. The first temperature reading corresponds to the first time reading. A new command GET_TEMP_READINGS was implemented in the switch statement. The overall structure was similar to SEND_TIME_DATA, but there was an additional temperature reading that was appended to the temperature array, separated by a ",".
+A second array was added to store the corresponding temperature readings with the time readings. A new command GET_TEMP_READINGS was implemented. The overall structure was similar to SEND_TIME_DATA, but the additional temperature reading was appended to the recording array, separated by a ",".
 
 ```cpp
 case GET_TEMP_READINGS:            
@@ -530,7 +505,7 @@ case GET_TEMP_READINGS:
             break;
 ```
 
-On the computer side, the notification handler decodes incoming string data and parses into timestamp and temperature values, each appended to separate arrays.
+On the computer side, the notification handler decodes incoming data and parses into timestamp and temperature values, each appended to separate arrays.
 
 ```cpp
 # Task 7
@@ -555,11 +530,6 @@ ble.send_command(CMD.GET_TEMP_READINGS, "")
 time.sleep(3.2)
 
 ble.stop_notify(ble.uuid["RX_STRING"])
-
-print("Times Samples Size:", len(times))
-print("Temps Samples Size:", len(temps))
-print("Times:", times)
-print("Temps:", temps)
 ```
 
 <div style="text-align:center; margin:20px 0;">
