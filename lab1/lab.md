@@ -543,19 +543,19 @@ ble.stop_notify(ble.uuid["RX_STRING"])
 
 #### Task 8: Discussion
 
-The two methods mainly differ in when the data is sent over. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging, since the computer sees the data immediately. However, this method is slow because every sample must go through BLE communication, which has a lot of overhead. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
+The two methods differ in when the data is sent over. In the first method, each timestamp is sent immediately from the Artemis to the computer as soon as it is generated. This is easy to implement and is useful for real time debugging. However, this method is slow because every sample must go through BLE communication. As a result, the sampling speed is limited by Bluetooth, not by how fast the Artemis can record data.
 
-In the second method, the Artemis stores the data locally in arrays first and sends it later. This allows the Artemis to record data much faster, since no BLE communication happens during recording. The recording speed is mainly limited by how fast millis() can be read, so it can reach much higher sampling rates than the first method. The downside is that the data is not available in real time. In addition, it is important to make sure the array size isn't filled and being overwritten.
+In the second method, the Artemis stores the data locally in arrays first and sends it later. This allows the Artemis to record data much faster. The recording speed is mainly limited by how fast millis() can be read, so it can reach much higher sampling rates. However, it is important to make sure the array size isn't filled and being overwritten.
 
-The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there is around 4 bytes for each time, and the maximum number of samples that can be stored is 393,216/4 = 98,304 samples. If there are timestamps and temperature, there is around 8 bytes per sample, and the maximum number of samples that can be stored is 393,216/8 = 49,152 samples. However, in practice not all RAM storage can be used, so the actual samples that can be stored is less than the calculated number.
+The Artemis has 384 kB RAM = 393,216 bytes. If only timestamps are stored, there is around 4 bytes/sample, so the maximum number of samples that can be stored is 393,216/4 = 98,304 samples. If there are timestamps and temperature, there is around 8 bytes/sample, so the maximum number of samples that can be stored is 393,216/8 = 49,152 samples. However, in practice not all RAM storage can be used, so the actual samples that can be stored is less than the calculated number.
 
 ---
 
 #### Additional Task 9: Effective Data Rate And Overhead
 
-To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, telling the Artemis to reply with a certain number of bytes. The timestamps of sent commands and received replies were recorded to calculate the transfer rate. Different reply sizes ranging from very small packets (5 bytes) to larger packets (120 bytes) were tested.
+To test for effective data rate and overhead, messages of different sizes were sent from the computer to the Artemis board, and the Artemis replied with the specified size. The timestamps of sent commands and received replies were recorded to calculate the transfer rate. Different reply sizes ranging from small packets (5 bytes) to larger packets (120 bytes) were tested.
 
-On the Artemis side, a new command REPLY_N was added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters before being sent over.
+On the Artemis side, a new command REPLY_N was added to extract an integer value representing the reply size. An array of the specified size is filled with repeating alphabetical characters.
 
 ```cpp
 case REPLY_N:            
@@ -578,7 +578,7 @@ case REPLY_N:
             break;
 ```
 
-On the computer side, the code shown below implements the test by repeatedly requesting the Artemis to reply with a specified size. For each size, 20 messages are sent while BLE notifications record. The total number of bytes received and the duration are used to compute the effective data rate.
+On the computer side, the test were implemented by requesting the Artemis to reply with a specified size. For each size, 20 messages were sent while BLE notifications record. The total number of bytes received and the duration are used to calculate the effective data rate.
 
 ```cpp
 # Task 9
@@ -610,19 +610,6 @@ for n in n_sizes:
     rate = total_bytes / duration
     
     rates.append(rate)
-
-    print("Number of Bytes:", n)
-    print("Total Bytes Received:", total_bytes)
-    print("Duration:", duration)
-    print("Effective data rate:", rate)
-
-plt.figure()
-plt.plot(n_sizes, rates, marker='o')
-plt.xlabel("n size (bytes)")
-plt.ylabel("Effective data rate (bytes/sec)")
-plt.title("BLE Effective Data Rate vs n Size")
-plt.grid(True)
-plt.show()
 ```
 
 The plot in Figure 9 shows that the effective data rate increases almost linearly as the reply size n increases. For small packets like 5 bytes, the effective data rate is very low, indicating that a large portion of the time is dominated by overhead.
@@ -647,9 +634,9 @@ As the reply size increases to 120 bytes, the effective data rate improves, reac
 
 #### Additional Task 10: Reliability
 
-To evaluate the reliability of communication between the Artemis board and the computer, a new test was implemented to send information at high rates. This test tracks if all messages sent by the Artemis are received, or if there is some missing data.
+To evaluate the reliability of communication, a new test was implemented to send information at high rates. This test tracks if all messages sent by the Artemis are received, or if there is some missing data.
 
-On the Artemis side, a new command RELIABILITY_TEST is used to send how ever many data points the computer told it to send. The format it sends is "T: i", where i increments from 0 to m−1.
+On the Artemis side, a new command RELIABILITY_TEST is used to send the amount of data points the computer told it to send. The format it sends is "T: i", where i increments from 0 to m−1.
 
 ```cpp
 case RELIABILITY_TEST:
@@ -665,11 +652,11 @@ case RELIABILITY_TEST:
                 tx_estring_value.append(i);
                 tx_characteristic_string.writeValue(tx_estring_value.c_str());
 
-                }
+            }
             break;
 ```
 
-On the computer side, the numbers received are stored in a set to ensure that each number is only counted once. After telling the Artemis to send M numbers, the computer listens for incoming data for a fixed duration. Once data collection is done, the received sequence are compared against the expected range. Any missing numbers indicate that they were not successfully received. The loss percentage is then calculated.
+On the computer side, the numbers received are stored in a set. The computer listens for incoming data for a fixed duration. Once data collection is done, the received sequence are compared against the expected range. Any missing numbers indicate that they were not successfully received.
 
 ```cpp
 # Task 10
@@ -686,7 +673,6 @@ ble.start_notify(ble.uuid["RX_STRING"], notification_handler_10)
 ble.send_command(CMD.RELIABILITY_TEST, M)
 
 time.sleep(12)
-
 ble.stop_notify(ble.uuid["RX_STRING"])
 
 missing = []
@@ -695,11 +681,6 @@ for i in range (M):
     if i not in received:
         missing.append(i)
 loss = 100.0 * len(missing) / M
-
-print("Expected:", M)
-print("Total Received:", len(received))
-print("Missing:", missing)
-print("Loss %:", loss)
 ```
 
 From Figure 11, the computer does read all the data from Artemis, without missing any number.
