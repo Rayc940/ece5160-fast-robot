@@ -89,7 +89,7 @@ A YouTube Video of C major scale audio was played, and serial monitor showed cha
 
 #### Additional Task: Simple Electronic Tuner
 
-The sketch can detect three frequencies and print the corresponding musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
+The sketch can detect three frequencies and print the musical note to the serial monitor. The three chosen frequencies are C4 (262 Hz), A4 (440 Hz), and E5 (659 Hz).
 
 The implementation was built upon the code from Example1_MicrophoneOutput. An additional helper method getFreq() was implemented to help identify the dominant frequency. This function compares the detected peak frequency to the predefined frequencies and determines the closest match.
 
@@ -176,7 +176,7 @@ The Jupyter Lab (Python) is responsible for:
 
 #### Configuration
 
-Before doing the lab tasks, some configuration steps were required. First, the MAC address printed by the Artemis board in the serial monitor was copied into the computer side configuration file `connections.yaml`.
+Before doing the lab tasks, some configuration steps were required. First, the MAC address printed by the Artemis board in the serial monitor was copied into the Python configuration file `connections.yaml`.
 
 Next, a new BLE service UUID was generated using the code:
 
@@ -194,10 +194,6 @@ The command type definitions in the Arduino enum CommandTypes and cmd_types.py w
 #### Task 1: ECHO Command
 
 A string was sent from the computer to the Artemis using the `ECHO` command. The Artemis added onto the string and responded.
-
-**Example:**
-- Sent: `HiHello`
-- Received: `Robot says -> HiHello :)`
 
 The code uses RobotCommand: get_next_value() to extract the received string into a character array. An EString object is then used to construct the response by appending string components.
 
