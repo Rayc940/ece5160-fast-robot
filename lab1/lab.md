@@ -1,7 +1,3 @@
-# Lab 1: The Artemis Board and Bluetooth
-
----
-
 ## Prelab 1A
 
 The Arduino IDE was installed and updated to the latest version. The Apollo3 board package was added using the provided JSON configuration. After connecting the Artemis board via USB, the corresponding board and serial port were selected.
