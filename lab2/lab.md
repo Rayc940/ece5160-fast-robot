@@ -4,7 +4,29 @@
 
 ## IMU Setup
 
-I first ran the Blink example from File → Examples → 01.Basics.
+The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed, and IMU was connected to Artemis board. Example1_Basics was ran from File → Examples → SparkFun 9DOF IMU Breakout - ICM 20948 - Arduino Library → Arduino.
+
+#### AD0_VAL
+
+AD0_VAL is the last bit of I2C address of the IMU, where the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
+
+#### Observation from Accelerometer and Gyroscope
+
+Accelerometer: When the board is held still, z axis reads about 1 g because it is measuring gravity, while the other two axes are close to zero. If the board is flipped over, the sign of z axis changes and becomes -1 g. When the board is accelerated, the acceleration values increase on the axis in the direction of motion.
+
+Gyroscope: The gyroscope measures angular velocity. When the board is not rotating, the gyroscope values stay near zero. When the board is rotated, the corresponding gyroscope axis values changes, and faster rotations produce larger values.
+
+#### Visual Indication
+
+To make it obvious that the board is running, a simple visual indicator was added in setup(). It blinks the LED three times slowly.
+
+```cpp
+for (int k = 0; k < 3; k++) {
+    digitalWrite(LED_BUILTIN, HIGH);
+    delay(400);
+    digitalWrite(LED_BUILTIN, LOW);
+    delay(400);
+```
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -16,7 +38,7 @@ I first ran the Blink example from File → Examples → 01.Basics.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Blink Example.
+  <b>Video 1:</b> Setup Indicator: Blink.
 </p>
 <br>
 
