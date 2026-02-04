@@ -1,6 +1,6 @@
 ## IMU Setup
 
-The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed, and IMU was connected to Artemis board. Example1_Basics was ran from File → Examples → SparkFun 9DOF IMU Breakout - ICM 20948 - Arduino Library → Arduino.
+The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Example1_Basics from SparkFun 9DOF IMU Breakout Library was ran to verify functionality.
 
 #### AD0_VAL
 
@@ -70,6 +70,7 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
 <p align="center">
   <b>Figure 2:</b> Ouputs showing roll at {-90, 90} degrees.
 </p>
+<br>
 
 #### Jupyter Plotting Function
 
@@ -103,14 +104,72 @@ Example outputs with are shown in figure 3 and 4.
 
 <p align="center">
   <img src="../img/lab2/jupyter_roll_90.png" width="30%">
+</p>
+
+<p align="center">
   <img src="../img/lab2/jupyter_pitch_-90.png" width="30%">
 </p>
 
 <p align="center">
   <b>Figure 3,4:</b> Example Ouputs from Jupyter Showing Pitch at 90° and Roll at -90°.
 </p>
+<br>
 
 #### Two Point Calibration
+
+To implement two point calibration, a helper function on Python was made to generate scale and offset. A new switch case TWO_POINT_CALIBRATION was implemented that returns t, ax, ay, az over BLE. 
+
+```cpp
+Initialize t_acc, ax_list, ay_list, az_list
+
+def notification_handler_acc(uuid, data: bytearray):
+    s = data.decode().strip()
+    parts = s.split(",")
+    append data to each list
+
+start BLE notifications
+
+while elapsed_time < T:
+    send TWO_POINT_CALIBRATION
+
+// Only one of these were called at a time, the other was commented out
+#ax_mean_pos = float(np.mean(ax_list))
+#ay_mean_pos = float(np.mean(ay_list))
+#az_mean_pos = float(np.mean(az_list))
+
+ax_mean_neg = float(np.mean(ax_list))
+ay_mean_neg = float(np.mean(ay_list))
+az_mean_neg = float(np.mean(az_list))
+```
+
+For two point calibration, the board was placed in two orientations for each axis so the expected acceleration along that axis was +1 g and −1 g. The mean measured value from each orientation was used to compute a linear scale and offset.
+
+```cpp
+def two_point(r_pos, r_neg):
+    s = 2.0 / (r_pos - r_neg)
+    o = -s * r_neg - 1.0
+    return s, o
+
+r_pos_z = az_mean_pos
+
+r_neg_z = az_mean_neg
+
+sz, oz = two_point(r_pos_z, r_neg_z)
+print("sz, oz:", sz, oz)
+```
+
+These printed scale and offset values were then applied in the Artemis to correct accelerometer readings.
+
+```cpp
+ax_g = sx * ax_g + ox;
+    ay_g = sy * ay_g + oy;
+    az_g = sz * az_g + oz;
+```
+<br>
+
+#### FFT
+
+
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
