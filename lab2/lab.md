@@ -103,11 +103,8 @@ plot t_list vs pitch_list and roll_list
 Example outputs with are shown in figure 3 and 4.
 
 <p align="center">
-  <img src="../img/lab2/jupyter_roll_90.png" width="30%">
-</p>
-
-<p align="center">
-  <img src="../img/lab2/jupyter_pitch_-90.png" width="30%">
+  <img src="../img/lab2/jupyter_roll_90.png" width="50%">
+  <img src="../img/lab2/jupyter_pitch_-90.png" width="50%">
 </p>
 
 <p align="center">
@@ -161,10 +158,42 @@ print("sz, oz:", sz, oz)
 These printed scale and offset values were then applied in the Artemis to correct accelerometer readings.
 
 ```cpp
-ax_g = sx * ax_g + ox;
-    ay_g = sy * ay_g + oy;
-    az_g = sz * az_g + oz;
+ax_cal = sx * ax_raw + ox;
+ay_cal = sy * ay_raw + oy;
+az_cal = sz * az_raw + oz;
 ```
+
+After calibration, the same test of pitch at 90° and roll at -90° were ran, and results are shown in figure 5 and 6. 
+
+<p align="center">
+  <img src="../img/lab2/calibrated_roll_-90.png" width="50%">
+  <img src="../img/lab2/calibrated_pitch_90.png" width="50%">
+</p>
+
+<p align="center">
+  <b>Figure 5,6:</b> Calibrated Ouputs Showing Pitch at 90° and Roll at -90°.
+</p>
+
+Some data points of calibrated results and raw data are shown below in figure 7 and 8, and calibrated results are slightly better.
+
+<p align="center">
+  <img src="../img/lab2/pitch1.png" width="30%">
+  <img src="../img/lab2/pitch2.png" width="30%">
+  <img src="../img/lab2/pitch3.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 7:</b> Calibrated vs. Raw Pitch Ouputs at 90°.
+</p>
+
+<p align="center">
+  <img src="../img/lab2/roll1.png" width="30%">
+  <img src="../img/lab2/roll2.png" width="30%">
+  <img src="../img/lab2/roll3.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 8:</b> Calibrated vs. Raw Roll Ouputs at -90°.
+</p>
+
 <br>
 
 #### FFT
@@ -186,7 +215,6 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
     # estimate sample rate
     dt = np.mean(np.diff(t))
     fs = 1.0 / dt
-
     subtract mean from data_list to remove DC
 
     # FFT
@@ -197,6 +225,10 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
     create frequency axis from 0 to fs/2
     plot frequency vs magnitude
 ```
+
+<br>
+
+#### Low Pass Filter
 
 ---
 
