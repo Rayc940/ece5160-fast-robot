@@ -103,8 +103,8 @@ plot t_list vs pitch_list and roll_list
 Example outputs with are shown in figure 3 and 4.
 
 <p align="center">
-  <img src="../img/lab2/jupyter_roll_90.png" width="50%">
-  <img src="../img/lab2/jupyter_pitch_-90.png" width="50%">
+  <img src="../img/lab2/jupyter_roll_90.png" width="100%">
+  <img src="../img/lab2/jupyter_pitch_-90.png" width="100%">
 </p>
 
 <p align="center">
@@ -114,7 +114,7 @@ Example outputs with are shown in figure 3 and 4.
 
 #### Two Point Calibration
 
-To implement two point calibration, a helper function on Python was made to generate scale and offset. A new switch case TWO_POINT_CALIBRATION was implemented that returns t, ax, ay, az over BLE. 
+To implement two point calibration, a helper function in Python was made to generate scale and offset. A new switch case TWO_POINT_CALIBRATION was implemented that returns t, ax, ay, az over BLE. 
 
 ```cpp
 Initialize t_acc, ax_list, ay_list, az_list
@@ -174,8 +174,8 @@ float sz = 0.9869166257320566f, oz = -0.01036935354718016f;
 After calibration, the same test of pitch at 90° and roll at -90° were ran, and results are shown in figure 5 and 6. 
 
 <p align="center">
-  <img src="../img/lab2/calibrated_roll_-90.png" width="50%">
-  <img src="../img/lab2/calibrated_pitch_90.png" width="50%">
+  <img src="../img/lab2/calibrated_roll_-90.png" width="100%">
+  <img src="../img/lab2/calibrated_pitch_90.png" width="100%">
 </p>
 
 <p align="center">
@@ -242,20 +242,28 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
 
 ## Gyroscope
 
-I then ran Example2_analogRead from File → Examples → Apollo3.
+#### Pitch, Roll, and Yaw
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/_jkc4uSTeV0"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 3:</b> Temperature Sensor Example.
-</p>
+For pitch, roll, and yaw calculation using gyroscope, these equations from class were implemented:
+
+```cpp
+roll_gyro = roll_gyro + gx_dps * dt;
+pitch_gyro = pitch_gyro + gy_dps * dt;
+yaw_gyro = yaw_gyro + gz_dps * dt;
+```
+
+#### Complementary Filter
+
+The complementary filter assigns a weight for pitch and roll value calculated from accelerometer or gyroscope.
+
+```cpp
+float pitch_gyro_pred = pitch_cf + gy_dps * dt;
+float roll_gyro_pred  = roll_cf  + gx_dps * dt;
+
+pitch_cf = alpha_cf * pitch_gyro_pred + (1.0f - alpha_cf) * pitch_cal;
+roll_cf  = alpha_cf * roll_gyro_pred  + (1.0f - alpha_cf) * roll_cal;
+```
+
 <br>
 
 ---
@@ -283,7 +291,7 @@ A YouTube Video of C major scale audio was played, and serial monitor showed cha
 
 ## Record a stunt
 
-Video 5 shows serial monitor printing the three different notes, which was played from a tuner app.
+Battery was mounted onto RC car, and video 1 below shows recorded motion with the car.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -295,20 +303,9 @@ Video 5 shows serial monitor printing the three different notes, which was playe
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 5:</b> Simple Electronic Tuner Example.
+  <b>Video 1:</b> Simple Electronic Tuner Example.
 </p>
 <br>
-
----
-
-#### Example Pic template
-
-<div style="text-align:center; margin:20px 0;">
-  <img src="../img/lab1/Task7.png" width="600">
-</div>
-<p style="text-align:center;">
-  <b>Figure 8:</b> Jupyter Lab Showing Time and Temp Samples.
-</p>
 
 ---
 
@@ -322,6 +319,6 @@ There was no significant challenge encountered during this lab. Overall, this la
 
 ## Acknowledgment
 
-I referenced [Jeffrey Cai](https://jcai2565.github.io/2025/02/02/lab1.html) and [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
