@@ -169,21 +169,34 @@ ax_g = sx * ax_g + ox;
 
 #### FFT
 
+A new function plot_fft() was implemented in Python which takes a time list and data list, and convert into frequency spectrum. 
 
+```cpp
+def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
+    """
+    t_s: list of timestamps
+    data_list: list of signal values
+    title: plot title
+    xlim_hz: optional x axis limit in Hz
+    """
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/66WNAS3cpZ8"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 2:</b> Serial Communication Example.
-</p>
-<br>
+    convert t_s, data_list to array
+    shift t_s so time starts at 0
+
+    # estimate sample rate
+    dt = np.mean(np.diff(t))
+    fs = 1.0 / dt
+
+    subtract mean from data_list to remove DC
+
+    # FFT
+    N = len(time_data)
+    freq_data = fft(time_data)
+    y = 2.0 / N * np.abs(freq_data[0:int(N/2)])
+
+    create frequency axis from 0 to fs/2
+    plot frequency vs magnitude
+```
 
 ---
 
