@@ -57,7 +57,7 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
 <p align="center">
   <img src="../img/lab2/pitch_-90.png" width="30%">
   <img src="../img/lab2/pitch_90.png" width="30%">
-  <img src="../img/lab2/roll pitch 0" width="30%">
+  <img src="../img/lab2/roll pitch 0.png" width="30%">
 </p>
 <p align="center">
   <b>Figure 1:</b> Ouputs showing pitch at {-90, 0, 90} degrees.
