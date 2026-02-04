@@ -44,7 +44,7 @@ for (int k = 0; k < 3; k++) {
 
 #### Pitch and Roll
 
-Pitch and roll were computed from the accelerometer using atan2:
+Pitch and roll were computed from the accelerometer using atan2. A new switch case GET_PITCH_ROLL was added that sends time, pitch degree, and roll degree over BLE.
 
 ```cpp
 // Pitch and Roll
@@ -59,7 +59,6 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
   <img src="../img/lab2/pitch_90.png" width="30%">
   <img src="../img/lab2/roll pitch 0" width="30%">
 </p>
-
 <p align="center">
   <b>Figure 1:</b> Ouputs showing pitch at {-90, 0, 90} degrees.
 </p>
@@ -68,12 +67,50 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
   <img src="../img/lab2/roll_-90.png" width="30%">
   <img src="../img/lab2/roll_90.png" width="30%">
 </p>
-
 <p align="center">
   <b>Figure 2:</b> Ouputs showing roll at {-90, 90} degrees.
 </p>
 
+#### Jupyter Plotting Function
 
+A function was implemented in Python that calls GET_PITCH_ROLL and plots the corresponding data from Artemis.
+
+```cpp
+initialize t_list, pitch_list, roll_list
+
+def notification_handler_pr(uuid, data: bytearray):
+    s = data.decode()
+
+    parts = s.split(",")
+    t_ms = int(parts[0])
+    pitch = float(parts[1])
+    roll = float(parts[2])
+    t_list.append(t_ms)
+    pitch_list.append(pitch)
+    roll_list.append(roll)
+
+start BLE notifications
+
+while elapsed_time < T:
+    send GET_PITCH_ROLL
+
+stop BLE notifications
+
+plot t_list vs pitch_list and roll_list
+```
+
+Example outputs with are shown in figure 3 and 4.
+
+<p align="center">
+  <img src="../img/lab2/jupyter_roll_90.png" width="30%">
+  <img src="../img/lab2/jupyter_pitch_-90.png" width="30%">
+</p>
+
+<p align="center">
+  <b>Figure 3,4:</b> Example Ouputs from Jupyter Showing Pitch at 90° and Roll at -90°.
+</p>
+
+#### Two Point Calibration
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
