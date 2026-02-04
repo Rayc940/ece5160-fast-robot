@@ -163,6 +163,14 @@ ay_cal = sy * ay_raw + oy;
 az_cal = sz * az_raw + oz;
 ```
 
+The calibration values are:
+
+```cpp
+float sx = 1.000051455432029f, ox = 0.0033058601683502165f;
+float sy = 1.0003119421412863f, oy = 0.014637164105158806f;
+float sz = 0.9869166257320566f, oz = -0.01036935354718016f;
+```
+
 After calibration, the same test of pitch at 90° and roll at -90° were ran, and results are shown in figure 5 and 6. 
 
 <p align="center">
