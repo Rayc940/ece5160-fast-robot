@@ -381,14 +381,11 @@ def notification_handler_6(uuid, data: bytearray):
     if s[:2] == "T:":
         times.append(int(s[2:]))
 
-ble.start_notify(ble.uuid['RX_STRING'], notification_handler_6)
-ble.send_command(CMD.RECORD_TIME_DATA, "")
-ble.send_command(CMD.SEND_TIME_DATA, "")
-
-# Artemis recording ~3s
-time.sleep(3.2)
-
-ble.stop_notify(ble.uuid["RX_STRING"])
+start BLE notifications
+send RECORD_TIME_DATA
+send SEND_TIME_DATA
+Artemis record ~3s
+stop BLE notifications
 
 # Calculate Data Transfer Rate
 duration = (times[-1] - times[0])/1000.0
@@ -431,8 +428,7 @@ On the computer side, the notification handler decodes incoming data and parses 
 
 ```cpp
 # Task 7
-times = []
-temps = []
+Initialize times, temps
 
 def notification_handler_7(uuid, data: bytearray):
     s = data.decode()
@@ -443,15 +439,11 @@ def notification_handler_7(uuid, data: bytearray):
         times.append(int(t))
         temps.append(float(temp))
 
-ble.start_notify(ble.uuid["RX_STRING"], notification_handler_7)
-
-ble.send_command(CMD.RECORD_TIME_DATA, "")
-ble.send_command(CMD.GET_TEMP_READINGS, "")
-
-# Artemis recording ~3s
-time.sleep(3.2)
-
-ble.stop_notify(ble.uuid["RX_STRING"])
+start BLE notifications
+send RECORD_TIME_DATA
+send SEND_TIME_DATA
+Artemis record ~3s
+stop BLE notifications
 ```
 
 <div style="text-align:center; margin:20px 0;">
@@ -504,28 +496,23 @@ On the computer side, the test were implemented by requesting the Artemis to rep
 
 ```cpp
 # Task 9
-rx_times = []
-rx_sizes = []
+Initialize rx_times, rx_sizes, rates
 n_sizes = [5, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120]
-rates = []
 
 def notification_handler_8(uuid, data: bytearray):
     rx_times.append(time.time())
     rx_sizes.append(len(data))
 
 for n in n_sizes:
-    rx_times.clear()
-    rx_sizes.clear()
-
-    ble.start_notify(ble.uuid['RX_STRING'], notification_handler_8)
+    clear rx_times, rx_sizes
+    start BLE notifications
 
     start = time.time()
     for _ in range(20):
-        ble.send_command(CMD.REPLY_N, n)
-        time.sleep(0.02)
+        send REPLY_N
     end = time.time()
 
-    ble.stop_notify(ble.uuid['RX_STRING'])
+    stop BLE notifications
 
     total_bytes = sum(rx_sizes)
     duration = end - start
@@ -591,11 +578,10 @@ def notification_handler_10(uuid, data: bytearray):
     if s[:2] == "T:":
         received.add(int(s[2:]))
 
-ble.start_notify(ble.uuid["RX_STRING"], notification_handler_10)
-ble.send_command(CMD.RELIABILITY_TEST, M)
-
+start BLE notifications
+send RELIABILITY_TEST
 time.sleep(12)
-ble.stop_notify(ble.uuid["RX_STRING"])
+stop BLE notifications
 
 missing = []
 
