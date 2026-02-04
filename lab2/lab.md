@@ -1,7 +1,3 @@
-## Prelab
-
----
-
 ## IMU Setup
 
 The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed, and IMU was connected to Artemis board. Example1_Basics was ran from File → Examples → SparkFun 9DOF IMU Breakout - ICM 20948 - Arduino Library → Arduino.
@@ -10,7 +6,7 @@ The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed, and IM
 
 AD0_VAL is the last bit of I2C address of the IMU, where the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
 
-#### Observation from Accelerometer and Gyroscope
+#### Observations
 
 Accelerometer: When the board is held still, z axis reads about 1 g because it is measuring gravity, while the other two axes are close to zero. If the board is flipped over, the sign of z axis changes and becomes -1 g. When the board is accelerated, the acceleration values increase on the axis in the direction of motion.
 
@@ -46,7 +42,38 @@ for (int k = 0; k < 3; k++) {
 
 ## Accelerometer
 
-Next, I ran Example4_Serial from File → Examples → Apollo3.
+#### Pitch and Roll
+
+Pitch and roll were computed from the accelerometer using atan2:
+
+```cpp
+// Pitch and Roll
+pitch_deg = atan2f(ax_g, az_g) * 180.0f / (float)M_PI;
+roll_deg  = atan2f(ay_g, az_g) * 180.0f / (float)M_PI;
+```
+
+When the board was placed flat on the table, both pitch and roll were near 0°. Tilting the board forward and backward produced pitch values near ±90°. Tilting the board sideways produced roll values near ±90°. Figures below show the output at {-90, 0, 90} degrees.
+
+<p align="center">
+  <img src="../img/lab2/pitch_-90.png" width="30%">
+  <img src="../img/lab2/pitch_90.png" width="30%">
+  <img src="../img/lab2/roll pitch 0" width="30%">
+</p>
+
+<p align="center">
+  <b>Figure 1:</b> Ouputs showing pitch at {-90, 0, 90} degrees.
+</p>
+
+<p align="center">
+  <img src="../img/lab2/roll_-90.png" width="30%">
+  <img src="../img/lab2/roll_90.png" width="30%">
+</p>
+
+<p align="center">
+  <b>Figure 2:</b> Ouputs showing roll at {-90, 90} degrees.
+</p>
+
+
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
