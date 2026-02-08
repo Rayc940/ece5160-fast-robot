@@ -235,9 +235,10 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
     plot frequency vs magnitude
 ```
 
+#### Accelerometer Raw Data
+
 Pitch and roll data obtained while running the RC car in proximity is then recorded and taken into frequency domain for noise analysis.
 The time domain and frequency domain plots of pitch and roll are shown in figure 9 and 10.
-
 
 <p align="center">
   <img src="../img/lab2/pitch_time_domain.png" width="50%">
@@ -258,6 +259,23 @@ The time domain and frequency domain plots of pitch and roll are shown in figure
 <br>
 
 #### Low Pass Filter
+
+From looking at the data of pitch and roll, the low frequency data ends around 5Hz, so a cutoff frequency of 10Hz is chosen to remove higher frequency noise with a low pass filter.
+
+The low pass filter coefficient alpha was calculated as follows:
+
+$$
+dt = \frac{1}{\text{Sample Rate}}
+$$
+
+$$
+RC = \frac{1}{2\pi f}
+$$
+
+$$
+\alpha = \frac{dt}{dt + RC} = 0.15
+$$
+
 
 ---
 
