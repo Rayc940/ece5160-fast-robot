@@ -103,8 +103,8 @@ plot t_list vs pitch_list and roll_list
 Example outputs with are shown in figure 3 and 4.
 
 <p align="center">
-  <img src="../img/lab2/jupyter_roll_90.png" width="100%">
-  <img src="../img/lab2/jupyter_pitch_-90.png" width="100%">
+  <img src="../img/lab2/jupyter_roll_90.png" width="50%">
+  <img src="../img/lab2/jupyter_pitch_-90.png" width="50%">
 </p>
 
 <p align="center">
@@ -174,15 +174,16 @@ float sz = 0.9869166257320566f, oz = -0.01036935354718016f;
 After calibration, the same test of pitch at 90° and roll at -90° were ran, and results are shown in figure 5 and 6. 
 
 <p align="center">
-  <img src="../img/lab2/calibrated_roll_-90.png" width="100%">
-  <img src="../img/lab2/calibrated_pitch_90.png" width="100%">
+  <img src="../img/lab2/calibrated_roll_-90.png" width="50%">
+  <img src="../img/lab2/calibrated_pitch_90.png" width="50%">
 </p>
 
 <p align="center">
   <b>Figure 5,6:</b> Calibrated Ouputs Showing Pitch at 90° and Roll at -90°.
 </p>
+<br>
 
-Some data points of calibrated results and raw data are shown below in figure 7 and 8, and calibrated results are slightly better.
+Some data points of calibrated results and raw data are shown below in figure 7 and 8, with the calibrated values being slightly closer to actual results.
 
 <p align="center">
   <img src="../img/lab2/pitch1.png" width="30%">
@@ -234,6 +235,26 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
     plot frequency vs magnitude
 ```
 
+Pitch and roll data obtained while running the RC car in proximity is then recorded and taken into frequency domain for noise analysis.
+The time domain and frequency domain plots of pitch and roll are shown in figure 9 and 10.
+
+
+<p align="center">
+  <img src="../img/lab2/pitch_time_domain.png" width="50%">
+  <img src="../img/lab2/pitch_freq_domain.png" width="50%">
+</p>
+<p align="center">
+  <b>Figure 9:</b> Pitch Time and Frequency Domain Signal.
+</p>
+
+<p align="center">
+  <img src="../img/lab2/roll_time_domain.png" width="50%">
+  <img src="../img/lab2/roll_freq_domain.png" width="50%">
+</p>
+<p align="center">
+  <b>Figure 10:</b> Roll Time and Frequency Domain Signal.
+</p>
+
 <br>
 
 #### Low Pass Filter
@@ -269,6 +290,11 @@ roll_cf  = alpha_cf * roll_gyro_pred  + (1.0f - alpha_cf) * roll_cal;
 ---
 
 ## Sample Data
+
+To check the IMU sampling speed, the main loop was written so it does not wait for new IMU data. Instead, the loop runs continuously and only reads the IMU when dataReady() indicates a new sample is available.
+
+When IMU reads were disabled, the main loop ran at about 39,000 loops per second. When IMU reads were enabled, new IMU data was read at about 325 samples per second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
+
 
 Next, I ran Example1_MicrophoneOutput from File → Examples → PDM.
 A YouTube Video of C major scale audio was played, and serial monitor showed changing detected frequency content.
@@ -311,7 +337,7 @@ Battery was mounted onto RC car, and video 1 below shows recorded motion with th
 
 ## Discussion
 
-This lab provides experience with programming the Artemis board and communicating with computer wirelessly using BLE. I practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. I also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
+This lab provides experience with working and communicating with computer wirelessly using BLE. I practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. I also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
 
 There was no significant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
 
