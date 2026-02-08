@@ -283,7 +283,7 @@ for n in range(1, len(pitch)):
     roll_LPF[n]  = alpha * roll[n]  + (1 - alpha) * roll_LPF[n-1]
 ```
 
-The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform.
+The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform. In frequency domain, it is obvious that noise after 10 Hz are attenuated.
 
 <p align="center">
   <img src="../img/lab2/pitch_lpf.png" width="40%">
@@ -326,7 +326,17 @@ The results of accelerometer raw, filtered, and gyro values are plot in figure 1
   <b>Figure 13:</b> Roll Raw Accel vs. LPF vs. Gyro Results.
 </p>
 
-To see the effect of sampling frequency on gyroscope drift, three sampling frequencies of 0.005, 0.5, and 5 are tested.
+To see the effect of sampling frequency on gyroscope drift, two sampling frequencies of 200Hz (sleep 0.005) and 2Hz (0.5). As shown in figure 14, the higher sampling frequency results in more noise.
+
+
+<p align="center">
+  <img src="../img/lab2/gyro_200hz.png" width="49%">
+  <img src="../img/lab2/gyro_20hz.png" width="49%">
+</p>
+<p align="center">
+  <b>Figure 14:</b> Gyroscope Data for Roll from -90° to 90°.
+</p>
+
 <br>
 
 #### Complementary Filter
