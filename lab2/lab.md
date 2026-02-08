@@ -235,6 +235,8 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
     plot frequency vs magnitude
 ```
 
+<br>
+
 #### Accelerometer Raw Data
 
 Pitch and roll data obtained while running the RC car in proximity is then recorded and taken into frequency domain for noise analysis.
@@ -264,17 +266,9 @@ From looking at the data of pitch and roll, the low frequency data ends around 5
 
 The low pass filter coefficient alpha was calculated as follows:
 
-$$
-dt = \frac{1}{\text{Sample Rate}}
-$$
-
-$$
-RC = \frac{1}{2\pi f}
-$$
-
-$$
-\alpha = \frac{dt}{dt + RC} = 0.15
-$$
+dt = 1 / sample rate
+RC = 1 / (2*pi*RC)
+alpha = dt / (dt + RC) = 0.15
 
 ```cpp
 alpha = 0.15
