@@ -103,8 +103,8 @@ plot t_list vs pitch_list and roll_list
 Example outputs with are shown in figure 3 and 4.
 
 <p align="center">
-  <img src="../img/lab2/jupyter_roll_90.png" width="40%">
-  <img src="../img/lab2/jupyter_pitch_-90.png" width="40%">
+  <img src="../img/lab2/jupyter_roll_90.png" width="49%">
+  <img src="../img/lab2/jupyter_pitch_-90.png" width="49%">
 </p>
 
 <p align="center">
@@ -174,8 +174,8 @@ float sz = 0.9869166257320566f, oz = -0.01036935354718016f;
 After calibration, the same test of pitch at 90° and roll at -90° were ran, and results are shown in figure 5 and 6. 
 
 <p align="center">
-  <img src="../img/lab2/calibrated_roll_-90.png" width="40%">
-  <img src="../img/lab2/calibrated_pitch_90.png" width="40%">
+  <img src="../img/lab2/calibrated_roll_-90.png" width="49%">
+  <img src="../img/lab2/calibrated_pitch_90.png" width="49%">
 </p>
 
 <p align="center">
@@ -243,16 +243,16 @@ Pitch and roll data obtained while running the RC car in proximity is then recor
 The time domain and frequency domain plots of pitch and roll are shown in figure 9 and 10.
 
 <p align="center">
-  <img src="../img/lab2/pitch_time_domain.png" width="40%">
-  <img src="../img/lab2/pitch_freq_domain.png" width="40%">
+  <img src="../img/lab2/pitch_time_domain.png" width="49%">
+  <img src="../img/lab2/pitch_freq_domain.png" width="49%">
 </p>
 <p align="center">
   <b>Figure 9:</b> Pitch Time and Frequency Domain Signal.
 </p>
 
 <p align="center">
-  <img src="../img/lab2/roll_time_domain.png" width="40%">
-  <img src="../img/lab2/roll_freq_domain.png" width="40%">
+  <img src="../img/lab2/roll_time_domain.png" width="49%">
+  <img src="../img/lab2/roll_freq_domain.png" width="49%">
 </p>
 <p align="center">
   <b>Figure 10:</b> Roll Time and Frequency Domain Signal.
@@ -286,16 +286,16 @@ for n in range(1, len(pitch)):
 The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform. In frequency domain, it is obvious that noise after 10 Hz are attenuated.
 
 <p align="center">
-  <img src="../img/lab2/pitch_lpf.png" width="40%">
-  <img src="../img/lab2/pitch_fft_comp.png" width="40%">
+  <img src="../img/lab2/pitch_lpf.png" width="49%">
+  <img src="../img/lab2/pitch_fft_comp.png" width="49%">
 </p>
 <p align="center">
   <b>Figure 11:</b> Pitch Raw vs. LPF Results.
 </p>
 
 <p align="center">
-  <img src="../img/lab2/roll_lpf.png" width="40%">
-  <img src="../img/lab2/roll_fft_comp.png" width="40%">
+  <img src="../img/lab2/roll_lpf.png" width="49%">
+  <img src="../img/lab2/roll_fft_ comp.png" width="49%">
 </p>
 <p align="center">
   <b>Figure 12:</b> Roll Raw vs. LPF Results.
