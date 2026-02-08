@@ -286,14 +286,16 @@ for n in range(1, len(pitch)):
 The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform.
 
 <p align="center">
-  <img src="../img/lab2/pitch_lpf.png" width="80%">
+  <img src="../img/lab2/pitch_lpf.png" width="40%">
+  <img src="../img/lab2/pitch_fft_comp.png" width="40%">
 </p>
 <p align="center">
   <b>Figure 11:</b> Pitch Raw vs. LPF Results.
 </p>
 
 <p align="center">
-  <img src="../img/lab2/roll_lpf.png" width="80%">
+  <img src="../img/lab2/roll_lpf.png" width="40%">
+  <img src="../img/lab2/roll_fft_comp.png" width="40%">
 </p>
 <p align="center">
   <b>Figure 12:</b> Roll Raw vs. LPF Results.
@@ -315,9 +317,21 @@ pitch_gyro = pitch_gyro + gy_dps * dt;
 yaw_gyro = yaw_gyro + gz_dps * dt;
 ```
 
+The results of accelerometer raw, filtered, and gyro values are plot in figure 13 below. The IMU was started at roll = 90°, rotated to roll = -90°, and back to 90°. Gyro value does capture this rotation, but due to drift it is off by around 80°. 
+
+<p align="center">
+  <img src="../img/lab2/gyro_accel_comparison.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 13:</b> Roll Raw Accel vs. LPF vs. Gyro Results.
+</p>
+
+To see the effect of sampling frequency on gyroscope drift, three sampling frequencies of 0.005, 0.5, and 5 are tested.
+<br>
+
 #### Complementary Filter
 
-The complementary filter assigns a weight for pitch and roll value calculated from accelerometer or gyroscope.
+In order to reduce the drift effect on gyroscope, the complementary filter assigns a weight for pitch and roll value calculated from accelerometer or gyroscope.
 
 ```cpp
 float pitch_gyro_pred = pitch_cf + gy_dps * dt;
