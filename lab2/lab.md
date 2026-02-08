@@ -276,6 +276,36 @@ $$
 \alpha = \frac{dt}{dt + RC} = 0.15
 $$
 
+```cpp
+alpha = 0.15
+pitch_LPF = np.zeros(len(pitch))
+roll_LPF  = np.zeros(len(roll))
+
+pitch_LPF[0] = pitch[0]
+roll_LPF[0]  = roll[0]
+
+for n in range(1, len(pitch)):
+    pitch_LPF[n] = alpha * pitch[n] + (1 - alpha) * pitch_LPF[n-1]
+    roll_LPF[n]  = alpha * roll[n]  + (1 - alpha) * roll_LPF[n-1]
+```
+
+The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform.
+
+<p align="center">
+  <img src="../img/lab2/pitch_lpf.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 11:</b> Pitch Raw vs. LPF Results.
+</p>
+
+<p align="center">
+  <img src="../img/lab2/roll_lpf.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 12:</b> Roll Raw vs. LPF Results.
+</p>
+
+<br>
 
 ---
 
