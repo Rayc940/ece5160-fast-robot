@@ -317,7 +317,7 @@ pitch_gyro = pitch_gyro + gy_dps * dt;
 yaw_gyro = yaw_gyro + gz_dps * dt;
 ```
 
-The results of accelerometer raw, filtered, and gyro values are plot in figure 13 below. The IMU was started at roll = 90°, rotated to roll = -90°, and back to 90°. Gyro value does capture this rotation, but due to drift it is off by around 80°. 
+The results of accelerometer raw, filtered, and gyro values are plot in figure 13 below. The IMU was started at roll = 90°, rotated to roll = -90°, and back to 90°. Gyro value does capture this rotation, but due to drift it is off by around 80°.
 
 <p align="center">
   <img src="../img/lab2/gyro_accel_comparison.png" width="80%">
@@ -326,15 +326,34 @@ The results of accelerometer raw, filtered, and gyro values are plot in figure 1
   <b>Figure 13:</b> Roll Raw Accel vs. LPF vs. Gyro Results.
 </p>
 
-To see the effect of sampling frequency on gyroscope drift, two sampling frequencies of 200Hz (sleep 0.005) and 2Hz (0.5). As shown in figure 14, the higher sampling frequency results in more noise.
+One issue with gyroscope is that the sign convention for pitch is incorrect, resulting in a 180° error on pitch, as shown in figure 14 below. To fix this, 
 
+```cpp
+pitch_gyro = pitch_gyro + gy_dps * dt;
+```
+
+was changed to 
+
+```cpp
+pitch_gyro = pitch_gyro - gy_dps * dt;
+```
+
+<p align="center">
+  <img src="../img/lab2/pitch_accel_gyro_oop.png" width="49%">
+</p>
+<p align="center">
+  <b>Figure 14:</b> Incorrect Pitch Value.
+</p>
+
+
+To see the effect of sampling frequency on gyroscope drift, two sampling frequencies of 200Hz (sleep 0.005) and 2Hz (0.5). As shown in figure 15, the higher sampling frequency results in more noise.
 
 <p align="center">
   <img src="../img/lab2/gyro_200hz.png" width="49%">
   <img src="../img/lab2/gyro_20hz.png" width="49%">
 </p>
 <p align="center">
-  <b>Figure 14:</b> Gyroscope Data for Roll from -90° to 90°.
+  <b>Figure 15:</b> Gyroscope Data for Roll from -90° to 90°.
 </p>
 
 <br>
@@ -351,19 +370,70 @@ pitch_cf = alpha_cf * pitch_gyro_pred + (1.0f - alpha_cf) * pitch_cal;
 roll_cf  = alpha_cf * roll_gyro_pred  + (1.0f - alpha_cf) * roll_cal;
 ```
 
+The complementary filter values are tested with two symbol tests:
+
+- Placing IMU flat on table, hitting table for vibration.
+- Rotating IMU about each axis for pitch and roll to see range.
+
+When placing IMU flat and creating source of vibration, the complementary filter shows resilient to noise and is relatively flat, while accelerometer shows the vibration.
+
+<p align="center">
+  <img src="../img/lab2/pitch_cf_flat.png" width="49%">
+  <img src="../img/lab2/roll_cf_flat.png" width="49%">
+</p>
+<p align="center">
+  <b>Figure 16:</b> Complementary Filter Value when Placed Flat.
+</p>
+
+When rotating IMU about each axis, pitch and roll value does confirm -90° to 90° range.
+
+<p align="center">
+  <img src="../img/lab2/pitch_cf_test.png" width="49%">
+  <img src="../img/lab2/roll_cf_test.png" width="49%">
+</p>
+<p align="center">
+  <b>Figure 17:</b> Complementary Filter Value from -90° to 90°.
+</p>
+
 <br>
 
 ---
 
 ## Sample Data
 
+#### Loop Time and IMU
+
 To check the IMU sampling speed, the main loop was written so it does not wait for new IMU data. Instead, the loop runs continuously and only reads the IMU when dataReady() indicates a new sample is available.
 
-When IMU reads were disabled, the main loop ran at about 39,000 loops per second. When IMU reads were enabled, new IMU data was read at about 325 samples per second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
+```cpp
+update_imu();  
+loop_count++;
 
+uint32_t now_ms = millis();
+if (now_ms - last_rate_ms >= 1000) {
+    Serial.print("loop/s=");
+    Serial.print(loop_count);
+    Serial.print("  imu_samples/s=");
+    Serial.println(imu_sample_count);
 
-Next, I ran Example1_MicrophoneOutput from File → Examples → PDM.
-A YouTube Video of C major scale audio was played, and serial monitor showed changing detected frequency content.
+    loop_count = 0;
+    imu_sample_count = 0;
+    last_rate_ms = now_ms;
+```
+
+When IMU reads were disabled (commented), the main loop ran at about 39,000 loops per second. When IMU reads were enabled, new IMU data was read at about 325 samples per second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
+
+<p align="center">
+  <img src="../img/lab2/no_update_imu.png" width="49%">
+  <img src="../img/lab2/update_imu_loop_time.png" width="49%">
+</p>
+<p align="center">
+  <b>Figure 18:</b> Loop Time with IMU Read vs. without.
+</p>
+
+<br>
+
+#### 
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
