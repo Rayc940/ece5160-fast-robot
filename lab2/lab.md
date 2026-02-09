@@ -433,7 +433,7 @@ uint32_t now_ms = millis();
 if (now_ms - last_rate_ms >= 1000) {
     Serial.print("loop/s=");
     Serial.print(loop_count);
-    Serial.print("  imu_samples/s=");
+    Serial.print("imu_samples/s=");
     Serial.println(imu_sample_count);
 
     loop_count = 0;
@@ -441,14 +441,14 @@ if (now_ms - last_rate_ms >= 1000) {
     last_rate_ms = now_ms;
 ```
 
-When IMU reads were disabled (commented), the main loop ran at about 39,000 loops per second. When IMU reads were enabled, new IMU data was read at about 325 samples per second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
+When IMU reads were disabled (commented), the main loop ran at about 39,000 loops/second. When IMU reads were enabled, IMU data was read at about 350 samples/second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
 
 <p align="center">
   <img src="../img/lab2/no_update_imu.png" width="49%">
   <img src="../img/lab2/update_imu_loop_time.png" width="49%">
 </p>
 <p align="center">
-  <b>Figure 18:</b> Loop Time with IMU Read vs. without.
+  <b>Figure 18:</b> Loop Time without IMU Read vs. with IMu Read.
 </p>
 
 <br>
@@ -457,75 +457,108 @@ When IMU reads were disabled (commented), the main loop ran at about 39,000 loop
 
 In main loop, update_imu() was called every iteration. update_imu() is non-blocking because it first checks myICM.dataReady(). If no new data, it returns immediately.
 
-I use a boolean flag recording to control logging:
-- When recording == true, I save data into arrays at index imu_len.
-- When recording == false, I do not store anything.
+A boolean flag **recording** was used to control logging:
+- When recording = true, data was saved into arrays at index imu_len.
+- When recording = false, nothing was stored.
 
-I start recording using the BLE command START_IMU_RECORD (sets recording = true and clears the index).
+Recording was started using the BLE command START_IMU_RECORD, which sets recording to true and clears the index.
 
-I stop recording automatically when:
-- 5 seconds passes (RECORD_DURATION_US = 5,000,000), or
-- the buffer fills (imu_len >= IMU_BUF_SIZE).
+```cpp
+case START_IMU_RECORD:
+            imu_len = 0;
+            record_done = false;
+            recording = true;
 
-I send the stored samples over BLE using SEND_IMU_RECORD.
+            tx_estring_value.clear();
+            tx_estring_value.append("REC_STARTED");
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+            break;
+```
 
-#### One Big Array
+Recording stopped when 5 seconds passes or the array fills (imu_len >= IMU_BUF_SIZE). The stored samples are then sent over BLE using SEND_IMU_RECORD.
 
-I used separate arrays with the same index:
+```cpp
+case SEND_IMU_RECORD:
+        {
+        recording = false;
+
+        for (int i = 0; i < imu_len; i++) {
+            tx_estring_value.clear();
+            tx_estring_value.append((int)imu_t_us[i]);
+            tx_estring_value.append(",");
+            tx_estring_value.append(pitch_cf_buf[i]);
+            tx_estring_value.append(",");
+            tx_estring_value.append(roll_cf_buf[i]);
+
+            tx_characteristic_string.writeValue(tx_estring_value.c_str());
+            delay(3);
+        }
+        tx_estring_value.clear();
+        tx_estring_value.append("REC_DONE");
+        tx_characteristic_string.writeValue(tx_estring_value.c_str());
+        break;
+        }
+```
+<br>
+
+#### Array Structure
+
+Separate arrays are used with the same index:
 
 ```cpp
 imu_t_us[i]
-
 pitch_acc_buf[i], roll_acc_buf[i]
-
 pitch_gyr_buf[i], roll_gyr_buf[i]
-
 pitch_cf_buf[i], roll_cf_buf[i]
 ```
 
-This is simple because every sample uses the same index i, so the signals stay aligned in time. It’s also easier to plot and compare signals. I can also choose which signals to transmit later without changing storage logic.
+This is simple because every sample uses the same index i, so the signals stay the same in time. It’s also easier to plot and compare signals. I can also choose which signals to transmit later without changing storage logic.
+<br>
 
-#### Data Types
+#### Data Types and Memory
 
-I store timestamps as unsigned long because unsigned long imu_t_us[] stores micros() directly. This keeps timestamps accurate and avoids floating point rounding.
+Timestamps are stored as unsigned long because unsigned long imu_t_us[] stores micros() directly. This keeps timestamps precise. Angles are stored as float because angles are real numbers, and float is accurate enough for the measurements. Doubles are too precise and use too much memory.
 
-I store angles as float because angles are real numbers, and float is accurate enough for the measurements.
+Each measurement consists of a timestamp stored as an unsigned long (4 Bytes) and six angle values (accelerometer, gyroscope, and complementary filter pitch and roll) stored as floats (6 × 4 Bytes), resulting in 28 Bytes per measurement.
 
-I avoid storing data as String because strings are larger and slower, and can cause memory problems. I only convert to strings when I transmit data over BLE.
-
-#### Memory
-
-In my code: IMU_BUF_SIZE = 2000
-
-unsigned long is 4 bytes, float is 4 bytes.
-
-Arrays stored during recording:
-
-imu_t_us[2000] → 2000 × 4 = 8000 bytes
-
-6 float arrays (pitch/roll for accel, gyro, cf) → 6 × 2000 × 4 = 48000 bytes
-
-Total ≈ 56000 bytes (~56 KB) just for the IMU record buffers.
-
-If sampling is ~350 Hz:
-
-2000 samples ÷ 350 ≈ 5.7 seconds
-
-So a 2000-sample buffer is enough for 5 seconds, which matches the requirement.
+The Artemis has 384 kB of RAM, which allows storage of approximately 14,043 measurements. With a measured sampling rate of 350 Hz, this corresponds to 40 seconds of continuous data, which exceeds the 5 second requirement.
 
 #### Recording
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/HzKOsx0vtjQ"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 4:</b> Microphone Example.
+The code below successfully record 5 seconds of data from IMU.
+
+```cpp
+Initialize t_us, pitch, roll
+done = False
+
+def handler(uuid, data: bytearray):
+    global done
+    s = data.decode()
+
+    if s start with REC_LEN: print
+    if s is REC_DONE: done = True
+    if s start with REC: print
+    append data to each list
+
+start BLE notifications
+done = False
+send START_IMU_RECORD
+time.sleep(5.3)
+send SEND_IMU_RECORD
+
+while elapsed_time < 15:
+    time.sleep(0.05)
+
+stop BLE notifications
+```
+
+Figure 19 below shows the pitch and roll value recorded using the above method.
+
+<p align="center">
+  <img src="../img/lab2/5s_imu.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 19:</b> 5 Seconds of IMU Data Recorded.
 </p>
 <br>
 
@@ -533,7 +566,9 @@ So a 2000-sample buffer is enough for 5 seconds, which matches the requirement.
 
 ## Record a stunt
 
-Battery was mounted onto RC car, and video 1 below shows recorded motion with the car.
+Battery was mounted onto RC car, and video 2 below shows recorded motion with the car.
+
+TODO: observations
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -545,7 +580,7 @@ Battery was mounted onto RC car, and video 1 below shows recorded motion with th
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Simple Electronic Tuner Example.
+  <b>Video 2:</b> RC Car Stunt!
 </p>
 <br>
 
@@ -553,14 +588,12 @@ Battery was mounted onto RC car, and video 1 below shows recorded motion with th
 
 ## Discussion
 
-This lab provides experience with working and communicating with computer wirelessly using BLE. I practiced sending commands from the computer to the Artemis and receiving data back, which helped us understand how BLE characteristics and notifications work. I also learned the difference between sending data in real time vs. storing data in an array and sending it all at once.
-
-There was no significant challenge encountered during this lab. Overall, this lab helped build a strong understanding of BLE communication and data handling, which will be important for future labs.
+This lab provids hands on experience working with the IMU and communicating wirelessly using BLE. This helped me understand the difference between streaming data in real time and recording data locally before transmitting it all at once. I also learned how filtering and sensor techniques can improve angle estimation. There was no significant challenge encountered during this lab. Overall, this lab built a strong foundation in IMU data processing.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab1/#)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab2/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
