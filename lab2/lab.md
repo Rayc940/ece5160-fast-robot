@@ -50,7 +50,6 @@ for (int k = 0; k < 3; k++) {
 Pitch and roll were computed from the accelerometer using atan2. A new switch case GET_PITCH_ROLL was added that sends time, pitch degree, and roll degree over BLE.
 
 ```cpp
-// Pitch and Roll
 pitch_deg = atan2f(ax_g, az_g) * 180.0f / (float)M_PI;
 roll_deg  = atan2f(ay_g, az_g) * 180.0f / (float)M_PI;
 ```
@@ -123,7 +122,7 @@ To implement two point calibration, a helper function in Python was made to gene
 Initialize t_acc, ax_list, ay_list, az_list
 
 def notification_handler_acc(uuid, data: bytearray):
-    s = data.decode().strip()
+    s = data.decode()
     parts = s.split(",")
     append data to each list
 
@@ -141,8 +140,9 @@ ax_mean_neg = float(np.mean(ax_list))
 ay_mean_neg = float(np.mean(ay_list))
 az_mean_neg = float(np.mean(az_list))
 ```
+<br>
 
-For two point calibration, the board was placed in two orientations for each axis so the expected acceleration along that axis was +1 g and −1 g. The mean measured value from each orientation was used to compute a linear scale and offset.
+For two point calibration, the board was placed in two orientations for each axis so the expected acceleration along that axis was +1 g and −1 g. The mean value measured from each orientation was used to compute a linear scale and offset.
 
 ```cpp
 def two_point(r_pos, r_neg):
@@ -242,7 +242,7 @@ def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
 
 #### Accelerometer Raw Data
 
-Pitch and roll data obtained while running the RC car in proximity is then recorded and taken into frequency domain for noise analysis.
+Pitch and roll data obtained while running the RC car in proximity are then recorded and taken into frequency domain for noise analysis.
 The time domain and frequency domain plots of pitch and roll are shown in figure 9 and 10.
 
 <p align="center">
@@ -265,13 +265,19 @@ The time domain and frequency domain plots of pitch and roll are shown in figure
 
 #### Low Pass Filter
 
-From looking at the data of pitch and roll, the low frequency data ends around 5Hz, so a cutoff frequency of 10Hz is chosen to remove higher frequency noise with a low pass filter.
+From the frequency plot of pitch and roll, the low frequency data ends around 5Hz, so a cutoff frequency of 10Hz is chosen to remove higher frequency noise. 
+
+Cutoff frequency determines the balance between noise attenuation and signal integrity. Lower cutoff frequency can reduce more high frequency noise, but it also attenuates quick, transient signal response. Higher cutoff frequency brings in more noise.
 
 The low pass filter coefficient alpha was calculated as follows:
 
 dt = 1 / sample rate
-RC = 1 / (2*pi*RC)
-alpha = dt / (dt + RC) = 0.15
+
+RC = 1 / (2π*RC)
+
+alpha = dt / (dt + RC)
+
+Sample rate (350Hz) was calculated in section **Sample Data**. After plugging in values, the calculated alpha is 0.15.
 
 ```cpp
 alpha = 0.15
@@ -286,7 +292,7 @@ for n in range(1, len(pitch)):
     roll_LPF[n]  = alpha * roll[n]  + (1 - alpha) * roll_LPF[n-1]
 ```
 
-The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform. In frequency domain, it is obvious that noise after 10 Hz are attenuated.
+The overlayed raw and low pass filtered outputs are shown in figure 11 and 12. The high frequency noise is removed, as shown from the smoother waveform. In frequency domain, the amplitude of noise after 10 Hz are attenuated.
 
 <p align="center">
   <img src="../img/lab2/pitch_lpf.png" width="49%">
@@ -320,7 +326,7 @@ pitch_gyro = pitch_gyro + gy_dps * dt;
 yaw_gyro = yaw_gyro + gz_dps * dt;
 ```
 
-The results of accelerometer raw, filtered, and gyro values are plot in figure 13 below. The IMU was started at roll = 90°, rotated to roll = -90°, and back to 90°. Gyro value does capture this rotation, but due to drift it is off by around 80°.
+The results of accelerometer raw, filtered, and gyro values are plotted in figure 13 below. The IMU started at roll = 90°, rotated to roll = -90°, and back to 90°. Gyroscope does capture this rotation, but due to drift it is off by around 100°.
 
 <p align="center">
   <img src="../img/lab2/gyro_accel_comparison.png" width="80%">
@@ -329,7 +335,7 @@ The results of accelerometer raw, filtered, and gyro values are plot in figure 1
   <b>Figure 13:</b> Roll Raw Accel vs. LPF vs. Gyro Results.
 </p>
 
-One issue with gyroscope is that the sign convention for pitch is incorrect, resulting in a 180° error on pitch, as shown in figure 14 below. To fix this, 
+Another issue with gyroscope is that the sign convention for pitch is incorrect, which results in a 180° error on pitch, as shown in figure 14 below. To account for this issue, the code
 
 ```cpp
 pitch_gyro = pitch_gyro + gy_dps * dt;
@@ -342,28 +348,38 @@ pitch_gyro = pitch_gyro - gy_dps * dt;
 ```
 
 <p align="center">
-  <img src="../img/lab2/pitch_accel_gyro_oop.png" width="49%">
+  <img src="../img/lab2/pitch_accel_gyro_oop.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 14:</b> Incorrect Pitch Value.
 </p>
+<br>
 
+#### Sampling Frequency
 
-To see the effect of sampling frequency on gyroscope drift, two sampling frequencies of 200Hz (sleep 0.005) and 2Hz (0.5). As shown in figure 15, the higher sampling frequency results in more noise.
+To investigate the effect of sampling frequency on gyroscope drift, two sampling frequencies of 200Hz (sleep 0.005) and 2Hz (sleep 0.5) were introduced. 
+
+```cpp
+while time.time() - start < 10.0:
+    ble.send_command(CMD.GET_PITCH_ROLL, "")
+    time.sleep(0.5) # This was modified
+```
+
+As shown in figure 15, the higher sampling frequency results in more noise.
 
 <p align="center">
   <img src="../img/lab2/gyro_200hz.png" width="49%">
   <img src="../img/lab2/gyro_20hz.png" width="49%">
 </p>
 <p align="center">
-  <b>Figure 15:</b> Gyroscope Data for Roll from -90° to 90°.
+  <b>Figure 15:</b> Gyroscope Data for Roll from -90° to 90°, 200Hz (Left) vs. 2Hz (Right).
 </p>
 
 <br>
 
 #### Complementary Filter
 
-In order to reduce the drift effect on gyroscope, the complementary filter assigns a weight for pitch and roll value calculated from accelerometer or gyroscope.
+In order to reduce the drift on gyroscope, the complementary filter assigns a weight for pitch and roll value calculated from accelerometer or gyroscope. 
 
 ```cpp
 float pitch_gyro_pred = pitch_cf + gy_dps * dt;
@@ -373,12 +389,13 @@ pitch_cf = alpha_cf * pitch_gyro_pred + (1.0f - alpha_cf) * pitch_cal;
 roll_cf  = alpha_cf * roll_gyro_pred  + (1.0f - alpha_cf) * roll_cal;
 ```
 
-The complementary filter values are tested with two symbol tests:
+An alpha_cf of 0.95 was chosen. Since gyroscope is a lot more stable than accelerometer, a higher weight was assigned to it. The rest was assigned to accelerometer, which is enough to reduce the drift from gyroscope.
 
+The complementary filter values are tested with two tests:
 - Placing IMU flat on table, hitting table for vibration.
 - Rotating IMU about each axis for pitch and roll to see range.
 
-When placing IMU flat and creating source of vibration, the complementary filter shows resilient to noise and is relatively flat, while accelerometer shows the vibration.
+When placing IMU flat and creating sources of vibration, the complementary filter shows resilient to noise and is relatively flat, while accelerometer shows vibrations and gyroscope shows drifts.
 
 <p align="center">
   <img src="../img/lab2/pitch_cf_flat.png" width="49%">
@@ -388,7 +405,7 @@ When placing IMU flat and creating source of vibration, the complementary filter
   <b>Figure 16:</b> Complementary Filter Value when Placed Flat.
 </p>
 
-When rotating IMU about each axis, pitch and roll value does confirm -90° to 90° range.
+When rotating IMU about each axis, pitch and roll value does confirm -90° to 90° range with smooth transition.
 
 <p align="center">
   <img src="../img/lab2/pitch_cf_test.png" width="49%">
