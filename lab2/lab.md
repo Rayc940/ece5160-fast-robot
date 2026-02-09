@@ -5,7 +5,7 @@ The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Exampl
 
 #### AD0_VAL
 
-AD0_VAL is the last bit of I2C address of the IMU, where the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
+AD0_VAL is the last bit of I2C address of the IMU, and the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
 <br>
 
 #### Observations
@@ -31,7 +31,7 @@ for (int k = 0; k < 3; k++) {
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/dTsu4LU6gek"
+    src="https://www.youtube.com/embed/MZmRoheMmXI"
     frameborder="0"
     allowfullscreen>
   </iframe>
@@ -436,7 +436,67 @@ When IMU reads were disabled (commented), the main loop ran at about 39,000 loop
 
 <br>
 
-#### IMU Array
+#### IMU Flag and Array
+
+In main loop, update_imu() was called every iteration. update_imu() is non-blocking because it first checks myICM.dataReady(). If no new data, it returns immediately.
+
+I use a boolean flag recording to control logging:
+- When recording == true, I save data into arrays at index imu_len.
+- When recording == false, I do not store anything.
+
+I start recording using the BLE command START_IMU_RECORD (sets recording = true and clears the index).
+
+I stop recording automatically when:
+- 5 seconds passes (RECORD_DURATION_US = 5,000,000), or
+- the buffer fills (imu_len >= IMU_BUF_SIZE).
+
+I send the stored samples over BLE using SEND_IMU_RECORD.
+
+#### One Big Array
+
+I used separate arrays with the same index:
+
+```cpp
+imu_t_us[i]
+
+pitch_acc_buf[i], roll_acc_buf[i]
+
+pitch_gyr_buf[i], roll_gyr_buf[i]
+
+pitch_cf_buf[i], roll_cf_buf[i]
+```
+
+This is simple because every sample uses the same index i, so the signals stay aligned in time. It’s also easier to plot and compare signals. I can also choose which signals to transmit later without changing storage logic.
+
+#### Data Types
+
+I store timestamps as unsigned long because unsigned long imu_t_us[] stores micros() directly. This keeps timestamps accurate and avoids floating point rounding.
+
+I store angles as float because angles are real numbers, and float is accurate enough for the measurements.
+
+I avoid storing data as String because strings are larger and slower, and can cause memory problems. I only convert to strings when I transmit data over BLE.
+
+#### Memory
+
+In my code: IMU_BUF_SIZE = 2000
+
+unsigned long is 4 bytes, float is 4 bytes.
+
+Arrays stored during recording:
+
+imu_t_us[2000] → 2000 × 4 = 8000 bytes
+
+6 float arrays (pitch/roll for accel, gyro, cf) → 6 × 2000 × 4 = 48000 bytes
+
+Total ≈ 56000 bytes (~56 KB) just for the IMU record buffers.
+
+If sampling is ~350 Hz:
+
+2000 samples ÷ 350 ≈ 5.7 seconds
+
+So a 2000-sample buffer is enough for 5 seconds, which matches the requirement.
+
+#### Recording
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
