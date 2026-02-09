@@ -1,6 +1,9 @@
 ## IMU Setup
 
-The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Example1_Basics from SparkFun 9DOF IMU Breakout Library was ran to verify functionality.
+The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Example1_Basics was ran to verify functionality.
+
+TODO: Picture of your Artemis IMU connections
+
 <br>
 
 #### AD0_VAL
@@ -13,6 +16,24 @@ AD0_VAL is the last bit of I2C address of the IMU, and the IMU supports two poss
 Accelerometer: When the board is held still, z axis reads about 1 g because it is measuring gravity, while the other two axes are close to zero. If the board is flipped over, the sign of z axis changes and becomes -1 g. When the board is accelerated, the acceleration values increase on the axis in the direction of motion.
 
 Gyroscope: The gyroscope measures angular velocity. When the board is not rotating, the gyroscope values stay near zero. When the board is rotated, the corresponding gyroscope axis values changes, and faster rotations produce larger values.
+
+Raw accelerometer data shows a little inaccuracy (around 2°) with some jitter, especially during motion. Gyroscope raw data is smoother short term but accumulates drift over time.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/MZmRoheMmXI"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 1:</b> Example1_Basics Demo.
+</p>
+
+TODO: Show that the IMU example code works (Video)
+
 <br>
 
 #### Visual Indication
@@ -72,6 +93,9 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
 <p align="center">
   <b>Figure 2:</b> Ouputs showing roll at {-90, 90} degrees.
 </p>
+
+Raw readings are quite accurate, but there is always a small offset. This is reduced by two point calibration mentioned in section below.
+
 <br>
 
 #### Jupyter Plotting Function
@@ -83,22 +107,12 @@ initialize t_list, pitch_list, roll_list
 
 def notification_handler_pr(uuid, data: bytearray):
     s = data.decode()
-
-    parts = s.split(",")
-    t_ms = int(parts[0])
-    pitch = float(parts[1])
-    roll = float(parts[2])
-    t_list.append(t_ms)
-    pitch_list.append(pitch)
-    roll_list.append(roll)
+    append data to each list
 
 start BLE notifications
-
 while elapsed_time < T:
     send GET_PITCH_ROLL
-
 stop BLE notifications
-
 plot t_list vs pitch_list and roll_list
 ```
 
@@ -116,6 +130,8 @@ Example outputs with are shown in figure 3 and 4.
 
 #### Two Point Calibration
 
+Two point calibration is used to map the accelerometer's reading as a linear function, allowing to reduce systematic measurement errors.
+
 To implement two point calibration, a helper function in Python was made to generate scale and offset. A new switch case TWO_POINT_CALIBRATION was implemented that returns t, ax, ay, az over BLE. 
 
 ```cpp
@@ -123,11 +139,9 @@ Initialize t_acc, ax_list, ay_list, az_list
 
 def notification_handler_acc(uuid, data: bytearray):
     s = data.decode()
-    parts = s.split(",")
     append data to each list
 
 start BLE notifications
-
 while elapsed_time < T:
     send TWO_POINT_CALIBRATION
 
@@ -155,7 +169,6 @@ r_pos_z = az_mean_pos
 r_neg_z = az_mean_neg
 
 sz, oz = two_point(r_pos_z, r_neg_z)
-print("sz, oz:", sz, oz)
 ```
 
 These printed scale and offset values were then applied in the Artemis to correct accelerometer readings.
@@ -214,17 +227,9 @@ A new function plot_fft() was implemented in Python which takes a time list and 
 
 ```cpp
 def plot_fft(t_s, data_list, title="FFT", xlim_hz=None):
-    """
-    t_s: list of timestamps
-    data_list: list of signal values
-    title: plot title
-    xlim_hz: optional x axis limit in Hz
-    """
-
     convert t_s, data_list to array
     shift t_s so time starts at 0
 
-    # estimate sample rate
     dt = np.mean(np.diff(t))
     fs = 1.0 / dt
     subtract mean from data_list to remove DC
@@ -260,6 +265,8 @@ The time domain and frequency domain plots of pitch and roll are shown in figure
 <p align="center">
   <b>Figure 10:</b> Roll Time and Frequency Domain Signal.
 </p>
+
+There are some high frequency noises, as indicated by the jitter in time domain signal, and the amplitude of high frequencies in frequency domain.
 
 <br>
 
