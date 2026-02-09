@@ -1,16 +1,19 @@
 ## IMU Setup
 
 The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Example1_Basics from SparkFun 9DOF IMU Breakout Library was ran to verify functionality.
+<br>
 
 #### AD0_VAL
 
 AD0_VAL is the last bit of I2C address of the IMU, where the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
+<br>
 
 #### Observations
 
 Accelerometer: When the board is held still, z axis reads about 1 g because it is measuring gravity, while the other two axes are close to zero. If the board is flipped over, the sign of z axis changes and becomes -1 g. When the board is accelerated, the acceleration values increase on the axis in the direction of motion.
 
 Gyroscope: The gyroscope measures angular velocity. When the board is not rotating, the gyroscope values stay near zero. When the board is rotated, the corresponding gyroscope axis values changes, and faster rotations produce larger values.
+<br>
 
 #### Visual Indication
 
@@ -433,7 +436,7 @@ When IMU reads were disabled (commented), the main loop ran at about 39,000 loop
 
 <br>
 
-#### 
+#### IMU Array
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
