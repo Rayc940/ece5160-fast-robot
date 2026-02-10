@@ -1,14 +1,14 @@
 ## IMU Setup
 
-The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. Example1_Basics was ran to verify functionality.
+The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. IMU was connected to Artemis using QWIIC connectors, as shown in figure 1. Example1_Basics was ran to verify functionality.
 
-TODO: Picture of your Artemis IMU connections
+<p align="center">
+  <img src="../img/lab2/imu_setup.jpeg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 0:</b> Artemis IMU Connection.
+</p>
 
-<br>
-
-#### AD0_VAL
-
-AD0_VAL is the last bit of I2C address of the IMU, and the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
 <br>
 
 #### Observations
@@ -23,7 +23,7 @@ Raw accelerometer data shows a little inaccuracy (around 2°) with some jitter, 
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/MZmRoheMmXI"
+    src="https://www.youtube.com/embed/jOivJuVg31c"
     frameborder="0"
     allowfullscreen>
   </iframe>
@@ -32,7 +32,11 @@ Raw accelerometer data shows a little inaccuracy (around 2°) with some jitter, 
   <b>Video 1:</b> Example1_Basics Demo.
 </p>
 
-TODO: Show that the IMU example code works (Video)
+<br>
+
+#### AD0_VAL
+
+AD0_VAL is the last bit of I2C address of the IMU, and the IMU supports two possible I2C addresses. The default setting is AD0_VAL = 1. If the ADR jumper is closed, the address bit flips and AD0_VAL should be changed to 0. This allows multiple identical devices to share the same I2C bus without address conflicts.
 
 <br>
 
@@ -58,8 +62,9 @@ for (int k = 0; k < 3; k++) {
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Setup Indicator: Blink.
+  <b>Video 2:</b> Setup Indicator: Blink.
 </p>
+
 <br>
 
 ---
@@ -94,7 +99,7 @@ When the board was placed flat on the table, both pitch and roll were near 0°. 
   <b>Figure 2:</b> Ouputs showing roll at {-90, 90} degrees.
 </p>
 
-Raw readings are quite accurate, but there is always a small offset. This is reduced by two point calibration mentioned in section below.
+Raw readings are quite accurate, but there are always a small offset. This was reduced by two point calibration mentioned in section below.
 
 <br>
 
@@ -126,6 +131,7 @@ Example outputs with are shown in figure 3 and 4.
 <p align="center">
   <b>Figure 3,4:</b> Example Ouputs from Jupyter Showing Pitch at 90° and Roll at -90°.
 </p>
+
 <br>
 
 #### Two Point Calibration
@@ -154,6 +160,7 @@ ax_mean_neg = float(np.mean(ax_list))
 ay_mean_neg = float(np.mean(ay_list))
 az_mean_neg = float(np.mean(az_list))
 ```
+
 <br>
 
 For two point calibration, the board was placed in two orientations for each axis so the expected acceleration along that axis was +1 g and −1 g. The mean value measured from each orientation was used to compute a linear scale and offset.
@@ -197,6 +204,7 @@ After calibration, the same test of pitch at 90° and roll at -90° were ran, an
 <p align="center">
   <b>Figure 5,6:</b> Calibrated Ouputs Showing Pitch at 90° and Roll at -90°.
 </p>
+
 <br>
 
 Some data points of calibrated results and raw data are shown below in figure 7 and 8, with the calibrated values being slightly closer to actual results.
@@ -266,7 +274,7 @@ The time domain and frequency domain plots of pitch and roll are shown in figure
   <b>Figure 10:</b> Roll Time and Frequency Domain Signal.
 </p>
 
-There are some high frequency noises, as indicated by the jitter in time domain signal, and the amplitude of high frequencies in frequency domain.
+There are some high frequency noises, as indicated by the jitter in time domain signal, and the amplitude of high frequencies in frequency spectrum.
 
 <br>
 
@@ -360,6 +368,7 @@ pitch_gyro = pitch_gyro - gy_dps * dt;
 <p align="center">
   <b>Figure 14:</b> Incorrect Pitch Value.
 </p>
+
 <br>
 
 #### Sampling Frequency
@@ -430,7 +439,7 @@ When rotating IMU about each axis, pitch and roll value does confirm -90° to 90
 
 #### Loop Time and IMU
 
-To check the IMU sampling speed, the main loop was written so it does not wait for new IMU data. Instead, the loop runs continuously and only reads the IMU when dataReady() indicates a new sample is available.
+To check the IMU sampling speed, the main loop was written so it does not wait for new IMU data. Instead, the loop runs continuously and only reads the IMU when dataReady() indicates a new sample is ready.
 
 ```cpp
 update_imu();  
@@ -438,17 +447,14 @@ loop_count++;
 
 uint32_t now_ms = millis();
 if (now_ms - last_rate_ms >= 1000) {
-    Serial.print("loop/s=");
-    Serial.print(loop_count);
-    Serial.print("imu_samples/s=");
-    Serial.println(imu_sample_count);
+    print loop time
 
     loop_count = 0;
     imu_sample_count = 0;
     last_rate_ms = now_ms;
 ```
 
-When IMU reads were disabled (commented), the main loop ran at about 39,000 loops/second. When IMU reads were enabled, IMU data was read at about 350 samples/second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU read time.
+When IMU reads were disabled (commented), the main loop ran at about 39,000 loops/second. When IMU reads were enabled, IMU data was read at about 350 samples/second. This shows that the main loop itself is much faster than the IMU, and the sampling rate is limited by the IMU.
 
 <p align="center">
   <img src="../img/lab2/no_update_imu.png" width="49%">
@@ -462,7 +468,7 @@ When IMU reads were disabled (commented), the main loop ran at about 39,000 loop
 
 #### IMU Flag and Array
 
-In main loop, update_imu() was called every iteration. update_imu() is non-blocking because it first checks myICM.dataReady(). If no new data, it returns immediately.
+In main loop, update_imu() was called every iteration. update_imu() is non blocking because it first checks myICM.dataReady(). If no new data, it returns immediately.
 
 A boolean flag **recording** was used to control logging:
 - When recording = true, data was saved into arrays at index imu_len.
@@ -490,15 +496,8 @@ case SEND_IMU_RECORD:
         recording = false;
 
         for (int i = 0; i < imu_len; i++) {
-            tx_estring_value.clear();
-            tx_estring_value.append((int)imu_t_us[i]);
-            tx_estring_value.append(",");
-            tx_estring_value.append(pitch_cf_buf[i]);
-            tx_estring_value.append(",");
-            tx_estring_value.append(roll_cf_buf[i]);
-
+            send time, pitch, roll
             tx_characteristic_string.writeValue(tx_estring_value.c_str());
-            delay(3);
         }
         tx_estring_value.clear();
         tx_estring_value.append("REC_DONE");
@@ -506,6 +505,7 @@ case SEND_IMU_RECORD:
         break;
         }
 ```
+
 <br>
 
 #### Array Structure
@@ -519,16 +519,19 @@ pitch_gyr_buf[i], roll_gyr_buf[i]
 pitch_cf_buf[i], roll_cf_buf[i]
 ```
 
-This is simple because every sample uses the same index i, so the signals stay the same in time. It’s also easier to plot and compare signals. I can also choose which signals to transmit later without changing storage logic.
+This is simple because every sample uses the same index i, so signals stay the same in time. It’s also easier to plot and compare signals. I can also choose which signals to transmit later.
+
 <br>
 
 #### Data Types and Memory
 
-Timestamps are stored as unsigned long because unsigned long imu_t_us[] stores micros() directly. This keeps timestamps precise. Angles are stored as float because angles are real numbers, and float is accurate enough for the measurements. Doubles are too precise and use too much memory.
+Timestamps are stored as unsigned long because unsigned long imu_t_us[] stores micros() directly. Angles are stored as float because angles are real numbers, and float is accurate enough for the measurements. Doubles are too precise and use too much memory.
 
 Each measurement consists of a timestamp stored as an unsigned long (4 Bytes) and six angle values (accelerometer, gyroscope, and complementary filter pitch and roll) stored as floats (6 × 4 Bytes), resulting in 28 Bytes per measurement.
 
 The Artemis has 384 kB of RAM, which allows storage of approximately 14,043 measurements. With a measured sampling rate of 350 Hz, this corresponds to 40 seconds of continuous data, which exceeds the 5 second requirement.
+
+<br>
 
 #### Recording
 
@@ -567,15 +570,16 @@ Figure 19 below shows the pitch and roll value recorded using the above method.
 <p align="center">
   <b>Figure 19:</b> 5 Seconds of IMU Data Recorded.
 </p>
+
 <br>
 
 ---
 
 ## Record a stunt
 
-Battery was mounted onto RC car, and video 2 below shows recorded motion with the car.
+Battery was mounted onto the RC car, and video 3 below shows recorded motion.
 
-TODO: observations
+One observation I noticed was that the RC car flips over when stopped suddenly at high speeds. Future control adjustments may be needed to prevent flipping during braking.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -587,15 +591,16 @@ TODO: observations
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 2:</b> RC Car Stunt!
+  <b>Video 3:</b> RC Car Stunt!
 </p>
+
 <br>
 
 ---
 
 ## Discussion
 
-This lab provids hands on experience working with the IMU and communicating wirelessly using BLE. This helped me understand the difference between streaming data in real time and recording data locally before transmitting it all at once. I also learned how filtering and sensor techniques can improve angle estimation. There was no significant challenge encountered during this lab. Overall, this lab built a strong foundation in IMU data processing.
+This lab provids hands on experience working with the IMU. This helped me understand how filtering and sensor techniques can improve angle estimation. There was no significant challenge encountered during this lab. Overall, this lab built a strong foundation in IMU data processing.
 
 ---
 
