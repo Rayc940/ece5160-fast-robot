@@ -1,6 +1,6 @@
 ## IMU Setup
 
-The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. IMU was connected to Artemis using QWIIC connectors, as shown in figure 1. Example1_Basics was ran to verify functionality.
+The "SparkFun 9DOF IMU Breakout_ICM 20948_Arduino Library" was installed. IMU was connected to Artemis using QWIIC connectors, as shown in figure 0. Example1_Basics was ran to verify functionality.
 
 <p align="center">
   <img src="../img/lab2/imu_setup.jpeg" width="80%">
