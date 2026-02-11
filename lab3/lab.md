@@ -12,7 +12,7 @@ Both VL53L1X sensors share the same I2C address. As a result, they can't be conn
 
 There are two approaches to solve this:
 
-1. Programmatically Change Address:
+1) Programmatically Change Address:
 One sensor is powered first. Its address is changed to a new value programmatically. The second sensor is then powered and kept at the default address.
 
 Advantage:
@@ -24,7 +24,7 @@ Disadvantage:
 
 <br>
 
-2. Continuously Enable/Disable Sensors
+2) Continuously Enable/Disable Sensors
 One sensor is powered first, the other in shutdown, and vice versa. This avoids changing address.
 
 Advantage:
@@ -78,6 +78,19 @@ The wiring diagram is shown is figure 2 below.
 Picture of your ToF sensor connected to your QWIIC breakout board
 Screenshot of Artemis scanning for I2C device (and discussion on I2C address)
 Discussion and pictures of sensor data with chosen mode
+
+#### TOF Sensor Tests
+
+- Range
+- Accuracy
+- Repeatability
+- Ranging Time
+
+#### Range Test
+
+TOF sensor was taped perpendicular to white wall. A set of distances: {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150} cm are tested.
+
+
 2 ToF sensors and the IMU: Discussion and screenshot/video of sensors working in parallel
 Tof sensor speed: Discussion on speed and limiting factor; include code snippet of how you do this
 Time v Distance: Include graph of data sent over bluetooth (2 sensors)
