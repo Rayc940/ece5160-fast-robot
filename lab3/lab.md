@@ -8,9 +8,7 @@ VL53L1X Time of Flight Sensors are used. The default I2C address is 0x52 from th
 
 #### ToF Sensors Approach
 
-Both VL53L1X sensors share the same I2C address. As a result, they can't be connected to the same I2C bus at the same time.
-
-There are two approaches to solve this:
+Both VL53L1X sensors share the same I2C address. As a result, they can't be connected to the same I2C bus at the same time. There are two approaches to solve this:
 
 ###### 1) Programmatically Change Address:
 
@@ -53,7 +51,7 @@ However, this approach may lead to a blind spot on the left of the RC car. Figur
   <img src="../img/lab2/imu_setup.jpeg" width="80%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> TODO.
+  <b>Figure TODO:</b> TODO.
 </p>
 
 <br>
@@ -66,7 +64,7 @@ The wiring diagram is shown is figure 2 below.
   <img src="../img/lab2/imu_setup.jpeg" width="80%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> TODO.
+  <b>Figure TODO:</b> TODO.
 </p>
 
 <br>
@@ -84,15 +82,27 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
 - Yellow: SCL
 - Blue: SDA
 
-Picture of your ToF sensor connected to your QWIIC breakout board
+<p align="center">
+  <img src="../img/lab2/imu_setup.jpeg" width="80%">
+</p>
+<p align="center">
+  <b>Figure TODO:</b> ToF sensor connected to QWIIC Breakout Board.
+</p>
+
+<br>
 
 #### I2C Scanning
 
 After the first TOF was connected, Example05_wire_I2C was ran to verify I2C address.
 
-Screenshot of Artemis scanning for I2C device (and discussion on I2C address)
-
 The address shown is 0x29, which doesn't match with the datasheet's 0x52. However, this makes sense because 0x29 in binary is 0101001, and 0x52 in binary is 01010010. The I2C 8 bit format is the 7 bit address << 1 + R/W bit. The Arduino is using the 7 bit format.
+
+<p align="center">
+  <img src="../img/lab3/I2C_pic.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure TODO:</b> Screenshot of Artemis scanning for I2C device.
+</p>
 
 <br>
 
@@ -189,11 +199,16 @@ if (distanceSensor2.checkForDataReady()) {
 }
 ```
 
-The loop continuously prints results while TOF is running in parallel, which proves it is working.
+The loop continuously prints results while TOF is running in parallel, which proves that it is non-blocking.
 
-non blocking tof pic
+<p align="center">
+  <img src="../img/lab3/nonblocking tof.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure TODO:</b> Non-blocking Serial Monitor Output.
+</p>
 
-Next, to investigate limiting factor and loop time, code below was used:
+Next, to investigate limiting factor and loop time, the code below was used:
 
 ```cpp
 if (distanceSensor1.checkForDataReady()) {
@@ -217,6 +232,12 @@ uint32_t now_ms = millis();
   last_rate_ms = now_ms;
 ```
 
+Loop time was measured under different settings:
+- With no IMU and no ToF sensors, the loop ran at 49,000 loops/second.
+- With two ToF sensors enabled, the loop time decreased to 650 loops/second.
+- With both ToF sensors and the IMU enabled, the loop time decreased to 200 loops/second.
+
+This shows that the main limiting factor is not the processor, but the time required for sensor communication and data acquisition. Although checkForDataReady() prevents the loop from blocking, the overall system speed is still restricted by how quickly the sensors can produce new data.
 
 <p align="center">
   <img src="../img/lab3/loop time.png" width="30%">
@@ -224,37 +245,106 @@ uint32_t now_ms = millis();
   <img src="../img/lab3/loop time imu tof.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Loop time with nothing, TOF, IMU
+  <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
 </p>
 
-
+<br>
 
 #### TOF and IMU Record
 
-The switch statement START_IMU_RECORD, SEND_IMU_RECORD from lab 2 were modified to START_RECORD and SEND_RECORD. It now sends I: IMU data, T1: TOF1 data, T2: TOF2 data. 
+The switch statements START_IMU_RECORD and SEND_IMU_RECORD from lab 2 were modified to START_RECORD and SEND_RECORD. It now sends data in the format I: IMU data, T1: TOF1 data, T2: TOF2 data.
 
-Python code was modified as well to parse the additional data.
+```cpp
+case START_RECORD:
+  IMU, TOF index = 0
+  record_done = false;
+  recording = true;
+  record_start_us = micros();
 
-Graph of data sent over BLE for TOF and IMU are shown.
+  tx_estring_value.clear();
+  tx_estring_value.append("REC_STARTED");
+  tx_characteristic_string.writeValue(tx_estring_value.c_str());
+  break;
+```
 
-#### Infrared Trasmission Sensor
+```cpp
+case SEND_RECORD:
+  send header with imu, tof index length
+  // IMU
+  for (int i = 0; i < imu_len; i++) {
+    send I, time, pitch, roll over BLE
+  }
 
-2 ToF sensors and the IMU: Discussion and screenshot/video of sensors working in parallel
-Tof sensor speed: Discussion on speed and limiting factor; include code snippet of how you do this
-Time v Distance: Include graph of data sent over bluetooth (2 sensors)
-Time v Angle: Include graph of data sent over bluetooth
-(5000) Discussion on infrared transmission based sensors
-(5000) Sensitivity of sensors to colors and textures
+  // TOF1
+  for (int i = 0; i < tof1_len; i++) {
+    send T1, time, tof1 over BLE
+  }
 
+  // TOF2
+  for (int i = 0; i < tof2_len; i++) {
+    send T2, time, tof2 over BLE
+  }
+```
+Similarly, Python code was modified as well to parse the additional TOF data. Graph of data sent over BLE for TOF and IMU are shown below.
 
 <p align="center">
-  <img src="../img/lab2/pitch_-90.png" width="30%">
-  <img src="../img/lab2/pitch_90.png" width="30%">
-  <img src="../img/lab2/roll pitch 0.png" width="30%">
+  <img src="../img/lab3/imu data.png" width="49%">
+  <img src="../img/lab3/tof data.png" width="49%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Ouputs showing pitch at {-90, 0, 90} degrees.
+  <b>Figure TODO:</b> Plot of IMU and TOF Data vs. Time from BLE, in Parallel. 
 </p>
+
+<br>
+
+#### Infrared Based Distance Sensors
+
+Many distance sensors use infrared light, but they differ in how distance is estimated. The three common approaches are amplitude-based, triangulation-based, and time of flight sensing.
+
+###### 1) Amplitude-Based IR Sensors
+
+Amplitude-based IR estimate distance by measuring the intensity of reflected IR. The assumption is that reflected light decreases as distance increases.
+
+Pros:
+- Very simple and cheap
+- Works well for object detection and short range distance sensing
+- High sample rate
+
+Cons:
+- Sensitive to surface color, texture, and ambient light (does not work)
+
+
+###### 2) Triangulation-Based IR Sensors
+
+Triangulation-based sensors emit an IR beam and measure the angle of the reflected light on a detector. Distance is calculated from geometry.
+
+Pros:
+- More accurate than amplitude-based sensors
+- Less sensitive to surface color or texture
+
+Cons:
+- Sensitive to ambient light
+- Low sample rate
+
+###### 3) TOF Sensors
+
+TOF sensors, such as the VL53L1X used in this lab, emit short IR pulses and measure the time it takes for the light to return. Distance is calculated directly from the speed of light.
+
+Pros:
+- Longer range
+- Less sensitive to surface color, texture, and ambient light
+
+Cons:
+- More complex
+- Low sample rate
+
+<br>
+
+#### Sensitivity to Color and Texture
+
+Although TOF sensors measure time, they still require sufficient reflected light. Dark or absorptive materials reduce return signal, which can increase noise. Transparent surfaces may allow light to pass through, causing no return signal. Highly angled surfaces can reflect return signal away from the receiver.
+
+Overall, TOF sensors are less sensitive to color and texture than amplitude-based sensors, but they are not completely immune.
 
 <br>
 
@@ -262,12 +352,12 @@ Time v Angle: Include graph of data sent over bluetooth
 
 ## Discussion
 
-This lab provids hands on experience working with the IMU. This helped me understand how filtering and sensor techniques can improve angle estimation. There was no significant challenge encountered during this lab. Overall, this lab built a strong foundation in IMU data processing.
+This lab provided experience working with two TOF sensors and managing I2C communication. Measuring loop speed showed that sensor measurement time, not processor speed, is the main limiting factor. Overall, this lab helped build a better understanding of TOF sensors.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab2/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab3/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
