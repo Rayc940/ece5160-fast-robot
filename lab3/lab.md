@@ -51,20 +51,18 @@ However, this approach may lead to a blind spot on the left of the RC car. Figur
   <img src="../img/lab3/tof_placement.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> TODO.
+  <b>Figure 1:</b> TOF Placement and Potential Blind Spots.
 </p>
 
 <br>
 
 #### Wiring Diagram
 
-The wiring diagram is shown is figure 2 below.
-
 <p align="center">
   <img src="../img/lab3/wiring diagram.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Wiring Diagram.
+  <b>Figure 2:</b> Wiring Diagram.
 </p>
 
 <br>
@@ -83,7 +81,7 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
 - Blue: SDA
 
 <p align="center">
-  <img src="../img/lab3/tof_with_qwiic.HEIC" width="80%">
+  <img src="../img/lab3/tof_with_qwiic.jpg" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> TOF sensor connected to QWIIC Breakout Board.
