@@ -173,7 +173,18 @@ if (distanceSensor1.checkForDataReady() &&
   }
 ```
 
-Two TOF Sensor Video
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Two TOF Sensor.
+</p>
 
 <br>
 
@@ -240,9 +251,9 @@ Loop time was measured under different settings:
 This shows that the main limiting factor is not the processor, but the time required for sensor communication and data acquisition. Although checkForDataReady() prevents the loop from blocking, the overall system speed is still restricted by how quickly the sensors can produce new data.
 
 <p align="center">
-  <img src="../img/lab3/loop time.png" width="30%">
-  <img src="../img/lab3/loop time tof.png" width="30%">
-  <img src="../img/lab3/loop time imu tof.png" width="30%">
+  <img src="../img/lab3/loop time.png" width="10%">
+  <img src="../img/lab3/loop time tof.png" width="39%">
+  <img src="../img/lab3/loop time imu tof.png" width="50%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
@@ -312,7 +323,6 @@ Pros:
 
 Cons:
 - Sensitive to surface color, texture, and ambient light (does not work)
-
 
 ###### 2) Triangulation-Based IR Sensors
 
