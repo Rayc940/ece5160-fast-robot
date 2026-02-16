@@ -86,7 +86,7 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
   <img src="../img/lab2/imu_setup.jpeg" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> ToF sensor connected to QWIIC Breakout Board.
+  <b>Figure TODO:</b> TOF sensor connected to QWIIC Breakout Board.
 </p>
 
 <br>
@@ -123,11 +123,13 @@ Since the robot mainly needs to detect nearby obstacles, short mode was chosen. 
 - Repeatability
 - Ranging Time
 
-Discussion and pictures of sensor data with chosen mode
+TODO: Discussion and pictures of sensor data with chosen mode
 
 #### Range Test
 
 TOF sensor was taped perpendicular to white wall. A set of distances: {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150} cm are tested.
+
+TODO
 
 #### Two TOF Sensors
 
@@ -168,9 +170,7 @@ if (distanceSensor1.checkForDataReady() &&
   distanceSensor2.clearInterrupt();
 
   print result
-
-  delay(100);
-  }
+}
 ```
 
 <div style="text-align:center; margin:30px 0;">
