@@ -48,7 +48,7 @@ The VL53L1X has a narrow field of view of 27°. One sensor will be facing direct
 However, this approach may lead to a blind spot on the left of the RC car. Figure 1 below shows possible blind spots. In addition, low obstacles, dark absorptive materials, or transparent surfaces may not reflect enough infrared light, resulting in missed readings.
 
 <p align="center">
-  <img src="../img/lab2/imu_setup.jpeg" width="80%">
+  <img src="../img/lab3/tof_placement.jpg" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> TODO.
@@ -61,10 +61,10 @@ However, this approach may lead to a blind spot on the left of the RC car. Figur
 The wiring diagram is shown is figure 2 below.
 
 <p align="center">
-  <img src="../img/lab2/imu_setup.jpeg" width="80%">
+  <img src="../img/lab3/wiring diagram.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> TODO.
+  <b>Figure TODO:</b> Wiring Diagram.
 </p>
 
 <br>
@@ -83,7 +83,7 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
 - Blue: SDA
 
 <p align="center">
-  <img src="../img/lab2/imu_setup.jpeg" width="80%">
+  <img src="../img/lab3/tof_with_qwiic.HEIC" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> TOF sensor connected to QWIIC Breakout Board.
