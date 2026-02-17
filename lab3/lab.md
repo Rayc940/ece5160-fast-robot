@@ -84,7 +84,7 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
   <img src="../img/lab3/tof_with_qwiic.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> TOF sensor connected to QWIIC Breakout Board.
+  <b>Figure 3:</b> TOF sensor connected to QWIIC Breakout Board.
 </p>
 
 <br>
@@ -99,7 +99,7 @@ The address shown is 0x29, which doesn't match with the datasheet's 0x52. Howeve
   <img src="../img/lab3/I2C_pic.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Screenshot of Artemis scanning for I2C device.
+  <b>Figure 4:</b> Screenshot of Artemis scanning for I2C device.
 </p>
 
 <br>
@@ -181,7 +181,7 @@ if (distanceSensor1.checkForDataReady() &&
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> Two TOF Sensor.
+  <b>Video 1:</b> Two TOF Sensor.
 </p>
 
 <br>
@@ -249,7 +249,7 @@ Loop time was measured under different settings:
 This shows that the main limiting factor is not the processor, but the time required for sensor communication and data acquisition. Although checkForDataReady() prevents the loop from blocking, the overall system speed is still restricted by how quickly the sensors can produce new data.
 
 <p align="center">
-  <img src="../img/lab3/loop time.png" width="10%">
+  <img src="../img/lab3/loop time.png" width="20%">
   <img src="../img/lab3/loop time tof.png" width="39%">
   <img src="../img/lab3/loop time imu tof.png" width="50%">
 </p>
@@ -353,8 +353,6 @@ Cons:
 Although TOF sensors measure time, they still require sufficient reflected light. Dark or absorptive materials reduce return signal, which can increase noise. Transparent surfaces may allow light to pass through, causing no return signal. Highly angled surfaces can reflect return signal away from the receiver.
 
 Overall, TOF sensors are less sensitive to color and texture than amplitude-based sensors, but they are not completely immune.
-
-<br>
 
 ---
 
