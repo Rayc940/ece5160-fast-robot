@@ -17,7 +17,6 @@ One sensor is powered on first. Its address is changed to a new value programmat
 Advantage:
 - Both TOF sensors are active
 - Fast and real time sampling
-
 Disadvantage:
 - More complex initialization for each power cycle
 
@@ -29,23 +28,21 @@ One sensor is powered first, the other in shutdown, and vice versa. This avoids 
 
 Advantage:
 - Simpler, no address reassignment
-- Fast and real time sampling
-
 Disadvantage:
 - Only one sensor active
 - Reduced sampling rate
 
 <br>
   
-The first option is chosen because for a fast moving robot that relies on quick and continuous distance updates, it is important to have both sensors operate at the same time and provide real time obstacle detection.
+The first option is chosen because for a fast moving robot that relies on quick and continuous distance updates, it is important to have both sensors operate at the same time and provide real time feedback.
 
 <br>
 
 #### Placement and Miss
 
-The VL53L1X has a narrow field of view of 27°. One sensor will be facing directly forward, the other facing outward to the side. This approach prioritizes detecting obstacles directly ahead while also providing side distance information. 
+The VL53L1X has a narrow field of view of 27°. One sensor will be facing directly forward, the other facing outward to the side. This approach prioritizes detecting obstacles ahead while also providing side distance information. 
 
-However, this approach may lead to a blind spot on the left of the RC car. Figure 1 below shows possible blind spots. In addition, low obstacles, dark absorptive materials, or transparent surfaces may not reflect enough infrared light, resulting in missed readings.
+However, this may lead to a blind spot on the left of the RC car. Figure 1 below shows possible blind spots. In addition, low obstacles, dark absorptive materials, or transparent surfaces may not reflect enough infrared light, resulting in missed readings.
 
 <p align="center">
   <img src="../img/lab3/tof_placement.jpg" width="80%">
@@ -71,14 +68,9 @@ However, this approach may lead to a blind spot on the left of the RC car. Figur
 
 ## Lab Tasks
 
-#### Solder Connections
+#### Soldering
 
-One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor was soldered to QWIIC cable:
-
-- Red: 3.3V
-- Black: GND
-- Yellow: SCL
-- Blue: SDA
+One of the 650mAh batteries was cut and soldered to JST connector. Both TOF sensors were soldered to QWIIC cables.
 
 <p align="center">
   <img src="../img/lab3/tof_with_qwiic.jpg" width="80%">
@@ -93,7 +85,7 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
 
 After the first TOF was connected, Example05_wire_I2C was ran to verify I2C address.
 
-The address shown is 0x29, which doesn't match with the datasheet's 0x52. However, this makes sense because 0x29 in binary is 0101001, and 0x52 in binary is 01010010. The I2C 8 bit format is the 7 bit address << 1 + R/W bit. The Arduino is using the 7 bit format.
+The address shown is 0x29, which doesn't match with the datasheet's 0x52. However, this makes sense because 0x29 in binary is 0101001, and 0x52 in binary is 01010010. The I2C 8 bit format is the 7 bit address << 1 + R/W bit. Arduino is using the 7 bit format.
 
 <p align="center">
   <img src="../img/lab3/I2C_pic.png" width="80%">
@@ -116,7 +108,7 @@ Since the robot mainly needs to detect nearby obstacles, short mode was chosen. 
 
 #### TOF Sensor Tests
 
-The following tests were ran:
+The following tests were ran to verify sensor functionality:
 
 - Range
 - Accuracy
@@ -132,7 +124,7 @@ TOF sensor was taped to corner of a box facing to white wall, and ruler was used
   <b>Figure 5:</b> TOF Test Setup.
 </p>
 
-###### Range Test
+##### Range Test
 
 A set of distances from 10cm to 100cm, with 10 cm increments, are tested. Measured values are close to actual distance, which confirms functionality of sensor in the range. 
 
@@ -145,7 +137,7 @@ A set of distances from 10cm to 100cm, with 10 cm increments, are tested. Measur
 
 <br>
 
-###### Accuracy Test
+##### Accuracy Test
 
 The error between measured and true distances are plotted. Errors fall between 2 to 3 cm, which is acceptable. Two point calibration or similar methods can be used to reduce this error.
 
@@ -158,7 +150,7 @@ The error between measured and true distances are plotted. Errors fall between 2
 
 <br>
 
-###### Repeatability Test
+##### Repeatability Test
 
 A distance of 50 cm was chosen, and 50 points were taken in the same run. Results show that TOF sensor is quite stable with little noise.
 
@@ -169,7 +161,7 @@ A distance of 50 cm was chosen, and 50 points were taken in the same run. Result
   <b>Figure 8:</b> TOF Repeatability Test.
 </p>
 
-Standard deviation was also calculated at different distances, and it shows that the measurements are consistent and precise across the range.
+Standard deviation was also calculated at different distances, and it indicates that the measurements are consistent and precise across the range.
 
 <p align="center">
   <img src="../img/lab3/std_dev.png" width="80%">
@@ -180,9 +172,9 @@ Standard deviation was also calculated at different distances, and it shows that
 
 <br>
 
-###### Ranging Time
+##### Ranging Time
 
-Average ranging time at each distances are calculated by averaging time between consecutive measurements. There are no clear correlation between ranging time and distance. This is expected because The light travel time difference between 10 cm and 100 cm is only: 0.9 m / 3e8 m = 3ns.
+Average ranging time at each distances are calculated by averaging time between consecutive measurements. There are no clear correlation between ranging time and distance. This is expected because The light travel time difference between 10 cm and 100 cm is only: 0.9 m / 3e8 m = 3 ns.
 
 <p align="center">
   <img src="../img/lab3/std_dev.png" width="80%">
@@ -370,6 +362,8 @@ Similarly, Python code was modified as well to parse the additional TOF data. Gr
 
 <br>
 
+---
+
 #### Infrared Based Distance Sensors
 
 Many distance sensors use infrared light, but they differ in how distance is estimated. The three common approaches are amplitude-based, triangulation-based, and time of flight sensing.
@@ -382,7 +376,6 @@ Pros:
 - Very simple and cheap
 - Works well for object detection and short range distance sensing
 - High sample rate
-
 Cons:
 - Sensitive to surface color, texture, and ambient light (does not work)
 
@@ -393,7 +386,6 @@ Triangulation-based sensors emit an IR beam and measure the angle of the reflect
 Pros:
 - More accurate than amplitude-based sensors
 - Less sensitive to surface color or texture
-
 Cons:
 - Sensitive to ambient light
 - Low sample rate
@@ -405,7 +397,6 @@ TOF sensors, such as the VL53L1X used in this lab, emit short IR pulses and meas
 Pros:
 - Longer range
 - Less sensitive to surface color, texture, and ambient light
-
 Cons:
 - More complex
 - Low sample rate
@@ -422,19 +413,19 @@ Distance is kept at 30 cm.
 From figure 14, white and black background do not affect too much, proving that TOF sensors are insensitive to color. However, when the background is transparent, light passes through, and bounce back from wall behind, which shows larger distance.
 
 <p align="center">
-  <img src="../img/lab3/wall.png" width="30%">
-  <img src="../img/lab3/black.png" width="30%">
-  <img src="../img/lab3/transparent.png" width="30%">
+  <img src="../img/lab3/wall.png" width="32%">
+  <img src="../img/lab3/black.png" width="32%">
+  <img src="../img/lab3/transparent.png" width="32%">
 </p>
 <p align="center">
   <b>Figure 14:</b> TOF distance with white, black, transparent background.
 </p>
 
-From figure 15, absorbing and reflecting background do not affect too much, which is surprising. TOF sensors might be insensitive to absorption/reflection. but it's also likely that the black cotton used isn't absorptive enough.
+From figure 15, absorbing and reflecting background do not affect too much, which is surprising. TOF sensors might be insensitive to absorption/reflection, but it's also likely that the black cotton used isn't absorptive enough.
 
 <p align="center">
-  <img src="../img/lab3/black_cotton.png" width="30%">
-  <img src="../img/lab3/screen.png" width="30%">
+  <img src="../img/lab3/black_cotton.png" width="49%">
+  <img src="../img/lab3/screen.png" width="49%">
 </p>
 <p align="center">
   <b>Figure 15:</b> TOF distance with absorbing, reflecting background.
