@@ -116,18 +116,82 @@ Since the robot mainly needs to detect nearby obstacles, short mode was chosen. 
 
 #### TOF Sensor Tests
 
+The following tests were ran to verify TOF sensor capability:
+
 - Range
 - Accuracy
 - Repeatability
 - Ranging Time
 
-TODO: Discussion and pictures of sensor data with chosen mode
+TOF sensor was taped to corner of a box facing to white wall, and ruler was used to measure distance.
 
-#### Range Test
+<p align="center">
+  <img src="../img/lab3/TOF_Test_Setup.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 5:</b> TOF Test Setup.
+</p>
 
-TOF sensor was taped perpendicular to white wall. A set of distances: {10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150} cm are tested.
+###### Range Test
 
-TODO
+A set of distances from 10cm to 100cm, with 10 cm increments, are tested. Measured values are close to actual distance, which confirms functionality of sensor in the range. 
+
+<p align="center">
+  <img src="../img/lab3/range_test.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 6:</b> TOF Range Test.
+</p>
+
+<br>
+
+###### Accuracy Test
+
+The error between measured and true distances are plotted. Errors fall between 2 to 3 cm, which is acceptable. Two point calibration or similar methods can be used to reduce this error.
+
+<p align="center">
+  <img src="../img/lab3/accuracy_test.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 7:</b> TOF Accuracy Test.
+</p>
+
+<br>
+
+###### Repeatability Test
+
+A distance of 50 cm was chosen, and 50 points were taken in the same run. 
+
+<p align="center">
+  <img src="../img/lab3/repeat_test.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 8:</b> TOF Repeatability Test.
+</p>
+
+Standard deviation was also calculated at different distances, and it shows that the measurements are consistent and precise.
+
+<p align="center">
+  <img src="../img/lab3/std_dev.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 9:</b> TOF Repeatability Test.
+</p>
+
+<br>
+
+###### Ranging Time
+
+Average ranging time at each distances are calculated by averaging time between each measurements.
+
+<p align="center">
+  <img src="../img/lab3/std_dev.jpg" width="80%">
+</p>
+<p align="center">
+  <b>Figure 10:</b> TOF Ranging Time.
+</p>
+
+<br>
 
 #### Two TOF Sensors
 
@@ -214,7 +278,7 @@ The loop continuously prints results while TOF is running in parallel, which pro
   <img src="../img/lab3/nonblocking tof.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Non-blocking Serial Monitor Output.
+  <b>Figure 11:</b> Non-blocking Serial Monitor Output.
 </p>
 
 Next, to investigate limiting factor and loop time, the code below was used:
@@ -254,7 +318,7 @@ This shows that the main limiting factor is not the processor, but the time requ
   <img src="../img/lab3/loop time imu tof.png" width="50%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
+  <b>Figure 12:</b> Loop time with Nothing, TOF, TOF and IMU.
 </p>
 
 <br>
@@ -301,7 +365,7 @@ Similarly, Python code was modified as well to parse the additional TOF data. Gr
   <img src="../img/lab3/tof data.png" width="49%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Plot of IMU and TOF Data vs. Time from BLE, in Parallel. 
+  <b>Figure 13:</b> Plot of IMU and TOF Data vs. Time from BLE, in Parallel. 
 </p>
 
 <br>
@@ -351,6 +415,30 @@ Cons:
 #### Sensitivity to Color and Texture
 
 Although TOF sensors measure time, they still require sufficient reflected light. Dark or absorptive materials reduce return signal, which can increase noise. Transparent surfaces may allow light to pass through, causing no return signal. Highly angled surfaces can reflect return signal away from the receiver.
+
+To test for this theory, five different backgrounds were used: white, black, transparent, black cotton (absorb well), screen (reflect well).
+Distance is kept at 30 cm.
+
+From figure 14, white and black background do not affect too much, proving that TOF sensors are insensitive to color. However, when the background is transparent, light passes through, and bounce back from wall behind, which shows larger distance.
+
+<p align="center">
+  <img src="../img/lab3/wall.png" width="30%">
+  <img src="../img/lab3/black.png" width="30%">
+  <img src="../img/lab3/transparent.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 14:</b> TOF distance with white, black, transparent background.
+</p>
+
+From figure 15, absorbing and reflecting background do not affect too much, which is surprising. TOF sensors might be insensitive to absorption/reflection. but it's also likely that the black cotton used isn't absorptive enough.
+
+<p align="center">
+  <img src="../img/lab3/black_cotton.png" width="30%">
+  <img src="../img/lab3/screen.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 15:</b> TOF distance with absorbing, reflecting background.
+</p>
 
 Overall, TOF sensors are less sensitive to color and texture than amplitude-based sensors, but they are not completely immune.
 
