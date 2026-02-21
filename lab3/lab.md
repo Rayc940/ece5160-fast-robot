@@ -137,7 +137,7 @@ TOF sensor was taped to corner of a box facing to white wall, and ruler was used
 A set of distances from 10cm to 100cm, with 10 cm increments, are tested. Measured values are close to actual distance, which confirms functionality of sensor in the range. 
 
 <p align="center">
-  <img src="../img/lab3/range_test.jpg" width="80%">
+  <img src="../img/lab3/range_test.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 6:</b> TOF Range Test.
@@ -150,7 +150,7 @@ A set of distances from 10cm to 100cm, with 10 cm increments, are tested. Measur
 The error between measured and true distances are plotted. Errors fall between 2 to 3 cm, which is acceptable. Two point calibration or similar methods can be used to reduce this error.
 
 <p align="center">
-  <img src="../img/lab3/accuracy_test.jpg" width="80%">
+  <img src="../img/lab3/accuracy_test.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 7:</b> TOF Accuracy Test.
@@ -163,7 +163,7 @@ The error between measured and true distances are plotted. Errors fall between 2
 A distance of 50 cm was chosen, and 50 points were taken in the same run. 
 
 <p align="center">
-  <img src="../img/lab3/repeat_test.jpg" width="80%">
+  <img src="../img/lab3/repeat_test.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 8:</b> TOF Repeatability Test.
@@ -172,7 +172,7 @@ A distance of 50 cm was chosen, and 50 points were taken in the same run.
 Standard deviation was also calculated at different distances, and it shows that the measurements are consistent and precise.
 
 <p align="center">
-  <img src="../img/lab3/std_dev.jpg" width="80%">
+  <img src="../img/lab3/std_dev.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 9:</b> TOF Repeatability Test.
@@ -185,7 +185,7 @@ Standard deviation was also calculated at different distances, and it shows that
 Average ranging time at each distances are calculated by averaging time between each measurements.
 
 <p align="center">
-  <img src="../img/lab3/std_dev.jpg" width="80%">
+  <img src="../img/lab3/std_dev.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 10:</b> TOF Ranging Time.
