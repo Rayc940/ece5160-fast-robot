@@ -116,7 +116,7 @@ Since the robot mainly needs to detect nearby obstacles, short mode was chosen. 
 
 #### TOF Sensor Tests
 
-The following tests were ran to verify TOF sensor capability:
+The following tests were ran:
 
 - Range
 - Accuracy
@@ -160,7 +160,7 @@ The error between measured and true distances are plotted. Errors fall between 2
 
 ###### Repeatability Test
 
-A distance of 50 cm was chosen, and 50 points were taken in the same run. 
+A distance of 50 cm was chosen, and 50 points were taken in the same run. Results show that TOF sensor is quite stable with little noise.
 
 <p align="center">
   <img src="../img/lab3/repeat_test.png" width="80%">
@@ -169,7 +169,7 @@ A distance of 50 cm was chosen, and 50 points were taken in the same run.
   <b>Figure 8:</b> TOF Repeatability Test.
 </p>
 
-Standard deviation was also calculated at different distances, and it shows that the measurements are consistent and precise.
+Standard deviation was also calculated at different distances, and it shows that the measurements are consistent and precise across the range.
 
 <p align="center">
   <img src="../img/lab3/std_dev.png" width="80%">
@@ -182,7 +182,7 @@ Standard deviation was also calculated at different distances, and it shows that
 
 ###### Ranging Time
 
-Average ranging time at each distances are calculated by averaging time between each measurements.
+Average ranging time at each distances are calculated by averaging time between consecutive measurements. There are no clear correlation between ranging time and distance. This is expected because The light travel time difference between 10 cm and 100 cm is only: 0.9 m / 3e8 m = 3ns.
 
 <p align="center">
   <img src="../img/lab3/std_dev.png" width="80%">
@@ -195,7 +195,7 @@ Average ranging time at each distances are calculated by averaging time between 
 
 #### Two TOF Sensors
 
-To hook up both TOF sensors, GPIO 4 and 6 on the Artemis are used to connect to XSHUT pins on TOFs. init_tof() are called to first initialize TOF1, change its address to 0x30, then initialize TOF2.
+To hook up both TOF sensors, GPIO 4 and 8 on the Artemis are used to connect to XSHUT pins on TOFs. init_tof() are called to first initialize TOF1, change its address to 0x30, then initialize TOF2.
 
 ```cpp
 void init_tof() {
