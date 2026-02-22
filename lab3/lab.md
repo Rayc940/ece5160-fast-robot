@@ -17,6 +17,7 @@ One sensor is powered on first. Its address is changed to a new value programmat
 Advantage:
 - Both TOF sensors are active
 - Fast and real time sampling
+
 Disadvantage:
 - More complex initialization for each power cycle
 
@@ -28,6 +29,7 @@ One sensor is powered first, the other in shutdown, and vice versa. This avoids 
 
 Advantage:
 - Simpler, no address reassignment
+
 Disadvantage:
 - Only one sensor active
 - Reduced sampling rate
@@ -177,7 +179,7 @@ Standard deviation was also calculated at different distances, and it indicates 
 Average ranging time at each distances are calculated by averaging time between consecutive measurements. There are no clear correlation between ranging time and distance. This is expected because The light travel time difference between 10 cm and 100 cm is only: 0.9 m / 3e8 m = 3 ns.
 
 <p align="center">
-  <img src="../img/lab3/std_dev.png" width="80%">
+  <img src="../img/lab3/ranging_time.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 10:</b> TOF Ranging Time.
@@ -376,6 +378,7 @@ Pros:
 - Very simple and cheap
 - Works well for object detection and short range distance sensing
 - High sample rate
+
 Cons:
 - Sensitive to surface color, texture, and ambient light (does not work)
 
@@ -386,6 +389,7 @@ Triangulation-based sensors emit an IR beam and measure the angle of the reflect
 Pros:
 - More accurate than amplitude-based sensors
 - Less sensitive to surface color or texture
+
 Cons:
 - Sensitive to ambient light
 - Low sample rate
@@ -397,6 +401,7 @@ TOF sensors, such as the VL53L1X used in this lab, emit short IR pulses and meas
 Pros:
 - Longer range
 - Less sensitive to surface color, texture, and ambient light
+
 Cons:
 - More complex
 - Low sample rate
