@@ -1,75 +1,39 @@
 ## Prelab
 
-#### I2C Sensor Address
+For this lab, the DRV8833 dual H bridge motor driver is used to power two DC motors. The Artemis generates PWM signals to control motor speed. Analog pins A0 to A3 are used. 
 
-VL53L1X Time of Flight Sensors are used. The default I2C address is 0x52 from the datasheet.
-
-<br>
-
-#### ToF Sensors Approach
-
-Both VL53L1X sensors share the same I2C address. As a result, they can't be connected to the same I2C bus at the same time. There are two approaches to solve this:
-
-###### 1) Programmatically Change Address:
-
-One sensor is powered on first. Its address is changed to a new value programmatically. The second sensor is then powered and kept at the default address.
-
-Advantage:
-- Both TOF sensors are active
-- Fast and real time sampling
-
-Disadvantage:
-- More complex initialization for each power cycle
-
-<br>
-
-###### 2) Continuously Enable/Disable Sensors
-
-One sensor is powered first, the other in shutdown, and vice versa. This avoids changing address.
-
-Advantage:
-- Simpler, no address reassignment
-- Fast and real time sampling
-
-Disadvantage:
-- Only one sensor active
-- Reduced sampling rate
-
-<br>
-  
-The first option is chosen because for a fast moving robot that relies on quick and continuous distance updates, it is important to have both sensors operate at the same time and provide real time obstacle detection.
-
-<br>
-
-#### Placement and Miss
-
-The VL53L1X has a narrow field of view of 27°. One sensor will be facing directly forward, the other facing outward to the side. This approach prioritizes detecting obstacles directly ahead while also providing side distance information. 
-
-However, this approach may lead to a blind spot on the left of the RC car. Figure 1 below shows possible blind spots. In addition, low obstacles, dark absorptive materials, or transparent surfaces may not reflect enough infrared light, resulting in missed readings.
-
-<p align="center">
-  <img src="../img/lab3/tof_placement.jpg" width="80%">
-</p>
-<p align="center">
-  <b>Figure 1:</b> TOF Placement and Potential Blind Spots.
-</p>
-
-<br>
-
-#### Wiring Diagram
+To supply sufficient current, we will parallel the two channels. Because both H bridges are on the same IC and share the same internal timing circuit, it is acceptable to parallel the outputs to double the average current.
 
 <p align="center">
   <img src="../img/lab3/wiring diagram.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Wiring Diagram.
+  <b>Figure 1:</b> Wiring Diagram.
 </p>
+
+The DRV8833 uses a separate power source (850mAh) from the Artemis. This is because motors create high frequency electrical noise and current spikes that could harm the Artemis.
+
+For wiring, motor power wires will be kept short and routed away from signal wires to reduce EMI noise. PWM and control wires will also be kept short. Stranded wire will be used instead of solid core wire so it doesn’t break when the car accelerates. 
 
 <br>
 
 ---
 
 ## Lab Tasks
+
+Picture of your setup with power supply and oscilloscope hookup
+Power supply setting discussion
+Include the code snippet for your analogWrite code that tests the motor drivers
+Image of your oscilloscope
+Short video of wheels spinning as expected (including code snippet it’s running on)
+Short video of both wheels spinning (with battery driving the motor drivers)
+Picture of all the components secured in the car
+Consider labeling your picture if you can’t see all the components
+Lower limit PWM value discussion
+Calibration demonstration (discussion, video, code, pictures as needed)
+Open loop code and video
+(5000) analogWrite frequency discussion (include screenshots and code)
+(5000) Lowest PWM value speed (once in motion) discussion (include videos where appropriate)
 
 #### Solder Connections
 
@@ -258,101 +222,6 @@ This shows that the main limiting factor is not the processor, but the time requ
 </p>
 
 <br>
-
-#### TOF and IMU Record
-
-The switch statements START_IMU_RECORD and SEND_IMU_RECORD from lab 2 were modified to START_RECORD and SEND_RECORD. It now sends data in the format I: IMU data, T1: TOF1 data, T2: TOF2 data.
-
-```cpp
-case START_RECORD:
-  IMU, TOF index = 0
-  record_done = false;
-  recording = true;
-  record_start_us = micros();
-
-  tx_estring_value.clear();
-  tx_estring_value.append("REC_STARTED");
-  tx_characteristic_string.writeValue(tx_estring_value.c_str());
-  break;
-```
-
-```cpp
-case SEND_RECORD:
-  send header with imu, tof index length
-  // IMU
-  for (int i = 0; i < imu_len; i++) {
-    send I, time, pitch, roll over BLE
-  }
-
-  // TOF1
-  for (int i = 0; i < tof1_len; i++) {
-    send T1, time, tof1 over BLE
-  }
-
-  // TOF2
-  for (int i = 0; i < tof2_len; i++) {
-    send T2, time, tof2 over BLE
-  }
-```
-Similarly, Python code was modified as well to parse the additional TOF data. Graph of data sent over BLE for TOF and IMU are shown below.
-
-<p align="center">
-  <img src="../img/lab3/imu data.png" width="49%">
-  <img src="../img/lab3/tof data.png" width="49%">
-</p>
-<p align="center">
-  <b>Figure TODO:</b> Plot of IMU and TOF Data vs. Time from BLE, in Parallel. 
-</p>
-
-<br>
-
-#### Infrared Based Distance Sensors
-
-Many distance sensors use infrared light, but they differ in how distance is estimated. The three common approaches are amplitude-based, triangulation-based, and time of flight sensing.
-
-###### 1) Amplitude-Based IR Sensors
-
-Amplitude-based IR estimate distance by measuring the intensity of reflected IR. The assumption is that reflected light decreases as distance increases.
-
-Pros:
-- Very simple and cheap
-- Works well for object detection and short range distance sensing
-- High sample rate
-
-Cons:
-- Sensitive to surface color, texture, and ambient light (does not work)
-
-###### 2) Triangulation-Based IR Sensors
-
-Triangulation-based sensors emit an IR beam and measure the angle of the reflected light on a detector. Distance is calculated from geometry.
-
-Pros:
-- More accurate than amplitude-based sensors
-- Less sensitive to surface color or texture
-
-Cons:
-- Sensitive to ambient light
-- Low sample rate
-
-###### 3) TOF Sensors
-
-TOF sensors, such as the VL53L1X used in this lab, emit short IR pulses and measure the time it takes for the light to return. Distance is calculated directly from the speed of light.
-
-Pros:
-- Longer range
-- Less sensitive to surface color, texture, and ambient light
-
-Cons:
-- More complex
-- Low sample rate
-
-<br>
-
-#### Sensitivity to Color and Texture
-
-Although TOF sensors measure time, they still require sufficient reflected light. Dark or absorptive materials reduce return signal, which can increase noise. Transparent surfaces may allow light to pass through, causing no return signal. Highly angled surfaces can reflect return signal away from the receiver.
-
-Overall, TOF sensors are less sensitive to color and texture than amplitude-based sensors, but they are not completely immune.
 
 ---
 
