@@ -53,11 +53,57 @@ One of the 650mAh batteries was cut and soldered to JST connector. TOF sensor wa
 
 <br>
 
-#### I2C Scanning
+#### TWo Motor Code
 
-After the first TOF was connected, Example05_wire_I2C was ran to verify I2C address.
+```cpp
+#define IN1 2
+#define IN2 3
+#define IN3 0
+#define IN4 1
 
-The address shown is 0x29, which doesn't match with the datasheet's 0x52. However, this makes sense because 0x29 in binary is 0101001, and 0x52 in binary is 01010010. The I2C 8 bit format is the 7 bit address << 1 + R/W bit. The Arduino is using the 7 bit format.
+
+void setup() {
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  Serial.begin(115200);
+  delay(1000);
+}
+
+void loop() {
+  // Forward
+  analogWrite(IN1, 255);
+  analogWrite(IN2, 150);
+  analogWrite(IN3, 150);
+  analogWrite(IN4, 255);
+  Serial.println("forward");
+  delay(2000);
+
+  // Coast (free spin)
+  analogWrite(IN1, 0);
+  analogWrite(IN2, 0);
+  analogWrite(IN3, 0);
+  analogWrite(IN4, 0);
+  Serial.println("stop");
+  delay(2000);
+
+  // Reverse
+  analogWrite(IN1, 150);
+  analogWrite(IN2, 255);
+  analogWrite(IN3, 255);
+  analogWrite(IN4, 150);
+  Serial.println("reverse");
+  delay(2000);
+
+  analogWrite(IN1, 0);
+  analogWrite(IN2, 0);
+  analogWrite(IN3, 0);
+  analogWrite(IN4, 0);
+  Serial.println("stop");
+  delay(2000);
+}
+```
 
 <p align="center">
   <img src="../img/lab3/I2C_pic.png" width="80%">
