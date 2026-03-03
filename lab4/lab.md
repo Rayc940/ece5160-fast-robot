@@ -37,7 +37,7 @@ Open loop code and video
 (5000) analogWrite frequency discussion (include screenshots and code)
 (5000) Lowest PWM value speed (once in motion) discussion (include videos where appropriate)
 
-#### Motor Driver with Oscilloscope
+#### Motor Driver with Oscilloscope TODO
 
 Firstly, one motor driver chip was soldered to the Artemis and powered using dc power supply. Since the battery has supply voltage of 3.7V, the dc power supply was set to same level.
 
@@ -49,58 +49,59 @@ Firstly, one motor driver chip was soldered to the Artemis and powered using dc 
   <b>Figure 2:</b> Motor Driver Setup with Oscilloscope.
 </p>
 
-Code below was uploaded, and input and output of motor driver was probed.
+Code below was uploaded, and corresponding output of motor driver was probed.
 
 ```cpp
-#define IN1 2
-#define IN2 3
-
-void setup() {
-  pinMode(IN1, OUTPUT);
-  pinMode(IN2, OUTPUT);
-  Serial.begin(115200);
-}
-
 void loop() {
-  // Forward
-  analogWrite(IN1, 255);
-  analogWrite(IN2, 150);
-  Serial.println("forward");
+  // 50% Duty Cycle
+  analogWrite(IN2, 128);
   delay(2000);
 
-  // Stop
-  analogWrite(IN1, 0);
-  analogWrite(IN2, 0);
-  Serial.println("stop");
-  delay(2000);
-
-  // Reverse
-  analogWrite(IN1, 150);
+  // 100% Duty Cycle
   analogWrite(IN2, 255);
-  Serial.println("reverse");
+  delay(2000);
+
+  // Off
+  analogWrite(IN2, 0);
   delay(2000);
 }
 ```
 
-Video 1 below shows the oscilloscope results.
+Video 1 below shows the oscilloscope results. Channel 2 shows changing PWM signals that matches the code, while channel 1's PWM is likely due to interference since the amplitude is only around 0.09V. This verifies functionality of motor driver.
 
-<p align="center">
-  <img src="../img/lab3/tof_with_qwiic.jpg" width="80%">
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Two TOF Sensor.
 </p>
-<p align="center">
-  <b>Figure TODO:</b> TODO.
+
+RC car was then used to test if wheel turns. Video 2 below shows RC car wheel turning forward and reverse, confirming functionality. Battery was used instead of external DC power supply.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Two TOF Sensor.
 </p>
-
-<br>
-
-RC car was then placed with one sided on. Video 2 below shows RC car wheel turning forward and reverse, confirming functionality.
-TODO
 
 <br>
 
 #### Two Motor Drivers
 
-After first motor driver confirmed functionality, same process was used on the second motor driver. Code below was used for both wheels turing forward and reverse.
+After first motor driver confirmed functionality, same process was applied to the second motor driver. Code below was used for both wheels turing forward and reverse.
 
 ```cpp
 #define IN1 2
@@ -121,26 +122,7 @@ void loop() {
 }
 ```
 
-Video TODO below shows both wheels turning
-
-<p align="center">
-  <img src="../img/lab3/I2C_pic.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure TODO:</b> Screenshot of Artemis scanning for I2C device.
-</p>
-
-<br>
-
-#### Assembly
-
-The car was assembled with all components: Artemis, IMU, TOF sensors, motor drivers.
-
-Figure TODO below shows the car.
-
-<br>
-
-#### Lower Limit PWM
+Video 3 below shows both wheels turning forward and reverse, powering using battery.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -152,12 +134,48 @@ Figure TODO below shows the car.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Two TOF Sensor.
+  <b>Video TODO:</b> Two TOF Sensor.
+</p>
+
+<br>
+
+#### RC Car Assembly
+
+RC car was assembled with all components: Artemis, IMU, TOF sensors, motor drivers.
+
+Figure TODO below shows the car.
+
+<p align="center">
+  <img src="../img/lab3/loop time.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure TODO:</b> Assembled RC Car.
+</p>
+
+<br>
+
+#### Lower Limit PWM
+
+The minimum PWM to run was determined to be TODO.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Two TOF Sensor.
 </p>
 
 <br>
 
 #### Calibration Factor
+
+The two motors might move at differnet speeds, making the car unable to travel in straight line. 
 
 <p align="center">
   <img src="../img/lab3/loop time.png" width="20%">
