@@ -5,10 +5,10 @@ For this lab, the DRV8833 dual H bridge motor driver is used to power two DC mot
 To supply sufficient current, we will parallel the two channels. Because both H bridges are on the same IC and share the same internal timing circuit, it is acceptable to parallel the outputs to double the average current.
 
 <p align="center">
-  <img src="../img/lab3/wiring diagram.jpg" width="80%">
+  <img src="../img/lab4/wiring_diagram.jpg" width="80%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> TODO.
+  <b>Figure 1:</b> Wiring Diagram.
 </p>
 
 The DRV8833 uses a separate power source (850mAh) from the Artemis. This is because motors create high frequency electrical noise and current spikes that could harm the Artemis.
@@ -39,11 +39,15 @@ Open loop code and video
 
 #### Motor Driver with Oscilloscope
 
-One motor driver chip was soldered to the Artemis and powered using dc power supply. Since the battery has supply voltage of 3.7V, the dc power supply was set to same level.
+Firstly, one motor driver chip was soldered to the Artemis and powered using dc power supply. Since the battery has supply voltage of 3.7V, the dc power supply was set to same level.
 
-Setup was shown in figure 1 below.
-
-TODO
+<p align="center">
+  <img src="../img/lab4/whole_setup.jpg" width="49%">
+  <img src="../img/lab4/scope_setup.jpg" width="49%">
+</p>
+<p align="center">
+  <b>Figure 2:</b> Motor Driver Setup with Oscilloscope.
+</p>
 
 Code below was uploaded, and input and output of motor driver was probed.
 
