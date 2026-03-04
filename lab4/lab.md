@@ -73,13 +73,13 @@ Video 1 below shows the oscilloscope results. Channel 2 shows changing PWM signa
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    src="https://www.youtube.com/embed/oFxlku3yY9s"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> Two TOF Sensor.
+  <b>Video TODO:</b> Motor Driver with Oscilloscope.
 </p>
 
 RC car was then used to test if wheel turns. Video 2 below shows RC car wheel turning forward and reverse, confirming functionality. Battery was used instead of external DC power supply.
@@ -88,13 +88,13 @@ RC car was then used to test if wheel turns. Video 2 below shows RC car wheel tu
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    src="https://www.youtube.com/embed/sf4BN3Vpjv8"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> Two TOF Sensor.
+  <b>Video TODO:</b> Motor Driver with Wheels on One Side.
 </p>
 
 <br>
@@ -128,7 +128,7 @@ Video 3 below shows both wheels turning forward and reverse, powering using batt
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    src="https://www.youtube.com/embed/cwK3nXUN26Y"
     frameborder="0"
     allowfullscreen>
   </iframe>
@@ -146,7 +146,7 @@ RC car was assembled with all components: Artemis, IMU, TOF sensors, motor drive
 Figure TODO below shows the car.
 
 <p align="center">
-  <img src="../img/lab3/loop time.png" width="80%">
+  <img src="../img/lab4/assembly.jpg" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> Assembled RC Car.
@@ -156,19 +156,34 @@ Figure TODO below shows the car.
 
 #### Lower Limit PWM
 
-The minimum PWM to run was determined to be TODO.
+The minimum PWM to run was determined to be 25.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/lIg7rgF5KvY"
+    src="https://www.youtube.com/embed/Rtli0zgsHWg"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> Two TOF Sensor.
+  <b>Video TODO:</b> Lower Limit PWM Forward.
+</p>
+
+For turn, the lower limit PWM is 95.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/IvMr34Qdg7I"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Lower Limit PWM Turn.
 </p>
 
 <br>
@@ -177,26 +192,34 @@ The minimum PWM to run was determined to be TODO.
 
 The two motors might move at differnet speeds, making the car unable to travel in straight line. 
 
-<p align="center">
-  <img src="../img/lab3/loop time.png" width="20%">
-  <img src="../img/lab3/loop time tof.png" width="39%">
-  <img src="../img/lab3/loop time imu tof.png" width="50%">
-</p>
-<p align="center">
-  <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/BOTg3QIemNw"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> RC Car in Straight Line.
 </p>
 
 <br>
 
 #### Open Loop Control
 
-<p align="center">
-  <img src="../img/lab3/loop time.png" width="20%">
-  <img src="../img/lab3/loop time tof.png" width="39%">
-  <img src="../img/lab3/loop time imu tof.png" width="50%">
-</p>
-<p align="center">
-  <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/JOQKsnqk7UQ"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Open Loop Control.
 </p>
 
 <br>
@@ -204,9 +227,7 @@ The two motors might move at differnet speeds, making the car unable to travel i
 #### analogWrite Frequency
 
 <p align="center">
-  <img src="../img/lab3/loop time.png" width="20%">
-  <img src="../img/lab3/loop time tof.png" width="39%">
-  <img src="../img/lab3/loop time imu tof.png" width="50%">
+  <img src="../img/lab4/freq_scope.jpg" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
@@ -216,13 +237,31 @@ The two motors might move at differnet speeds, making the car unable to travel i
 
 #### Lower Limit PWM While Moving
 
-<p align="center">
-  <img src="../img/lab3/loop time.png" width="20%">
-  <img src="../img/lab3/loop time tof.png" width="39%">
-  <img src="../img/lab3/loop time imu tof.png" width="50%">
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/OyFa-V3Fv2Q"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Lower Limit PWM in Motion Forward.
 </p>
-<p align="center">
-  <b>Figure TODO:</b> Loop time with Nothing, TOF, TOF and IMU.
+
+TODO:
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/OyFa-V3Fv2Q"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Lower Limit PWM in Motion Turn.
 </p>
 
 <br>
