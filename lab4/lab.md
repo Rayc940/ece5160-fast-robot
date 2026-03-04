@@ -290,8 +290,6 @@ Video 8 below shows the forward lower limit PWM in motion.
 
 However, the lowest PWM value at which the robot can turn while in motion was the same (95 = 37% duty cycle) as before. This is likely because turning requires overcoming similar friction regardless of whether the robot is starting from rest or already turning.
 
-<br>
-
 ---
 
 ## Discussion
