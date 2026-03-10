@@ -141,144 +141,158 @@ Video 1 below shows the result of P only controller.
 
 <br>
 
-#### I Control
+#### PI Control
 
-RC car was then used to test if wheel turns. Video 2 below shows RC car wheel turning forward and reverse, confirming functionality. Battery was used instead of external DC power supply.
+To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and pushes the robot closer to the exact setpoint.
+
+```cpp
+i_accum += (float)err * dt;
+float i = Ki * i_accum;
+```
+
+However, when the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate excessively, which may lead to integrator wind-up. To prevent this, the accumulated integral value was clamped within a fixed range.
+
+```cpp
+if (i_accum > I_CLAMP) i_accum = I_CLAMP;
+if (i_accum < -I_CLAMP) i_accum = -I_CLAMP
+```
+
+With Ki = 0.001, the PI controller reduced the steady state error and allowed the robot to settle very close to the target without oscillation.
+
+<p align="center">
+  <img src="../img/lab5/PI_dist.png" width="30%">
+  <img src="../img/lab5/PI_error.png" width="30%">
+  <img src="../img/lab5/PI_pwm.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 1:</b> Plots of PI Control Data.
+</p>
+
+Video 1 below shows the result of PI controller.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/sf4BN3Vpjv8"
+    src="https://www.youtube.com/embed/oFxlku3yY9s"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 2:</b> Motor Driver with Wheels on One Side.
+  <b>Video TODO:</b> PI Control to Wall.
 </p>
 
 <br>
 
-#### Two Motor Drivers
+#### PID Control
 
-After the first motor driver confirmed functionality, same process was applied to the second motor driver. Code below was used for both wheels turing forward and reverse.
+A derivative term was also added to help reduce overshoot and slow the robot as it approached the wall. The derivative term reacts to the rate of change of the error, which helps dampen motion near the setpoint.
 
 ```cpp
-#define IN1 2
-#define IN2 3
-#define IN3 0
-#define IN4 1
+float d_raw = ((float)err - prev_err) / dt;
+float d = Kd * d_raw;
+```
 
-void setup() {
-  initialize pins
-  Serial.begin(115200);
-}
+Because the ToF sensor measurements are discrete and noisy, using the raw derivative caused unstable behavior. To reduce this noise, a low pass filter was applied.
 
-void loop() {
-  move forward
-  stop
-  move reverse
-  stop
+```cpp
+d_filt = alpha_d * d_raw + (1.0f - alpha_d) * d_filt;
+float d = Kd * d_filt;
+```
+
+This smoothing reduced sudden spikes in the derivative signal and improved stability.
+
+<p align="center">
+  <img src="../img/lab5/PID_dist.png" width="30%">
+  <img src="../img/lab5/PID_error.png" width="30%">
+  <img src="../img/lab5/PID_pwm.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 1:</b> Plots of PID Control Data.
+</p>
+
+Video 3 below shows the result of PID controller.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/oFxlku3yY9s"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> PI Control to Wall.
+</p>
+
+<br>
+
+#### TOF Sensor Setup
+
+The ToF sensor settings also affect performance. Faster sensing allows the controller to react more quickly to changes.
+
+For this lab, the sensor was configured in short distance mode with a 33 ms timing budget, which provided sufficiently fast updates. 
+
+A faster sampling rate can help reduce the delay between measurement and controller response, which improves stability.
+
+
+```cpp
+distanceSensor1.setDistanceModeShort();
+distanceSensor1.setTimingBudgetInMs(33);
+distanceSensor1.startRanging();
+```
+
+<br>
+
+#### Motor Deadband
+
+From Lab 4, motors have a minimum PWM limit which they would not move. If the controller output became too small near the setpoint, the robot might stop moving even though the error was not zero.
+
+To address this, a deadband helper function was applied to the PWM command before sending it to the motors.
+
+```cpp
+int apply_deadband(int pwm)
+{
+  int a = abs(pwm);
+  if (a == 0) return 0;
+  if (a < PWM_DEADBAND) a = PWM_DEADBAND;
+  if (a > 255) a = 255;
+  return (pwm < 0) ? -a : a;
 }
 ```
 
-Video 3 below shows both wheels turning forward and reverse, powering using battery.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/cwK3nXUN26Y"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 3:</b> Motor Driver with Wheels on Both Sides.
-</p>
-
 <br>
 
-#### RC Car Assembly
+#### Perturbation Test
 
-RC car was assembled with all components: Artemis, IMU, TOF sensors, motor drivers. The two TOF sensors are placed as discussed in lab 3.
+The robot was also tested with external perturbations. After reaching the target distance, the robot was manually pushed closer and farther away.
+
+In both cases, the controller responded by driving the robot back toward the 304 mm setpoint.
 
 <p align="center">
-  <img src="../img/lab4/assembly.jpg" width="80%">
+  <img src="../img/lab5/pert_dist.png" width="30%">
+  <img src="../img/lab5/pert_error.png" width="30%">
+  <img src="../img/lab5/pert_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 3:</b> Assembled RC Car.
+  <b>Figure 1:</b> Plots of PID Control Perturbation Data.
 </p>
 
-<br>
-
-#### Lower Limit PWM
-
-Next, the minimum PWM to make RC car travel was experimentally determined to be 25 = 10% duty cycle. Video 4 below shows RC car moving while on the setting.
+Video 3 below shows the result of PID controller under perturbation.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/Rtli0zgsHWg"
+    src="https://www.youtube.com/embed/oFxlku3yY9s"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 4:</b> Lower Limit PWM Forward.
-</p>
-
-<br>
-
-For on axis turn, the lower limit PWM is 95 = 37% duty cycle. Video 5 below shows RC car turning while on the setting.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/IvMr34Qdg7I"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 5:</b> Lower Limit PWM Turn.
-</p>
-
-<br>
-
-#### Calibration Factor
-
-The two motors moved at differnet speeds, making the car unable to travel in straight line. To combat this, a calibration factor was introduced to reduce pwm on the more powerful side. Calibration factor was experimentally determined to be 0.8. The function clipPWM() is used to make sure pwm value is within 0 to 255 after calibration.
-
-```cpp
-void driveForward(int pwm) {
-  int pwmL = pwm;
-  int pwmR = clipPWM((int)(pwm * calibration));
-
-  analogWrite(L_IN1, pwmL);
-  analogWrite(L_IN2, 255);
-
-  analogWrite(R_IN1, 255);
-  analogWrite(R_IN2, pwmR);
-}
-```
-
-Video 6 successfully demonstrates RC car traveling in a straight line.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/BOTg3QIemNw"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 6:</b> RC Car in Straight Line.
+  <b>Video TODO:</b> PID Control, Perturbation.
 </p>
 
 <br>
