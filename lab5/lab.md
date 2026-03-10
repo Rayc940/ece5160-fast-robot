@@ -116,9 +116,9 @@ float p = Kp * (float)err;
 After tuning, Kp of 0.1 was chosen. Proportional control was able to drive the robot toward the wall and stop near the target distance, but some oscillation occurred.
 
 <p align="center">
-  <img src="../img/lab5/P_dist.png" width="33%">
-  <img src="../img/lab5/P_error.png" width="33%">
-  <img src="../img/lab5/P_pwm.png" width="33%">
+  <img src="../img/lab5/P_dist.png" width="30%">
+  <img src="../img/lab5/P_error.png" width="30%">
+  <img src="../img/lab5/P_pwm.png" width="30%">
 </p>
 <p align="center">
   <b>Figure 1:</b> Plots of P Control Data.
