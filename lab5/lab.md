@@ -111,7 +111,7 @@ The proportional term was used first. The proportional controller directly scale
 
 ```cpp
 float p = Kp * (float)err;
-```​
+```
 
 After tuning, Kp of 0.1 was chosen. Proportional control was able to drive the robot toward the wall and stop near the target distance, but some oscillation occurred.
 
