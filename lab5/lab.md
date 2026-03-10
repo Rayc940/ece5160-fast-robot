@@ -1,56 +1,130 @@
 ## Prelab
 
-For this lab, the DRV8833 dual H bridge motor drivers are used to power two DC motors. The Artemis generates PWM signals to control motor speed. Analog pins A0 to A3 are used. 
+A bluetooth debugging system was set up before starting controller tuning. The goal was to let the Artemis run PID for a fixed amount of time while storing data locally, and then send the recorded data for analyzing. 
 
-To supply sufficient current, we will parallel the two channels. Because both H bridges are on the same IC and share the same internal timing circuit, it is acceptable to parallel the outputs to double the average current.
+```cpp
+initalize lists
 
-<p align="center">
-  <img src="../img/lab4/wiring_diagram.jpg" width="80%">
-</p>
-<p align="center">
-  <b>Figure 1:</b> Wiring Diagram.
-</p>
+def parse_pid(line: str):
+    parts = line.split(",")
+    parse parts
 
-The DRV8833 uses a separate power source (850mAh) from the Artemis. This is because motors create high frequency electrical noise and current spikes that could harm the Artemis.
+def data_handler(_uuid, response: bytearray):
+    parse_pid(incoming data)
+    store in local lists
 
-For wiring, motor power wires will be kept short and routed away from signal wires to reduce EMI noise. PWM and control wires will also be kept short. Stranded wire will be used instead of solid core wire so it doesn’t break when the car accelerates. 
+start BLE notification
+set PID gains
+start PID run
+get PID data
+wait for PID data
+stop BLE notification
+```
+
+On Artemis side, four commands are added:
+
+```cpp
+START_PID_RUN, STOP_PID_RUN, GET_PID_DATA, SET_PID_GAINS
+```
+
+When the laptop sent START_PID_RUN, the robot cleared the old PID log, reset the controller state, and began the closed loop run. 
+
+```cpp
+case START_PID_RUN:
+        {
+        pid_len = 0;
+        pid_running = true;
+        pid_start_ms = millis();
+        prev_pid_us = 0;
+        i_accum = 0.0f;
+        prev_err = 0.0f;
+        d_filt = 0.0f;
+        break;
+        }
+```
+
+To make tuning easier, PID gains were also sent over BLE with SET_PID_GAINS. This helped quickly test different Kp, Ki, and Kd values without needing to upload code everytime.
+
+```cpp
+case SET_PID_GAINS:
+        float kp, ki, kd;
+        success = robot_cmd.get_next_value(kp); if (!success) return;
+        success = robot_cmd.get_next_value(ki); if (!success) return;
+        success = robot_cmd.get_next_value(kd); if (!success) return;
+        Kp = kp; Ki = ki; Kd = kd;
+        break;
+```
+
+For safety, there is a hard stop. The robot stopped if the run time exceeded the set limit, if the measured distance became too small, or if BLE connection was lost.
+
+```cpp
+if (now_ms - pid_start_ms >= PID_RUN_MS) {
+        coastStop();
+        pid_running = false;
+        return;
+}
+
+if (last_dist_mm > 0 && last_dist_mm < 120) {
+        coastStop();
+        pid_running = false;
+        return;
+}
+```
+
+After the run finished, GET_PID_DATA was called to get data over BLE. The Artemis first sent a header containing the number of samples, then streamed each saved data line back over BLE.
+
+```cpp
+case GET_PID_DATA:
+        send headers
+        for (int i = 0; i < pid_len; i++) {
+                send data: time, TOF ready, distance, error, P, I, D, PWM
+        }
+        break;
+```
 
 <br>
 
 ---
 
 ## Lab Tasks
-#### Motor Driver with Oscilloscope
 
-Firstly, one motor driver chip was soldered to the Artemis and powered using dc power supply. Since the battery has supply voltage of 3.7V, the dc power supply was set to same level.
+#### Position Control
 
-<p align="center">
-  <img src="../img/lab4/whole_setup.jpg" width="49%">
-  <img src="../img/lab4/scope_setup.jpg" width="49%">
-</p>
-<p align="center">
-  <b>Figure 2:</b> Motor Driver Setup with Oscilloscope.
-</p>
+The goal of the task was to make the robot drive toward a wall as quickly as possible and stop at a target distance of 304 mm using ToF feedback. 
 
-Code below was uploaded, and corresponding output of motor driver was probed.
+The controller was implemented directly on the Artemis using the front TOF sensor as the feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor command from the PID terms.
+
+$$
+u_k = K_p e_k + K_i \sum e_k \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}
+$$
+
+In code, the error was computed as:
 
 ```cpp
-void loop() {
-  // 50% Duty Cycle
-  analogWrite(IN2, 128);
-  delay(2000);
-
-  // 100% Duty Cycle
-  analogWrite(IN2, 255);
-  delay(2000);
-
-  // Off
-  analogWrite(IN2, 0);
-  delay(2000);
-}
+int dist = last_dist_mm;
+int err = dist - setpoint_mm;
 ```
 
-Video 1 below shows the oscilloscope results. Channel 2 shows changing PWM signals that matches the code, while channel 1's PWM is likely due to interference since the amplitude is only around 0.09V. This verifies functionality of motor driver.
+#### P Control
+
+The proportional term was used first. The proportional controller directly scales the distance error to generate a motor command.
+
+```cpp
+float p = Kp * (float)err;
+```​
+
+After tuning, Kp of 0.1 was chosen. Proportional control was able to drive the robot toward the wall and stop near the target distance, but some oscillation occurred.
+
+<p align="center">
+  <img src="../img/lab5/P_dist.png" width="33%">
+  <img src="../img/lab5/P_error.png" width="33%">
+  <img src="../img/lab5/P_pwm.png" width="33%">
+</p>
+<p align="center">
+  <b>Figure 1:</b> Plots of P Control Data.
+</p>
+
+Video 1 below shows the result of P only controller.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -62,8 +136,12 @@ Video 1 below shows the oscilloscope results. Channel 2 shows changing PWM signa
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Motor Driver with Oscilloscope.
+  <b>Video TODO:</b> P Control to Wall.
 </p>
+
+<br>
+
+#### I Control
 
 RC car was then used to test if wheel turns. Video 2 below shows RC car wheel turning forward and reverse, confirming functionality. Battery was used instead of external DC power supply.
 
