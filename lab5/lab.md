@@ -301,20 +301,18 @@ Video 3 below shows the result of PID controller under perturbation.
 
 ### Extrapolation
 
-##### TOF Sensor Frequency
+#### TOF Sensor Frequency
 
-The update frequency of the TOF sensor was measured and compared to the PID control loop rate. This was done by counting how many times the main loop executed in one second and how many times the ToF sensor reported a new reading in that same time.
+The update frequency of the TOF sensor was measured and compared to the PID control loop rate. This was done by counting how many times the main loop executed in one second and how many times the ToF sensor reported a new reading in that same time, same as in previous lab.
 
 <p align="center">
-  <img src="../img/lab5/pert_dist.png" width="30%">
-  <img src="../img/lab5/pert_error.png" width="30%">
-  <img src="../img/lab5/pert_pwm.png" width="30%">
+  <img src="../img/lab5/pert_dist.png" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> TODO.
 </p>
 
-This shows that the control loop is running much faster than the TOF sensor. Because of this, the controller cannot depend on receiving a new distance reading every loop iteration.
+This shows that the control loop is running much faster than the TOF sensor. Because of this, the controller cannot depend on receiving a new distance reading every loop.
 
 To handle this, the PID controller was allowed to run every loop, even when no new TOF data was available. If a new measurement was available, the stored distance value was updated. If no new measurement was available, the controller continued to run using the most recent saved value.
 
@@ -322,18 +320,18 @@ To handle this, the PID controller was allowed to run every loop, even when no n
 
 #### Linear Extrapolation
 
-Using the last saved distance value works, but it causes the controller to act on a stair-step signal because the ToF only updates every ~0.1 s. To improve this, a simple linear extrapolation method was added.
+Using the last saved distance value works, but it causes the controller to act on a step signal because the TOF only updates every ~0.1 s. To improve this, a simple linear extrapolation method was added.
 
-The robot stores the two most recent ToF readings and their timestamps. When a new ToF measurement arrives, the slope between the two points is calculated as:
+The robot stores the two most recent TOF readings and their timestamps. When a new TOF measurement arrives, the slope between the two points is calculated as:
 
 $$
-\text{slope} = \frac{d_{current} - d_{previous}}{t_{current} - t_{previous}}
+m = \frac{d_c - d_p}{t_c - t_p}
 $$
 
 This slope is then used to estimate the distance at the current time:
 
 $$
-\text{slope} = \frac{d_{current} - d_{previous}}{t_{current} - t_{previous}}
+d_{est} = d_2 + \frac{d_2 - d_1}{t_2 - t_1}(t - t_2)
 $$
 
 This gives an estimated distance that updates every PID loop instead of only when a new ToF sample arrives.
@@ -377,10 +375,9 @@ int dist = get_extrapolated_dist_mm(now_us);
 int err = dist - setpoint_mm;
 ```
 
-With this approach, the PID controller still runs at 164 Hz, but instead of using a stale ToF value for multiple loop iterations, it uses a continuously updated estimate of the wall distance between sensor updates. Since the ToF sensor only updates at 10–11 Hz, this extrapolation helps smooth the distance input to the controller and provides a more responsive estimate of the robot’s position.
+With this approach, the PID controller still runs at 164 Hz, but instead of using a stale TOF value for multiple loop iterations, it uses a continuously updated estimate of the wall distance. Since the TOF sensor only updates at 10 Hz, this extrapolation helps smooth the distance input to the controller and provides a more responsive estimate of the robot’s position.
 
-To evaluate the method, both the raw ToF distance and the extrapolated distance were logged and plotted on the same graph. The raw signal shows discrete jumps because of the slow sensor update rate, while the extrapolated signal fills in the gaps between measurements. This makes the estimated distance smoother and more suitable for high-speed wall approach.
-
+To evaluate the method, both the raw ToF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows discrete jumps because of the slow sensor update rate, while the extrapolated signal is more smooth between measurements.
 
 <p align="center">
   <img src="../img/lab4/freq_scope.jpg" width="80%">
