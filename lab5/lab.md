@@ -21,13 +21,7 @@ wait for PID data
 stop BLE notification
 ```
 
-On Artemis side, four commands are added:
-
-```cpp
-START_PID_RUN, STOP_PID_RUN, GET_PID_DATA, SET_PID_GAINS
-```
-
-When the laptop sent START_PID_RUN, the robot cleared the old PID log, reset the controller state, and began the closed loop run. 
+On Artemis side, when the laptop sent START_PID_RUN, the robot cleared the old PID log, reset the controller state, and began the closed loop run. 
 
 ```cpp
 case START_PID_RUN:
@@ -92,11 +86,9 @@ case GET_PID_DATA:
 
 The goal of the task was to make the robot drive toward a wall as quickly as possible and stop at a target distance of 304 mm.
 
-The controller was implemented on Artemis using the front TOF sensor as feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor PWM from the PID terms.
+The controller was implemented using the front TOF sensor as feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor PWM from the PID terms.
 
-$$
-u_k = K_p e_k + K_i \sum e_k \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}
-$$
+`u_k = K_p e_k + K_i \sum e_k \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}`
 
 In code, the error was computed as:
 
@@ -107,7 +99,7 @@ int err = dist - setpoint_mm;
 
 #### P Control
 
-The proportional term was used first. The proportional controller directly scales the distance error to generate a motor command.
+The proportional term was added. The proportional controller directly scales the distance error to generate a motor command.
 
 ```cpp
 float p = Kp * (float)err;
@@ -148,13 +140,6 @@ To improve the steady state accuracy, an integral term was added. The integral a
 ```cpp
 i_accum += (float)err * dt;
 float i = Ki * i_accum;
-```
-
-However, when the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate excessively, which may lead to integrator wind-up. To prevent this, the accumulated integral value was clamped within a fixed range.
-
-```cpp
-if (i_accum > I_CLAMP) i_accum = I_CLAMP;
-if (i_accum < -I_CLAMP) i_accum = -I_CLAMP
 ```
 
 With Ki = 0.001, the PI controller reduced the steady state error and allowed the robot to settle very close to the target without oscillation.
@@ -405,6 +390,13 @@ To prevent this, the accumulated integral value was clamped within a fixed range
 ```cpp
 if (i_accum > I_CLAMP) i_accum = I_CLAMP;
 if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
+```
+
+However, when the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate excessively, which may lead to integrator wind-up. To prevent this, the accumulated integral value was clamped within a fixed range.
+
+```cpp
+if (i_accum > I_CLAMP) i_accum = I_CLAMP;
+if (i_accum < -I_CLAMP) i_accum = -I_CLAMP
 ```
 
 ---
