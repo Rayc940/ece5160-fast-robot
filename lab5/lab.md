@@ -130,13 +130,13 @@ Video 1 below shows the result of P only controller.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/oFxlku3yY9s"
+    src="https://www.youtube.com/embed/fP9MSvP5kSc"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> P Control to Wall.
+  <b>Video 1:</b> P Only Controller.
 </p>
 
 <br>
@@ -168,19 +168,19 @@ With Ki = 0.001, the PI controller reduced the steady state error and allowed th
   <b>Figure 1:</b> Plots of PI Control Data.
 </p>
 
-Video 1 below shows the result of PI controller.
+Video 2 below shows the result of PI controller.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/oFxlku3yY9s"
+    src="https://www.youtube.com/embed/8dwQlHGNRlU"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> PI Control to Wall.
+  <b>Video 2:</b> PI Controller.
 </p>
 
 <br>
@@ -218,13 +218,13 @@ Video 3 below shows the result of PID controller.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/oFxlku3yY9s"
+    src="https://www.youtube.com/embed/bTfX_to0jH8"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> PI Control to Wall.
+  <b>Video 3:</b> PID Controller.
 </p>
 
 <br>
@@ -280,19 +280,19 @@ In both cases, the controller responded by driving the robot back toward the 304
   <b>Figure 1:</b> Plots of PID Control Perturbation Data.
 </p>
 
-Video 3 below shows the result of PID controller under perturbation.
+Video 4 below shows the result of PID controller under perturbation.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/oFxlku3yY9s"
+    src="https://www.youtube.com/embed/-B3x1WbUun4"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> PID Control, Perturbation.
+  <b>Video 4:</b> PID Control, Perturbation.
 </p>
 
 <br>
@@ -306,7 +306,7 @@ Video 3 below shows the result of PID controller under perturbation.
 The update frequency of the TOF sensor was measured and compared to the PID control loop rate. This was done by counting how many times the main loop executed in one second and how many times the ToF sensor reported a new reading in that same time, same as in previous lab.
 
 <p align="center">
-  <img src="../img/lab5/pert_dist.png" width="80%">
+  <img src="../img/lab5/TOF_freq.png" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> TODO.
@@ -320,7 +320,7 @@ To handle this, the PID controller was allowed to run every loop, even when no n
 
 #### Linear Extrapolation
 
-Using the last saved distance value works, but it causes the controller to act on a step signal because the TOF only updates every ~0.1 s. To improve this, a simple linear extrapolation method was added.
+The controller acts on a step signal because the TOF only updates every ~0.1 s. To improve this, a simple linear extrapolation method was added.
 
 The robot stores the two most recent TOF readings and their timestamps. When a new TOF measurement arrives, the slope between the two points is calculated as:
 
@@ -334,9 +334,9 @@ $$
 d_{est} = d_2 + \frac{d_2 - d_1}{t_2 - t_1}(t - t_2)
 $$
 
-This gives an estimated distance that updates every PID loop instead of only when a new ToF sample arrives.
+This gives an estimated distance that updates every PID loop instead of only when a new TOF sample arrives.
 
-When a new ToF reading is available, the previous distance and timestamp are shifted into history, and the new reading becomes the latest sample.
+When a new TOF reading is available, the previous distance and timestamp are shifted into previous value, and the new reading becomes the latest sample.
 
 ```cpp
 prev_dist_mm = last_dist_mm;
@@ -375,12 +375,12 @@ int dist = get_extrapolated_dist_mm(now_us);
 int err = dist - setpoint_mm;
 ```
 
-With this approach, the PID controller still runs at 164 Hz, but instead of using a stale TOF value for multiple loop iterations, it uses a continuously updated estimate of the wall distance. Since the TOF sensor only updates at 10 Hz, this extrapolation helps smooth the distance input to the controller and provides a more responsive estimate of the robot’s position.
+With this approach, the PID controller still runs at 164 Hz, but instead of using the same TOF value, it uses a continuously updated estimate. This helps smooth the distance input to the controller.
 
-To evaluate the method, both the raw ToF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows discrete jumps because of the slow sensor update rate, while the extrapolated signal is more smooth between measurements.
+To evaluate this method, both the raw TOF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows jumps, while the extrapolated signal is more smooth.
 
 <p align="center">
-  <img src="../img/lab4/freq_scope.jpg" width="80%">
+  <img src="../img/lab5/extrapolated" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> Input PWM Frequency.
