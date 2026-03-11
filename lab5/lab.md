@@ -380,15 +380,15 @@ The final controller was tested for three times at different speed, and video 5 
 <div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
 
 <iframe width="360" height="200"
-src="https://www.youtube.com/embed/VIDEO1"
+src="https://www.youtube.com/embed/0nrV3FTbbqM"
 frameborder="0" allowfullscreen></iframe>
 
 <iframe width="360" height="200"
-src="https://www.youtube.com/embed/VIDEO2"
+src="https://www.youtube.com/embed/yZh0VrxaNQA"
 frameborder="0" allowfullscreen></iframe>
 
 <iframe width="360" height="200"
-src="https://www.youtube.com/embed/VIDEO3"
+src="https://www.youtube.com/embed/sUXtRFqiyBQ"
 frameborder="0" allowfullscreen></iframe>
 
 </div>
@@ -447,6 +447,22 @@ To test for the differences, robot was held by hand for a while to accumulate I 
 </p>
 <p align="center">
   <b>Figure 8:</b> Error with Wind Up vs. No Wind Up Protection.
+</p>
+
+<div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
+
+<iframe width="360" height="200"
+src="https://www.youtube.com/embed/h-kXEtOBWFc"
+frameborder="0" allowfullscreen></iframe>
+
+<iframe width="360" height="200"
+src="https://www.youtube.com/embed/jhuoMP1gch8"
+frameborder="0" allowfullscreen></iframe>
+
+</div>
+
+<p style="text-align:center;">
+<b>Video 6:</b> Windup vs. No Windup Protection Controller.
 </p>
 
 ---
