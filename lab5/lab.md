@@ -1,6 +1,6 @@
 ## Prelab
 
-A bluetooth debugging system was set up before starting controller tuning. The goal was to let the Artemis run PID for a fixed amount of time while storing data locally, and then send the recorded data for analyzing. 
+A bluetooth debugging setup was implemented before controller tuning. It let the Artemis run PID for a fixed amount of time while storing data locally, and then send the recorded data. 
 
 ```cpp
 initalize lists
@@ -43,7 +43,7 @@ case START_PID_RUN:
         }
 ```
 
-To make tuning easier, PID gains were also sent over BLE with SET_PID_GAINS. This helped quickly test different Kp, Ki, and Kd values without needing to upload code everytime.
+To make tuning easier, PID gains were also sent over BLE with SET_PID_GAINS. This helped test gain values without needing to upload code every time.
 
 ```cpp
 case SET_PID_GAINS:
@@ -71,7 +71,7 @@ if (last_dist_mm > 0 && last_dist_mm < 120) {
 }
 ```
 
-After the run finished, GET_PID_DATA was called to get data over BLE. The Artemis first sent a header containing the number of samples, then streamed each saved data line back over BLE.
+After the run finished, GET_PID_DATA was called to get data. Artemis first sent a header containing the number of samples, then sent each saved data.
 
 ```cpp
 case GET_PID_DATA:
@@ -90,9 +90,9 @@ case GET_PID_DATA:
 
 ### Position Control
 
-The goal of the task was to make the robot drive toward a wall as quickly as possible and stop at a target distance of 304 mm using ToF feedback. 
+The goal of the task was to make the robot drive toward a wall as quickly as possible and stop at a target distance of 304 mm.
 
-The controller was implemented directly on the Artemis using the front TOF sensor as the feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor command from the PID terms.
+The controller was implemented on Artemis using the front TOF sensor as feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor PWM from the PID terms.
 
 $$
 u_k = K_p e_k + K_i \sum e_k \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}
@@ -398,8 +398,16 @@ Video 5 below shows three successful run.
 
 #### Wind Up Protection
 
+When the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate, which can lead to overshoot and unstable behavior.
 
+To prevent this, the accumulated integral value was clamped within a fixed range.
 
+```cpp
+if (i_accum > I_CLAMP) i_accum = I_CLAMP;
+if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
+```
+
+---
 
 ## Discussion
 
