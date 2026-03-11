@@ -88,7 +88,7 @@ The goal of the task was to make the robot drive toward a wall as quickly as pos
 
 The controller was implemented using the front TOF sensor as feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor PWM from the PID terms.
 
-`u_k = K_p e_k + K_i \sum e_k \Delta t + K_d \frac{e_k - e_{k-1}}{\Delta t}`
+`u_k = K_p e_k + K_i * Σ(e_k * Δt) + K_d * (e_k - e_{k-1}) / Δt`
 
 In code, the error was computed as:
 
@@ -373,7 +373,7 @@ To evaluate this method, both the raw TOF distance and the extrapolated distance
 
 <br>
 
-#### Final Run TODO
+#### Final Run
 
 The final controller was tested for three times at different distances, and video 5 below shows the results.
 
