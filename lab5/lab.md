@@ -380,7 +380,7 @@ With this approach, the PID controller still runs at 164 Hz, but instead of usin
 To evaluate this method, both the raw TOF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows jumps, while the extrapolated signal is more smooth.
 
 <p align="center">
-  <img src="../img/lab5/extrapolated" width="80%">
+  <img src="../img/lab5/extrapolated.png" width="80%">
 </p>
 <p align="center">
   <b>Figure TODO:</b> Input PWM Frequency.
@@ -388,7 +388,18 @@ To evaluate this method, both the raw TOF distance and the extrapolated distance
 
 <br>
 
+#### Final Run TODO
+
+Maximum speed is calculated to be:
+
+Video 5 below shows three successful run.
+
 ---
+
+#### Wind Up Protection
+
+
+
 
 ## Discussion
 
