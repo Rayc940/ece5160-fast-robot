@@ -420,7 +420,7 @@ plot
 ```
 
 <p align="center">
-  <img src="../img/lab5/speed.png" width="30%">
+  <img src="../img/lab5/speed.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 7:</b> Speed During Final Run.
