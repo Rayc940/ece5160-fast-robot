@@ -181,7 +181,7 @@ float d_raw = ((float)err - prev_err) / dt;
 float d = Kd * d_raw;
 ```
 
-Because the ToF sensor measurements are discrete and noisy, using the raw derivative caused unstable behavior. To reduce this noise, a low pass filter was applied.
+Because the TOF sensor measurements are discrete and noisy, using the raw derivative caused unstable behavior. To reduce this noise, a low pass filter was applied.
 
 ```cpp
 d_filt = alpha_d * d_raw + (1.0f - alpha_d) * d_filt;
@@ -218,7 +218,7 @@ Video 3 below shows the result of PID controller.
 
 #### TOF Sensor Setup
 
-The ToF sensor settings also affect performance. Faster sensing allows the controller to react more quickly to changes.
+The TOF sensor settings also affect performance. Faster sensing allows the controller to react more quickly to changes.
 
 For this lab, the sensor was configured in short distance mode with a 33 ms timing budget, which provided sufficiently fast updates. 
 
@@ -352,7 +352,7 @@ int get_extrapolated_dist_mm(uint32_t now_us)
 }
 ```
 
-Inside the PID loop, the raw ToF distance and extrapolated distance were both available, and the controller used the extrapolated value:
+Inside the PID loop, the raw TOF distance and extrapolated distance were both available, and the controller used the extrapolated value:
 
 ```cpp
 int raw_dist = last_dist_mm;
