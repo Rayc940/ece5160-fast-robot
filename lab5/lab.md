@@ -135,14 +135,14 @@ Video 1 below shows the result of P only controller.
 
 #### PI Control
 
-To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and pushes the robot closer to the exact setpoint.
+To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and moves the robot closer setpoint.
 
 ```cpp
 i_accum += (float)err * dt;
 float i = Ki * i_accum;
 ```
 
-With Ki = 0.001, the PI controller reduced the steady state error and allowed the robot to settle very close to the target without oscillation.
+With Ki = 0.001, the PI controller reduced the steady state error and allowed the robot to stop without oscillation.
 
 <p align="center">
   <img src="../img/lab5/PI_dist.png" width="30%">
@@ -150,7 +150,7 @@ With Ki = 0.001, the PI controller reduced the steady state error and allowed th
   <img src="../img/lab5/PI_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Plots of PI Control Data.
+  <b>Figure 2:</b> Plots of PI Control Data.
 </p>
 
 Video 2 below shows the result of PI controller.
@@ -172,7 +172,7 @@ Video 2 below shows the result of PI controller.
 
 #### PID Control
 
-A derivative term was also added to help reduce overshoot and slow the robot as it approached the wall. The derivative term reacts to the rate of change of the error, which helps dampen motion near the setpoint.
+Next, a derivative term was added to help reduce overshoot and slow the robot as it approached the wall. The derivative term reacts to the rate of change of the error, which helps dampen motion near the setpoint. Kd was chosen to be 0.001.
 
 ```cpp
 float d_raw = ((float)err - prev_err) / dt;
@@ -194,7 +194,7 @@ This smoothing reduced sudden spikes in the derivative signal and improved stabi
   <img src="../img/lab5/PID_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Plots of PID Control Data.
+  <b>Figure 3:</b> Plots of PID Control Data.
 </p>
 
 Video 3 below shows the result of PID controller.
@@ -220,7 +220,7 @@ The ToF sensor settings also affect performance. Faster sensing allows the contr
 
 For this lab, the sensor was configured in short distance mode with a 33 ms timing budget, which provided sufficiently fast updates. 
 
-A faster sampling rate can help reduce the delay between measurement and controller response, which improves stability.
+A faster sampling rate can help reduce the delay between measurement and controller response.
 
 
 ```cpp
@@ -233,7 +233,7 @@ distanceSensor1.startRanging();
 
 #### Motor Deadband
 
-From Lab 4, motors have a minimum PWM limit which they would not move. If the controller output became too small near the setpoint, the robot might stop moving even though the error was not zero.
+From Lab 4, motors have a minimum PWM limit. If the controller output became too small near the setpoint, the robot might stop moving even though the error was not zero.
 
 To address this, a deadband helper function was applied to the PWM command before sending it to the motors.
 
@@ -254,7 +254,7 @@ int apply_deadband(int pwm)
 
 The robot was also tested with external perturbations. After reaching the target distance, the robot was manually pushed closer and farther away.
 
-In both cases, the controller responded by driving the robot back toward the 304 mm setpoint.
+In both cases, the controller responded by driving the robot back toward the setpoint.
 
 <p align="center">
   <img src="../img/lab5/pert_dist.png" width="30%">
@@ -262,7 +262,7 @@ In both cases, the controller responded by driving the robot back toward the 304
   <img src="../img/lab5/pert_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Plots of PID Control Perturbation Data.
+  <b>Figure 4:</b> Plots of PID Control Perturbation Data.
 </p>
 
 Video 4 below shows the result of PID controller under perturbation.
@@ -288,16 +288,18 @@ Video 4 below shows the result of PID controller under perturbation.
 
 #### TOF Sensor Frequency
 
-The update frequency of the TOF sensor was measured and compared to the PID control loop rate. This was done by counting how many times the main loop executed in one second and how many times the ToF sensor reported a new reading in that same time, same as in previous lab.
+The update frequency of the TOF sensor was measured and compared to the PID control loop rate. 
+
+This was done by counting how many times the main loop ran in one second and how many times the TOF sensor reported a new reading in that same time.
 
 <p align="center">
   <img src="../img/lab5/TOF_freq.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> TODO.
+  <b>Figure 5:</b> TOF and Main Loop Frequency.
 </p>
 
-This shows that the control loop is running much faster than the TOF sensor. Because of this, the controller cannot depend on receiving a new distance reading every loop.
+This shows that the control loop is running much faster than the TOF sensor (160Hz vs. 10Hz). Because of this, the controller cannot depend on receiving a new distance reading every loop.
 
 To handle this, the PID controller was allowed to run every loop, even when no new TOF data was available. If a new measurement was available, the stored distance value was updated. If no new measurement was available, the controller continued to run using the most recent saved value.
 
@@ -305,19 +307,15 @@ To handle this, the PID controller was allowed to run every loop, even when no n
 
 #### Linear Extrapolation
 
-The controller acts on a step signal because the TOF only updates every ~0.1 s. To improve this, a simple linear extrapolation method was added.
+The controller acts on a step signal because the TOF only updates every 0.1 s. To improve this, a simple linear extrapolation method was added.
 
 The robot stores the two most recent TOF readings and their timestamps. When a new TOF measurement arrives, the slope between the two points is calculated as:
 
-$$
-m = \frac{d_c - d_p}{t_c - t_p}
-$$
+`m = (d_current - d_previous) / (t_current - t_previous)`
 
 This slope is then used to estimate the distance at the current time:
 
-$$
-d_{est} = d_2 + \frac{d_2 - d_1}{t_2 - t_1}(t - t_2)
-$$
+`d_est = d_current + m * (t_now - t_current)`
 
 This gives an estimated distance that updates every PID loop instead of only when a new TOF sample arrives.
 
@@ -331,7 +329,7 @@ last_dist_mm = d1;
 last_tof_us = now_us;
 ```
 
-The extrapolated distance is then computed from the last two ToF samples:
+The extrapolated distance is then calculated from the last two TOF samples:
 
 ```cpp
 int get_extrapolated_dist_mm(uint32_t now_us)
@@ -360,24 +358,73 @@ int dist = get_extrapolated_dist_mm(now_us);
 int err = dist - setpoint_mm;
 ```
 
-With this approach, the PID controller still runs at 164 Hz, but instead of using the same TOF value, it uses a continuously updated estimate. This helps smooth the distance input to the controller.
+With this approach, the PID controller still runs at 160 Hz, but instead of using the same TOF value, it uses a continuously updated estimate. This helps smooth the distance input to the controller.
 
 To evaluate this method, both the raw TOF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows jumps, while the extrapolated signal is more smooth.
 
 <p align="center">
-  <img src="../img/lab5/extrapolated.png" width="80%">
+  <img src="../img/lab5/extrapolated.png" width="30%">
+  <img src="../img/lab5/extrapolated_error.png" width="30%">
+  <img src="../img/lab5/extrapolated_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> Input PWM Frequency.
+  <b>Figure 6:</b> Extrapolated vs. Raw Plots
 </p>
 
 <br>
 
 #### Final Run TODO
 
-Maximum speed is calculated to be:
+The final controller was tested for three times at different speed, and video 5 below shows the results.
 
-Video 5 below shows three successful run.
+<div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
+
+<iframe width="360" height="200"
+src="https://www.youtube.com/embed/VIDEO1"
+frameborder="0" allowfullscreen></iframe>
+
+<iframe width="360" height="200"
+src="https://www.youtube.com/embed/VIDEO2"
+frameborder="0" allowfullscreen></iframe>
+
+<iframe width="360" height="200"
+src="https://www.youtube.com/embed/VIDEO3"
+frameborder="0" allowfullscreen></iframe>
+
+</div>
+
+<p style="text-align:center;">
+<b>Video 5:</b> Three Runs of the Final Controller.
+</p>
+
+Maximum speed is calculated to be 2071 mm/s.
+
+```cpp
+window_pts = 10
+initialize lists
+
+for i in range(len(est_dist) - window_pts):
+    dd = est_dist[i] - est_dist[i + window_pts]
+    dt = t[i + window_pts] - t[i]
+    if dt > 0:
+        speeds.append(dd / dt)
+        t_speed.append((t[i] + t[i + window_pts]) / 2)
+
+# keep first part
+valid = est_dist[:len(speeds)] > 400
+speeds_valid = speeds[valid]
+t_speed_valid = t_speed[valid]
+ 
+print max speed
+plot
+```
+
+<p align="center">
+  <img src="../img/lab5/speed.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 7:</b> Speed During Final Run.
+</p>
 
 ---
 
@@ -392,12 +439,15 @@ if (i_accum > I_CLAMP) i_accum = I_CLAMP;
 if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 ```
 
-However, when the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate excessively, which may lead to integrator wind-up. To prevent this, the accumulated integral value was clamped within a fixed range.
+To test for the differences, robot was held by hand for a while to accumulate I error, then released. Figure 8 below shows that with wind up protection, there are no steady state error. However, without wind up protection, there exists a small steady state error.
 
-```cpp
-if (i_accum > I_CLAMP) i_accum = I_CLAMP;
-if (i_accum < -I_CLAMP) i_accum = -I_CLAMP
-```
+<p align="center">
+  <img src="../img/lab5/error_windup.png" width="45%">
+  <img src="../img/lab5/error_nowindup.png" width="45%">
+</p>
+<p align="center">
+  <b>Figure 8:</b> Error with Wind Up vs. No Wind Up Protection.
+</p>
 
 ---
 
