@@ -3,7 +3,7 @@
 A bluetooth debugging setup was implemented before controller tuning. It let the Artemis run PID for a fixed amount of time while storing data locally, and then send the recorded data. 
 
 ```cpp
-initalize lists
+initialize lists
 
 def parse_pid(line: str):
     parts = line.split(",")
@@ -135,7 +135,7 @@ Video 1 below shows the result of P only controller.
 
 #### PI Control
 
-To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and moves the robot closer setpoint.
+To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and moves the robot closer to the setpoint.
 
 ```cpp
 i_accum += (float)err * dt;
@@ -319,7 +319,7 @@ This slope is then used to estimate the distance at the current time:
 
 This gives an estimated distance that updates every PID loop instead of only when a new TOF sample arrives.
 
-When a new TOF reading is available, the previous distance and timestamp are shifted into previous value, and the new reading becomes the latest sample.
+When a new TOF reading is available, the previous distance and timestamp are shifted into previous sample, and the new reading becomes the latest sample.
 
 ```cpp
 prev_dist_mm = last_dist_mm;
@@ -375,7 +375,7 @@ To evaluate this method, both the raw TOF distance and the extrapolated distance
 
 #### Final Run TODO
 
-The final controller was tested for three times at different speed, and video 5 below shows the results.
+The final controller was tested for three times at different distances, and video 5 below shows the results.
 
 <div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
 
@@ -439,7 +439,7 @@ if (i_accum > I_CLAMP) i_accum = I_CLAMP;
 if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 ```
 
-To test for the differences, robot was held by hand for a while to accumulate I error, then released. Figure 8 below shows that with wind up protection, there are no steady state error. However, without wind up protection, there exists a small steady state error.
+To test for the differences, robot was held by hand for a while to accumulate I error, then released. Figure 8 below shows that with wind up protection, there are no steady state error. However, without wind up protection, the accumulated integral term caused the robot to drive more aggressively after release, resulting in larger overshoot.
 
 <p align="center">
   <img src="../img/lab5/error_windup.png" width="45%">
