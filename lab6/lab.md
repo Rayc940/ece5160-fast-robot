@@ -42,7 +42,7 @@ case START_PID_RUN:
 }
 ```
 
-Similarly, SET_PID_GAINS is reused to set PID gains for yaw.
+Similarly, SET_PID_GAINS was reused to set PID gains for yaw.
 
 Since Lab 6 requires changing the setpoint while the robot is running, a separate command was added to update the yaw setpoint.
 
@@ -58,13 +58,13 @@ case SET_YAW_SETPOINT:
 }
 ```
 
-After the run finished, GET_PID_DATA is reused to get data. Artemis first sends a header containing the number of samples, then sends each saved data.
+After the run finished, GET_PID_DATA was reused to get data. Artemis first sent a header containing the number of samples, then sent each saved data.
 
 ```cpp
 case GET_PID_DATA:
         send headers
-        for (int i = 0; i < pid_len; i++) {
-                send data: time, TOF ready, distance, error, P, I, D, PWM
+        for (int i = 0; i < yaw_pid_len; i++) {
+                send data: time, yaw angle, error, P, I, D, control effort, pwm
         }
         break;
 ```
@@ -73,37 +73,58 @@ case GET_PID_DATA:
 
 ## Lab Tasks
 
-### Position Control
+### Digital Motion Processing
 
-The goal of the task was to make the robot drive toward a wall as quickly as possible and stop at a target distance of 304 mm.
-
-The controller was implemented using the front TOF sensor as feedback. At each step, the robot measured the distance to wall, computed the error, and then generated a motor PWM from the PID terms.
-
-<p align="center">
-  <img src="../img/lab5/pid.png" width="80%">
-</p>
-
-In code, the error was computed as:
+Digital integration of gyroscope data often introduces drift over time (shown in lab 2). To reduce this drift, DMP built into the ICM-20948 IMU was used. The DMP internally performs sensor fusion and outputs orientation as a quaternion, which can then be converted to yaw angle.
 
 ```cpp
-int dist = last_dist_mm;
-int err = dist - setpoint_mm;
+float yaw_raw = dmp_ok ? yaw_dmp : wrap_angle_deg(yaw_gyro);
 ```
+
+At the start of each PID run, the current yaw value is used as the reference orientation. This allows the controller to use relative angles instead of absolute angles.
+
+```cpp
+yaw_zero_offset = dmp_ok ? yaw_dmp : 0.0f;
+float yaw = wrap_angle_deg(yaw_raw - yaw_zero_offset);
+```
+
+Using the DMP reduces yaw drift compared to gyro integration.
+
+<br>
+
+### Limitation on Sensor TODO
+
+Are there limitations on the sensor itself to be aware of? What is the maximum rotational velocity that the gyroscope can read (look at spec sheets and code documentation on github). Is this sufficient for our applications, and is there was to configure this parameter?
+
+
+### Orientation Control
+
+The goal of this lab was to control the robot's orientation. The robot rotates in place by driving the wheels at equal speeds in opposite directions.
+
+Yaw was used as the feedback signal for the controller. The orientation error was computed as the difference between the target yaw setpoint and the measured yaw.
+
+```cpp
+float err = wrap_angle_deg(setpoint_deg - yaw);
+```
+
+The wrap_angle_deg() function ensures the controller always takes the shortest rotational path by keeping the error between −180° and 180°.
+
+<br>
 
 #### P Control
 
-The proportional term was added. The proportional controller directly scales the distance error to generate a motor command.
+The proportional term generates a control signal proportional to the orientation error.
 
 ```cpp
-float p = Kp * (float)err;
+float p = Kp_yaw * err;
 ```
 
-After tuning, Kp of 0.1 was chosen. Proportional control was able to drive the robot toward the wall and stop near the target distance, but some oscillation occurred.
+After tuning, Kp of 10 was chosen. Proportional control was able to make the robot rotate close to setpoint, but with some steady state error.
 
 <p align="center">
-  <img src="../img/lab5/P_dist.png" width="30%">
-  <img src="../img/lab5/P_error.png" width="30%">
-  <img src="../img/lab5/P_pwm.png" width="30%">
+  <img src="../img/lab6/P_angle.png" width="30%">
+  <img src="../img/lab6/P_error.png" width="30%">
+  <img src="../img/lab6/P_pwm.png" width="30%">
 </p>
 <p align="center">
   <b>Figure 1:</b> Plots of P Control Data.
@@ -121,26 +142,26 @@ Video 1 below shows the result of P only controller.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> P Only Controller.
+  <b>Video TODO:</b> P Only Controller.
 </p>
 
 <br>
 
 #### PI Control
 
-To improve the steady state accuracy, an integral term was added. The integral accumulates error over time and moves the robot closer to the setpoint.
+To improve the steady state accuracy, an integral term was added. The integral term accumulates the error over time and helps remove steady state error.
 
 ```cpp
-i_accum += (float)err * dt;
-float i = Ki * i_accum;
+yaw_i_accum += err * dt;
+float i = Ki_yaw * yaw_i_accum;
 ```
 
-With Ki = 0.001, the PI controller reduced the steady state error and allowed the robot to stop without oscillation.
+With Ki = 0.01, the controller reduced the steady state error.
 
 <p align="center">
-  <img src="../img/lab5/PI_dist.png" width="30%">
-  <img src="../img/lab5/PI_error.png" width="30%">
-  <img src="../img/lab5/PI_pwm.png" width="30%">
+  <img src="../img/lab6/PD_angle.png" width="30%">
+  <img src="../img/lab6/PD_error.png" width="30%">
+  <img src="../img/lab6/PD_pwm.png" width="30%">
 </p>
 <p align="center">
   <b>Figure 2:</b> Plots of PI Control Data.
@@ -158,33 +179,29 @@ Video 2 below shows the result of PI controller.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 2:</b> PI Controller.
+  <b>Video TODO:</b> PI Controller.
 </p>
 
 <br>
 
 #### PID Control
 
-Next, a derivative term was added to help reduce overshoot and slow the robot as it approached the wall. The derivative term reacts to the rate of change of the error, which helps dampen motion near the setpoint. Kd was chosen to be 0.001.
+Next, a derivative term was added to help reduce overshoot. Instead of calculating the derivative of the error, the gyroscope angular velocity was used directly since angular velocity is the derivative of orientation.
 
 ```cpp
-float d_raw = ((float)err - prev_err) / dt;
-float d = Kd * d_raw;
+float d = -Kd_yaw * gz_dps;
 ```
 
-Because the ToF sensor measurements are discrete and noisy, using the raw derivative caused unstable behavior. To reduce this noise, a low pass filter was applied.
+This also helps avoid derivative kick, which can occur when the setpoint changes suddenly. Because the derivative term depends on angular velocity rather than the error derivative, sudden setpoint changes do not create large spikes in the control signal.
 
-```cpp
-d_filt = alpha_d * d_raw + (1.0f - alpha_d) * d_filt;
-float d = Kd * d_filt;
-```
+Because the derivative term comes directly from the gyroscope measurement rather than from finite-differencing noisy angle samples, an additional low-pass filter was not needed here. This is different from the Lab 5 TOF controller, where the derivative had to be filtered because it was computed from discrete error measurements.
 
 This smoothing reduced sudden spikes in the derivative signal and improved stability.
 
 <p align="center">
-  <img src="../img/lab5/PID_dist.png" width="30%">
-  <img src="../img/lab5/PID_error.png" width="30%">
-  <img src="../img/lab5/PID_pwm.png" width="30%">
+  <img src="../img/lab6/PID_angle.png" width="30%">
+  <img src="../img/lab6/PID_error.png" width="30%">
+  <img src="../img/lab6/PID_pwm.png" width="30%">
 </p>
 <p align="center">
   <b>Figure 3:</b> Plots of PID Control Data.
@@ -202,25 +219,8 @@ Video 3 below shows the result of PID controller.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 3:</b> PID Controller.
+  <b>Video TODO:</b> PID Controller.
 </p>
-
-<br>
-
-#### TOF Sensor Setup
-
-The ToF sensor settings also affect performance. Faster sensing allows the controller to react more quickly to changes.
-
-For this lab, the sensor was configured in short distance mode with a 33 ms timing budget, which provided sufficiently fast updates. 
-
-A faster sampling rate can help reduce the delay between measurement and controller response.
-
-
-```cpp
-distanceSensor1.setDistanceModeShort();
-distanceSensor1.setTimingBudgetInMs(33);
-distanceSensor1.startRanging();
-```
 
 <br>
 
