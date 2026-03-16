@@ -1,5 +1,73 @@
 ## Prelab
 
+Before tuning the orientation controller, a bluetooth debugging system was set up similar to lab 5. It runs the PID controller for fixed time, stores data, and sends data to laptop.
+
+On the Python side, the code was similar to Lab 5.
+
+```cpp
+initialize lists
+
+def parse_yaw_pid(line: str):
+    parts = line.split(",")
+    parse time, yaw angle, error, P, I, D, control effort, pwm
+
+def data_handler(_uuid, response: bytearray):
+    parse_yaw_pid(incoming data)
+    store in local lists
+
+start BLE notification
+set yaw PID gains
+set yaw setpoint
+start yaw PID run
+get PID data
+wait for PID data
+stop BLE notification
+```
+
+On the Artemis side, START_PID_RUN was reused. The robot cleared the old yaw PID log, reset controller memory, zeroed the yaw reference.
+
+```cpp
+case START_PID_RUN:
+{
+    pid_running = true;
+    pid_start_ms = millis();
+    yaw_prev_us = 0;
+    yaw_i_accum = 0;
+    yaw_prev_err = 0;
+    yaw_gyro = 0.0f;
+    yaw_zero_offset = dmp_ok ? yaw_dmp : 0.0f;
+    yaw_pid_len = 0;
+    tx_characteristic_string.writeValue("YAW_PID_STARTED");
+    break;
+}
+```
+
+Similarly, SET_PID_GAINS is reused to set PID gains for yaw.
+
+Since Lab 6 requires changing the setpoint while the robot is running, a separate command was added to update the yaw setpoint.
+
+```cpp
+case SET_YAW_SETPOINT:
+{
+    float sp;
+    success = robot_cmd.get_next_value(sp);
+    if (!success) return;
+
+    setpoint_deg = wrap_angle_deg(sp);
+    break;
+}
+```
+
+After the run finished, GET_PID_DATA is reused to get data. Artemis first sends a header containing the number of samples, then sends each saved data.
+
+```cpp
+case GET_PID_DATA:
+        send headers
+        for (int i = 0; i < pid_len; i++) {
+                send data: time, TOF ready, distance, error, P, I, D, PWM
+        }
+        break;
+```
 
 ---
 
