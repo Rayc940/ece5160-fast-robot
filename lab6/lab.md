@@ -19,6 +19,7 @@ start BLE notification
 set yaw PID gains
 set yaw setpoint
 start yaw PID run
+set yaw setpoint
 get PID data
 wait for PID data
 stop BLE notification
@@ -90,12 +91,15 @@ float yaw = wrap_angle_deg(yaw_raw - yaw_zero_offset);
 
 Using the DMP reduces yaw drift compared to gyro integration.
 
+In each loop iteration, the FIFO is emptied so that the controller always uses the newest orientation estimate from DMP. The DMP output is read in the main loop using the update_dmp() function.
+
 <br>
 
 ### Limitation on Sensor TODO
 
-Are there limitations on the sensor itself to be aware of? What is the maximum rotational velocity that the gyroscope can read (look at spec sheets and code documentation on github). Is this sufficient for our applications, and is there was to configure this parameter?
+There are also limitations of the gyroscope sensor to consider. By default, the ICM-20948 gyroscope is configured with a full-scale range of ±250 degrees per second (dps), as shown in the Arduino driver code. According to the ICM-20948 datasheet, the gyroscope supports four selectable ranges: ±250, ±500, ±1000, and ±2000 dps. A range of 250 dps corresponds to about 0.7 rotations per second. The robot can rotate faster than this under motor actuation, so the default setting may not always be sufficient and could lead to measurement saturation. The full-scale range can be adjusted by configuring the GYRO_FS_SEL register, allowing the maximum measurable angular velocity to be increased to 500, 1000, or 2000 dps if needed.
 
+<br>
 
 ### Orientation Control
 
