@@ -306,17 +306,11 @@ Video 4 below shows the result of PID controller under perturbation.
   <b>Video 4:</b> PID Control, Perturbation.
 </p>
 
-<br>
-
 ---
-
-### Programming Implmentation
 
 #### Range/Sampling Time
 
-The update frequency of the control loop, IMU, and DMP were measured to understand how often new orientation data is available compared to how often the controller runs.
-
-This was done by counting the number of main loop iterations, IMU updates, and DMP updates per second.
+The update frequency of the main loop, IMU, and DMP were measured. This was done by counting the number of main loop iterations, IMU updates, and DMP updates per second.
 
 <p align="center">
   <img src="../img/lab6/imu_freq.png" width="80%">
@@ -327,15 +321,15 @@ This was done by counting the number of main loop iterations, IMU updates, and D
 
 The results show that the control loop runs significantly faster than both the IMU and DMP updates. As a result, a new yaw measurement is not available at every control step.
 
-To handle this mismatch, the PID controller is executed every loop using the most recent available yaw value. The DMP provides updated orientation data asynchronously, and the latest value is stored and reused until a new sample becomes available.
+To handle this, the PID controller is using the most recent yaw value every loop. The DMP provides updated orientation data asynchronously, and the most recent value is stored and reused until a new sample becomes available.
 
-Although this results in a slightly stair-stepped yaw signal due to the lower DMP update rate, the controller performance remains stable. This is because the derivative term is computed directly from the gyroscope angular velocity (gz_dps), which is updated at a higher rate.
+Although this results in a slightly stair stepped yaw signal due to the lower DMP update rate, the controller performance remains stable. This is because the derivative term is calculated from the gyroscope angular velocity, which is updated at a higher rate.
 
 <br>
 
 #### Programming Implmentation
 
-The PID controller is implemented as a non-blocking step function (pid_step_yaw) that runs once per loop iteration. Since BLE polling and command handling also occur in the main loop, Bluetooth commands can still be received and processed while the controller is running.
+The PID controller is implemented as a non-blocking step function (pid_step_yaw()) that runs once per loop. Since BLE polling and command handling is also in the main loop, bluetooth commands can still be received and processed while the controller is running.
 
 While the current implementation rotates the robot in place, the same control structure could be extended to maintain orientation while driving forward or backward by adjusting the relative speeds of the left and right motors.
 
@@ -345,18 +339,18 @@ While the current implementation rotates the robot in place, the same control st
 
 #### Wind Up Protection
 
-When the robot starts far from the desired orientation, the yaw error can remain large for an extended period. This causes the integral term to accumulate continuously, which can lead to overshoot and unstable behavior once the robot begins to respond.
+When the robot starts far from the setpoint, the yaw error can remain large for some time. This causes the integral term to accumulate, which can lead to overshoot.
 
-To mitigate this, the integral term was limited using a clamp:
+To avoid this, the integral term was protected with a clamp:
 
 ```cpp
 if (i_accum > I_CLAMP) i_accum = I_CLAMP;
 if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 ```
 
-To evaluate the effect of windup, the robot was held in place while the controller was running, allowing the integral term to build up. The robot was then released and its response was observed.
+To test for the effect of windup, the robot was held in place while the controller was running, allowing the integral term to build up. The robot was then released.
 
-As shown in Figure 8, with windup protection enabled, the robot smoothly converges to the setpoint without excessive overshoot. In contrast, without windup protection, the accumulated integral term causes a much larger control effort upon release, resulting in aggressive motion and significant overshoot.
+As shown in Figure 8, with windup protection enabled, the robot converges to the setpoint without overshoot. However, without windup protection, the accumulated integral term causes some overshoot and steady state error, as shown in Figure 9.
 
 <p align="center">
   <img src="../img/lab6/windup_angle.png" width="30%">
@@ -389,7 +383,7 @@ frameborder="0" allowfullscreen></iframe>
 </div>
 
 <p style="text-align:center;">
-<b>Video 6:</b> Windup vs. No Windup Protection Controller.
+<b>Video 5:</b> Windup vs. No Windup Protection Controller.
 </p>
 
 <br>
@@ -398,7 +392,7 @@ frameborder="0" allowfullscreen></iframe>
 
 ## Discussion
 
-This lab provided experience implementing closed loop control and sensor based navigation on the robot. Overall, this lab improved understanding of PID control, tuning controller gains, and integrating sensor feedback to achieve stable position control. The addition of distance extrapolation also demonstrated how estimation techniques can improve controller performance.
+This lab provided experience implementing closed loop orientation control using IMU and DMP. Overall, it improved understanding of PID control, tuning controller gains, and using IMU data to tune stable orientation control. The use of the DMP for yaw estimation demonstrated how sensor fusion can reduce drift and provide more reliable orientation measurements.
 
 ---
 
