@@ -297,7 +297,7 @@ Video 4 below shows the result of PID controller under perturbation.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/u9zb5dK_BeM"
+    src="https://www.youtube.com/embed/v7XNLwYeiJE"
     frameborder="0"
     allowfullscreen>
   </iframe>
@@ -319,7 +319,7 @@ The update frequency of the TOF sensor was measured and compared to the PID cont
 This was done by counting how many times the main loop ran in one second and how many times the TOF sensor reported a new reading in that same time.
 
 <p align="center">
-  <img src="../img/lab5/TOF_freq.png" width="80%">
+  <img src="../img/lab6/imu_freq.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 6:</b> Gyroscope and Main Loop Frequency.
