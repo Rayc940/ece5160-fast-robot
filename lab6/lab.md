@@ -341,7 +341,7 @@ While the current implementation rotates the robot in place, the same control st
 
 ---
 
-#### Wind Up Protection
+#### Wind Up Protection TODO
 
 When the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate, which can lead to overshoot and unstable behavior.
 
@@ -355,21 +355,31 @@ if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 To test for the differences, robot was held by hand for a while to accumulate I error, then released. Figure 8 below shows that with wind up protection, there are no steady state error. However, without wind up protection, the accumulated integral term caused the robot to drive more aggressively after release, resulting in larger overshoot.
 
 <p align="center">
-  <img src="../img/lab5/error_windup.png" width="45%">
-  <img src="../img/lab5/error_nowindup.png" width="45%">
+  <img src="../img/lab6/windup_angle.png" width="30%">
+  <img src="../img/lab6/windup_error.png" width="30%">
+  <img src="../img/lab6/windup_pid.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 8:</b> Error with Wind Up vs. No Wind Up Protection.
+  <b>Figure 8:</b> Angle, Error, PID Effort with Wind Up Protection.
+</p>
+
+<p align="center">
+  <img src="../img/lab6/nowindup_angle.png" width="30%">
+  <img src="../img/lab6/nowindup_error.png" width="30%">
+  <img src="../img/lab6/nowindup_pid.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 9:</b> Angle, Error, PID Effort without Wind Up Protection.
 </p>
 
 <div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
 
 <iframe width="360" height="200"
-src="https://www.youtube.com/embed/h-kXEtOBWFc"
+src="https://www.youtube.com/embed/KSUEaRIorfQ"
 frameborder="0" allowfullscreen></iframe>
 
 <iframe width="360" height="200"
-src="https://www.youtube.com/embed/jhuoMP1gch8"
+src="https://www.youtube.com/embed/IrafosLwEoY"
 frameborder="0" allowfullscreen></iframe>
 
 </div>
