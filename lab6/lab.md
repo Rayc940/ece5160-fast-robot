@@ -95,9 +95,18 @@ In each loop iteration, the FIFO is emptied so that the controller always uses t
 
 <br>
 
-### Limitation on Sensor TODO
+### Limitation on Sensor
 
-There are also limitations of the gyroscope sensor to consider. By default, the ICM-20948 gyroscope is configured with a full-scale range of ±250 degrees per second (dps), as shown in the Arduino driver code. According to the ICM-20948 datasheet, the gyroscope supports four selectable ranges: ±250, ±500, ±1000, and ±2000 dps. A range of 250 dps corresponds to about 0.7 rotations per second. The robot can rotate faster than this under motor actuation, so the default setting may not always be sufficient and could lead to measurement saturation. The full-scale range can be adjusted by configuring the GYRO_FS_SEL register, allowing the maximum measurable angular velocity to be increased to 500, 1000, or 2000 dps if needed.
+There are limitations of the gyroscope sensor. By default, the ICM-20948 gyroscope is configured with a range of ±250 degrees per second (dps), as shown in the Arduino code.
+
+According to the ICM-20948 datasheet, the gyroscope supports four ranges: ±250, ±500, ±1000, and ±2000 dps. The robot can rotate faster than this, so default setting may not be enough. The range can be adjusted by changing the GYRO_FS_SEL register.
+
+<p align="center">
+  <img src="../img/lab6/P_angle.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure TODO:</b> ICM-20948 Datasheet.
+</p>
 
 <br>
 
@@ -198,9 +207,7 @@ float d = -Kd_yaw * gz_dps;
 
 This also helps avoid derivative kick, which can occur when the setpoint changes suddenly. Because the derivative term depends on angular velocity rather than the error derivative, sudden setpoint changes do not create large spikes in the control signal.
 
-Because the derivative term comes directly from the gyroscope measurement rather than from finite-differencing noisy angle samples, an additional low-pass filter was not needed here. This is different from the Lab 5 TOF controller, where the derivative had to be filtered because it was computed from discrete error measurements.
-
-This smoothing reduced sudden spikes in the derivative signal and improved stability.
+Because the derivative term comes directly from the gyroscope measurement rather than the noisy angle samples, an additional low pass filter was not needed.
 
 <p align="center">
   <img src="../img/lab6/PID_angle.png" width="30%">
@@ -228,30 +235,11 @@ Video 3 below shows the result of PID controller.
 
 <br>
 
-#### Motor Deadband
-
-From Lab 4, motors have a minimum PWM limit. If the controller output became too small near the setpoint, the robot might stop moving even though the error was not zero.
-
-To address this, a deadband helper function was applied to the PWM command before sending it to the motors.
-
-```cpp
-int apply_deadband(int pwm)
-{
-  int a = abs(pwm);
-  if (a == 0) return 0;
-  if (a < PWM_DEADBAND) a = PWM_DEADBAND;
-  if (a > 255) a = 255;
-  return (pwm < 0) ? -a : a;
-}
-```
-
-<br>
-
 #### Perturbation Test
 
-The robot was also tested with external perturbations. After reaching the target distance, the robot was manually pushed closer and farther away.
+The robot was also tested with external perturbations. After reaching the target angle, the robot was manually pushed closer and farther away.
 
-In both cases, the controller responded by driving the robot back toward the setpoint.
+In both cases, the controller responded by rotating the robot back toward the setpoint.
 
 <p align="center">
   <img src="../img/lab5/pert_dist.png" width="30%">
@@ -281,7 +269,7 @@ Video 4 below shows the result of PID controller under perturbation.
 
 ---
 
-### Extrapolation
+### Programming Implmentation
 
 #### TOF Sensor Frequency
 
@@ -302,21 +290,11 @@ To handle this, the PID controller was allowed to run every loop, even when no n
 
 <br>
 
-#### Linear Extrapolation
+#### Programming Implmentation
 
-The controller acts on a step signal because the TOF only updates every 0.1 s. To improve this, a simple linear extrapolation method was added.
+The PID controller is implemented as a non-blocking step function (pid_step_yaw) that runs once per loop iteration. Since BLE polling and command handling also occur in the main loop, Bluetooth commands can still be received and processed while the controller is running.
 
-The robot stores the two most recent TOF readings and their timestamps. When a new TOF measurement arrives, the slope between the two points is calculated as:
 
-`m = (d_current - d_previous) / (t_current - t_previous)`
-
-This slope is then used to estimate the distance at the current time:
-
-`d_est = d_current + m * (t_now - t_current)`
-
-This gives an estimated distance that updates every PID loop instead of only when a new TOF sample arrives.
-
-When a new TOF reading is available, the previous distance and timestamp are shifted into previous sample, and the new reading becomes the latest sample.
 
 ```cpp
 prev_dist_mm = last_dist_mm;
@@ -325,48 +303,6 @@ prev_tof_us = last_tof_us;
 last_dist_mm = d1;
 last_tof_us = now_us;
 ```
-
-The extrapolated distance is then calculated from the last two TOF samples:
-
-```cpp
-int get_extrapolated_dist_mm(uint32_t now_us)
-{
-    if (!tof_hist_valid) return last_dist_mm;
-
-    float dt_sample = (last_tof_us - prev_tof_us) / 1e6f;
-    if (dt_sample <= 0.0f) return last_dist_mm;
-
-    float slope = ((float)last_dist_mm - (float)prev_dist_mm) / dt_sample;
-    float dt_now = (now_us - last_tof_us) / 1e6f;
-    float d_est = (float)last_dist_mm + slope * dt_now;
-
-    if (d_est < 0.0f) d_est = 0.0f;
-    if (d_est > 4000.0f) d_est = 4000.0f;
-
-    return (int)roundf(d_est);
-}
-```
-
-Inside the PID loop, the raw ToF distance and extrapolated distance were both available, and the controller used the extrapolated value:
-
-```cpp
-int raw_dist = last_dist_mm;
-int dist = get_extrapolated_dist_mm(now_us);
-int err = dist - setpoint_mm;
-```
-
-With this approach, the PID controller still runs at 160 Hz, but instead of using the same TOF value, it uses a continuously updated estimate. This helps smooth the distance input to the controller.
-
-To evaluate this method, both the raw TOF distance and the extrapolated distance were recorded and plotted on the same graph. The raw signal shows jumps, while the extrapolated signal is more smooth.
-
-<p align="center">
-  <img src="../img/lab5/extrapolated.png" width="30%">
-  <img src="../img/lab5/extrapolated_error.png" width="30%">
-  <img src="../img/lab5/extrapolated_pwm.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 6:</b> Extrapolated vs. Raw Plots
-</p>
 
 <br>
 
@@ -392,35 +328,6 @@ frameborder="0" allowfullscreen></iframe>
 
 <p style="text-align:center;">
 <b>Video 5:</b> Three Runs of the Final Controller.
-</p>
-
-Maximum speed is calculated to be 2071 mm/s.
-
-```cpp
-window_pts = 10
-initialize lists
-
-for i in range(len(est_dist) - window_pts):
-    dd = est_dist[i] - est_dist[i + window_pts]
-    dt = t[i + window_pts] - t[i]
-    if dt > 0:
-        speeds.append(dd / dt)
-        t_speed.append((t[i] + t[i + window_pts]) / 2)
-
-# keep first part
-valid = est_dist[:len(speeds)] > 400
-speeds_valid = speeds[valid]
-t_speed_valid = t_speed[valid]
- 
-print max speed
-plot
-```
-
-<p align="center">
-  <img src="../img/lab5/speed.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 7:</b> Speed During Final Run.
 </p>
 
 ---
@@ -472,6 +379,6 @@ This lab provided experience implementing closed loop control and sensor based n
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab5/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab6/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
