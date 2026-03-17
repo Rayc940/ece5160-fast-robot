@@ -312,11 +312,11 @@ Video 4 below shows the result of PID controller under perturbation.
 
 ### Programming Implmentation
 
-#### Range/Sampling Time TODO
+#### Range/Sampling Time
 
-The update frequency of the TOF sensor was measured and compared to the PID control loop rate. 
+The update frequency of the control loop, IMU, and DMP were measured to understand how often new orientation data is available compared to how often the controller runs.
 
-This was done by counting how many times the main loop ran in one second and how many times the TOF sensor reported a new reading in that same time.
+This was done by counting the number of main loop iterations, IMU updates, and DMP updates per second.
 
 <p align="center">
   <img src="../img/lab6/imu_freq.png" width="80%">
@@ -325,9 +325,11 @@ This was done by counting how many times the main loop ran in one second and how
   <b>Figure 6:</b> Gyroscope and Main Loop Frequency.
 </p>
 
-This shows that the control loop is running much faster than the TOF sensor (160Hz vs. 10Hz). Because of this, the controller cannot depend on receiving a new distance reading every loop.
+The results show that the control loop runs significantly faster than both the IMU and DMP updates. As a result, a new yaw measurement is not available at every control step.
 
-To handle this, the PID controller was allowed to run every loop, even when no new TOF data was available. If a new measurement was available, the stored distance value was updated. If no new measurement was available, the controller continued to run using the most recent saved value.
+To handle this mismatch, the PID controller is executed every loop using the most recent available yaw value. The DMP provides updated orientation data asynchronously, and the latest value is stored and reused until a new sample becomes available.
+
+Although this results in a slightly stair-stepped yaw signal due to the lower DMP update rate, the controller performance remains stable. This is because the derivative term is computed directly from the gyroscope angular velocity (gz_dps), which is updated at a higher rate.
 
 <br>
 
