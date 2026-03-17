@@ -93,6 +93,45 @@ Using the DMP reduces yaw drift compared to gyro integration.
 
 In each loop iteration, the FIFO is emptied so that the controller always uses the newest orientation estimate from DMP. The DMP output is read in the main loop using the update_dmp() function.
 
+```cpp
+void update_dmp()
+{
+    yaw_dmp_fresh = false;
+    if (!dmp_ok) return;
+
+    icm_20948_DMP_data_t data;
+    while (true) {
+        myICM.readDMPdataFromFIFO(&data);
+        if (!((myICM.status == ICM_20948_Stat_Ok) ||
+              (myICM.status == ICM_20948_Stat_FIFOMoreDataAvail))) {
+            break;
+        }
+        if ((data.header & DMP_header_bitmap_Quat6) > 0) {
+            double q1 = ((double)data.Quat6.Data.Q1) / 1073741824.0; // 2^30
+            double q2 = ((double)data.Quat6.Data.Q2) / 1073741824.0;
+            double q3 = ((double)data.Quat6.Data.Q3) / 1073741824.0;
+
+            double q0_sq = 1.0 - ((q1 * q1) + (q2 * q2) + (q3 * q3));
+            if (q0_sq < 0.0) q0_sq = 0.0;
+            double q0 = sqrt(q0_sq);
+
+            double ysqr = q2 * q2;
+
+            double t3 = +2.0 * (q0 * q3 + q1 * q2);
+            double t4 = +1.0 - 2.0 * (ysqr + q3 * q3);
+            yaw_dmp = (float)(atan2(t3, t4) * 180.0 / M_PI);
+            yaw_dmp = wrap_angle_deg(yaw_dmp);
+
+            yaw_dmp_fresh = true;
+        }
+
+        if (myICM.status != ICM_20948_Stat_FIFOMoreDataAvail) {
+            break;
+        }
+    }
+}
+```
+
 <br>
 
 ### Limitation on Sensor
@@ -102,10 +141,10 @@ There are limitations of the gyroscope sensor. By default, the ICM-20948 gyrosco
 According to the ICM-20948 datasheet, the gyroscope supports four ranges: ±250, ±500, ±1000, and ±2000 dps. The robot can rotate faster than this, so default setting may not be enough. The range can be adjusted by changing the GYRO_FS_SEL register.
 
 <p align="center">
-  <img src="../img/lab6/P_angle.png" width="80%">
+  <img src="../img/lab6/gyro_sensor.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure TODO:</b> ICM-20948 Datasheet.
+  <b>Figure 1:</b> ICM-20948 Datasheet, Gyroscope Angular Velocity.
 </p>
 
 <br>
@@ -140,7 +179,7 @@ After tuning, Kp of 10 was chosen. Proportional control was able to make the rob
   <img src="../img/lab6/P_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Plots of P Control Data.
+  <b>Figure 2:</b> Plots of P Control Data.
 </p>
 
 Video 1 below shows the result of P only controller.
@@ -177,7 +216,7 @@ With Ki = 0.01, the controller reduced the steady state error.
   <img src="../img/lab6/PD_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Plots of PI Control Data.
+  <b>Figure 3:</b> Plots of PI Control Data.
 </p>
 
 Video 2 below shows the result of PI controller.
@@ -209,13 +248,15 @@ This also helps avoid derivative kick, which can occur when the setpoint changes
 
 Because the derivative term comes directly from the gyroscope measurement rather than the noisy angle samples, an additional low pass filter was not needed.
 
+Kd of 0.3 was chosen for best response.
+
 <p align="center">
   <img src="../img/lab6/PID_angle.png" width="30%">
   <img src="../img/lab6/PID_error.png" width="30%">
   <img src="../img/lab6/PID_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 3:</b> Plots of PID Control Data.
+  <b>Figure 4:</b> Plots of PID Control Data.
 </p>
 
 Video 3 below shows the result of PID controller.
@@ -242,12 +283,12 @@ The robot was also tested with external perturbations. After reaching the target
 In both cases, the controller responded by rotating the robot back toward the setpoint.
 
 <p align="center">
-  <img src="../img/lab5/pert_dist.png" width="30%">
-  <img src="../img/lab5/pert_error.png" width="30%">
-  <img src="../img/lab5/pert_pwm.png" width="30%">
+  <img src="../img/lab6/pert_angle.png" width="30%">
+  <img src="../img/lab6/pert_error.png" width="30%">
+  <img src="../img/lab6/pert_pwm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 4:</b> Plots of PID Control Perturbation Data.
+  <b>Figure 5:</b> Plots of PID Control Perturbation Data.
 </p>
 
 Video 4 below shows the result of PID controller under perturbation.
@@ -271,7 +312,7 @@ Video 4 below shows the result of PID controller under perturbation.
 
 ### Programming Implmentation
 
-#### TOF Sensor Frequency
+#### Range/Sampling Time TODO
 
 The update frequency of the TOF sensor was measured and compared to the PID control loop rate. 
 
@@ -281,7 +322,7 @@ This was done by counting how many times the main loop ran in one second and how
   <img src="../img/lab5/TOF_freq.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 5:</b> TOF and Main Loop Frequency.
+  <b>Figure 6:</b> Gyroscope and Main Loop Frequency.
 </p>
 
 This shows that the control loop is running much faster than the TOF sensor (160Hz vs. 10Hz). Because of this, the controller cannot depend on receiving a new distance reading every loop.
@@ -294,41 +335,9 @@ To handle this, the PID controller was allowed to run every loop, even when no n
 
 The PID controller is implemented as a non-blocking step function (pid_step_yaw) that runs once per loop iteration. Since BLE polling and command handling also occur in the main loop, Bluetooth commands can still be received and processed while the controller is running.
 
-
-
-```cpp
-prev_dist_mm = last_dist_mm;
-prev_tof_us = last_tof_us;
-
-last_dist_mm = d1;
-last_tof_us = now_us;
-```
+While the current implementation rotates the robot in place, the same control structure could be extended to maintain orientation while driving forward or backward by adjusting the relative speeds of the left and right motors.
 
 <br>
-
-#### Final Run
-
-The final controller was tested for three times at different distances, and video 5 below shows the results.
-
-<div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
-
-<iframe width="360" height="200"
-src="https://www.youtube.com/embed/0nrV3FTbbqM"
-frameborder="0" allowfullscreen></iframe>
-
-<iframe width="360" height="200"
-src="https://www.youtube.com/embed/yZh0VrxaNQA"
-frameborder="0" allowfullscreen></iframe>
-
-<iframe width="360" height="200"
-src="https://www.youtube.com/embed/sUXtRFqiyBQ"
-frameborder="0" allowfullscreen></iframe>
-
-</div>
-
-<p style="text-align:center;">
-<b>Video 5:</b> Three Runs of the Final Controller.
-</p>
 
 ---
 
