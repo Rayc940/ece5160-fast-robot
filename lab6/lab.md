@@ -149,13 +149,13 @@ Video 1 below shows the result of P only controller.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/fP9MSvP5kSc"
+    src="https://www.youtube.com/embed/3tVZWa7vp-Q"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> P Only Controller.
+  <b>Video 1:</b> P Only Controller.
 </p>
 
 <br>
@@ -186,13 +186,13 @@ Video 2 below shows the result of PI controller.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/8dwQlHGNRlU"
+    src="https://www.youtube.com/embed/FS0wyYx55ig"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> PI Controller.
+  <b>Video 2:</b> PI Controller.
 </p>
 
 <br>
@@ -224,13 +224,13 @@ Video 3 below shows the result of PID controller.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/bTfX_to0jH8"
+    src="https://www.youtube.com/embed/yNlylsxH1b8"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> PID Controller.
+  <b>Video 3:</b> PID Controller.
 </p>
 
 <br>
@@ -256,7 +256,7 @@ Video 4 below shows the result of PID controller under perturbation.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/-B3x1WbUun4"
+    src="https://www.youtube.com/embed/u9zb5dK_BeM"
     frameborder="0"
     allowfullscreen>
   </iframe>
