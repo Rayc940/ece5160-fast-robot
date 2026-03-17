@@ -343,18 +343,20 @@ While the current implementation rotates the robot in place, the same control st
 
 ---
 
-#### Wind Up Protection TODO
+#### Wind Up Protection
 
-When the robot starts far from the wall, the error can remain large for a long time. This causes the integral term to accumulate, which can lead to overshoot and unstable behavior.
+When the robot starts far from the desired orientation, the yaw error can remain large for an extended period. This causes the integral term to accumulate continuously, which can lead to overshoot and unstable behavior once the robot begins to respond.
 
-To prevent this, the accumulated integral value was clamped within a fixed range.
+To mitigate this, the integral term was limited using a clamp:
 
 ```cpp
 if (i_accum > I_CLAMP) i_accum = I_CLAMP;
 if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 ```
 
-To test for the differences, robot was held by hand for a while to accumulate I error, then released. Figure 8 below shows that with wind up protection, there are no steady state error. However, without wind up protection, the accumulated integral term caused the robot to drive more aggressively after release, resulting in larger overshoot.
+To evaluate the effect of windup, the robot was held in place while the controller was running, allowing the integral term to build up. The robot was then released and its response was observed.
+
+As shown in Figure 8, with windup protection enabled, the robot smoothly converges to the setpoint without excessive overshoot. In contrast, without windup protection, the accumulated integral term causes a much larger control effort upon release, resulting in aggressive motion and significant overshoot.
 
 <p align="center">
   <img src="../img/lab6/windup_angle.png" width="30%">
