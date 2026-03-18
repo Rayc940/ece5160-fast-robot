@@ -333,8 +333,6 @@ The PID controller is implemented as a non-blocking step function (pid_step_yaw(
 
 While the current implementation rotates the robot in place, the same control structure could be extended to maintain orientation while driving forward or backward by adjusting the relative speeds of the left and right motors.
 
-<br>
-
 ---
 
 #### Wind Up Protection
