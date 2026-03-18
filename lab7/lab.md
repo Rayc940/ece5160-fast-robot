@@ -1,51 +1,15 @@
-## Prelab
+## Estimate Drag and Momentum
 
-Before tuning the orientation controller, a bluetooth debugging system was set up similar to lab 5. It runs the PID controller for fixed time, stores data, and sends data to laptop.
+Choose your step responce, u(t), to be of similar size to the PWM value you used in Lab 5 (to keep the dynamics similar). Pick something between 50%-100% of the maximum u.
+- PWM = 120
 
-On the Python side, the code was similar to Lab 5.
+Make sure your step time is long enough to reach steady state (you likely have to use active braking of the car to avoid crashing into the wall). Make sure to use a piece of foam to avoid hitting the wall and damaging your car.
+- 3 seconds
 
-```cpp
-initialize lists
+Show graphs for the TOF sensor output, the (computed) speed, and the motor input. Please ensure that the x-axis is in seconds.
+Measure the steady state speed, 90% rise time, and the speed at 90% risetime. Note, this doesn’t have to be 90%, you could also use somewhere between 60-90, but the speed and time must correspond to get an accurate estimate for m.
 
-def parse_yaw_pid(line: str):
-    parts = line.split(",")
-    parse time, yaw angle, error, P, I, D, control effort, pwm
-
-def data_handler(_uuid, response: bytearray):
-    parse_yaw_pid(incoming data)
-    store in local lists
-
-start BLE notification
-set yaw PID gains
-set yaw setpoint
-start yaw PID run
-set yaw setpoint
-get PID data
-wait for PID data
-stop BLE notification
-```
-
-On the Artemis side, START_PID_RUN was reused. The robot cleared the old yaw PID log, reset controller memory, zeroed the yaw reference.
-
-```cpp
-case START_PID_RUN:
-{
-    pid_running = true;
-    pid_start_ms = millis();
-    yaw_prev_us = 0;
-    yaw_i_accum = 0;
-    yaw_prev_err = 0;
-    yaw_gyro = 0.0f;
-    yaw_zero_offset = dmp_ok ? yaw_dmp : 0.0f;
-    yaw_pid_len = 0;
-    tx_characteristic_string.writeValue("YAW_PID_STARTED");
-    break;
-}
-```
-
-Similarly, SET_PID_GAINS was reused to set PID gains for yaw.
-
-Since Lab 6 requires changing the setpoint while the robot is running, a separate command was added to update the yaw setpoint.
+When sending this data back to your laptop, make sure to save the data in a file so that you can use it even after your Jupyter kernel restarts. Consider writing the data to a CSV file, pickle file, or shelve file.
 
 ```cpp
 case SET_YAW_SETPOINT:
@@ -59,39 +23,11 @@ case SET_YAW_SETPOINT:
 }
 ```
 
-After the run finished, GET_PID_DATA was reused to get data. Artemis first sent a header containing the number of samples, then sent each saved data.
-
-```cpp
-case GET_PID_DATA:
-        send headers
-        for (int i = 0; i < yaw_pid_len; i++) {
-                send data: time, yaw angle, error, P, I, D, control effort, pwm
-        }
-        break;
-```
-
 ---
 
-## Lab Tasks
-
-### Digital Motion Processing
+## Initialize KF (Python)
 
 Digital integration of gyroscope data often introduces drift over time (shown in lab 2). To reduce this drift, DMP built into the ICM-20948 IMU was used. The DMP internally performs sensor fusion and outputs orientation as a quaternion, which can then be converted to yaw angle.
-
-```cpp
-float yaw_raw = dmp_ok ? yaw_dmp : wrap_angle_deg(yaw_gyro);
-```
-
-At the start of each PID run, the current yaw value is used as the reference orientation. This allows the controller to use relative angles instead of absolute angles.
-
-```cpp
-yaw_zero_offset = dmp_ok ? yaw_dmp : 0.0f;
-float yaw = wrap_angle_deg(yaw_raw - yaw_zero_offset);
-```
-
-Using the DMP reduces yaw drift compared to gyro integration.
-
-In each loop iteration, the FIFO is emptied so that the controller always uses the newest orientation estimate from DMP. The DMP output is read in the main loop using the update_dmp() function.
 
 ```cpp
 void update_dmp()
@@ -132,9 +68,9 @@ void update_dmp()
 }
 ```
 
-<br>
+---
 
-### Limitation on Sensor
+## KF Implementation on Jupyter
 
 There are limitations of the gyroscope sensor. By default, the ICM-20948 gyroscope is configured with a range of ±250 degrees per second (dps), as shown in the Arduino code.
 
@@ -147,9 +83,9 @@ According to the ICM-20948 datasheet, the gyroscope supports four ranges: ±250,
   <b>Figure 1:</b> ICM-20948 Datasheet, Gyroscope Angular Velocity.
 </p>
 
-<br>
+---
 
-### Orientation Control
+## KF Implementation on the Robot
 
 The goal of this lab was to control the robot's orientation. The robot rotates in place by driving the wheels at equal speeds in opposite directions.
 
@@ -160,79 +96,6 @@ float err = wrap_angle_deg(setpoint_deg - yaw);
 ```
 
 The wrap_angle_deg() function ensures the controller always takes the shortest rotational path by keeping the error between −180° and 180°.
-
-<br>
-
-#### P Control
-
-The proportional term generates a control signal proportional to the orientation error.
-
-```cpp
-float p = Kp_yaw * err;
-```
-
-After tuning, Kp of 10 was chosen. Proportional control was able to make the robot rotate close to setpoint, but with some steady state error.
-
-<p align="center">
-  <img src="../img/lab6/P_angle.png" width="30%">
-  <img src="../img/lab6/P_error.png" width="30%">
-  <img src="../img/lab6/P_pwm.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 2:</b> Plots of P Control Data.
-</p>
-
-Video 1 below shows the result of P only controller.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/3tVZWa7vp-Q"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 1:</b> P Only Controller.
-</p>
-
-<br>
-
-#### PI Control
-
-To improve the steady state accuracy, an integral term was added. The integral term accumulates the error over time and helps remove steady state error.
-
-```cpp
-yaw_i_accum += err * dt;
-float i = Ki_yaw * yaw_i_accum;
-```
-
-With Ki = 0.01, the controller reduced the steady state error.
-
-<p align="center">
-  <img src="../img/lab6/PD_angle.png" width="30%">
-  <img src="../img/lab6/PD_error.png" width="30%">
-  <img src="../img/lab6/PD_pwm.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 3:</b> Plots of PI Control Data.
-</p>
-
-Video 2 below shows the result of PI controller.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/FS0wyYx55ig"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 2:</b> PI Controller.
-</p>
 
 <br>
 
@@ -272,116 +135,6 @@ Video 3 below shows the result of PID controller.
 </div>
 <p style="text-align:center;">
   <b>Video 3:</b> PID Controller.
-</p>
-
-<br>
-
-#### Perturbation Test
-
-The robot was also tested with external perturbations. After reaching the target angle, the robot was manually pushed closer and farther away.
-
-In both cases, the controller responded by rotating the robot back toward the setpoint.
-
-<p align="center">
-  <img src="../img/lab6/pert_angle.png" width="30%">
-  <img src="../img/lab6/pert_error.png" width="30%">
-  <img src="../img/lab6/pert_pwm.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 5:</b> Plots of PID Control Perturbation Data.
-</p>
-
-Video 4 below shows the result of PID controller under perturbation.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/v7XNLwYeiJE"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 4:</b> PID Control, Perturbation.
-</p>
-
----
-
-#### Range/Sampling Time
-
-The update frequency of the main loop, IMU, and DMP were measured. This was done by counting the number of main loop iterations, IMU updates, and DMP updates per second.
-
-<p align="center">
-  <img src="../img/lab6/imu_freq.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 6:</b> Gyroscope and Main Loop Frequency.
-</p>
-
-The results show that the control loop runs significantly faster than both the IMU and DMP updates. As a result, a new yaw measurement is not available at every control step.
-
-To handle this, the PID controller is using the most recent yaw value every loop. The DMP provides updated orientation data asynchronously, and the most recent value is stored and reused until a new sample becomes available.
-
-Although this results in a slightly stair stepped yaw signal due to the lower DMP update rate, the controller performance remains stable. This is because the derivative term is calculated from the gyroscope angular velocity, which is updated at a higher rate.
-
-<br>
-
-#### Programming Implmentation
-
-The PID controller is implemented as a non-blocking step function (pid_step_yaw()) that runs once per loop. Since BLE polling and command handling is also in the main loop, bluetooth commands can still be received and processed while the controller is running.
-
-While the current implementation rotates the robot in place, the same control structure could be extended to maintain orientation while driving forward or backward by adjusting the relative speeds of the left and right motors.
-
----
-
-#### Wind Up Protection
-
-When the robot starts far from the setpoint, the yaw error can remain large for some time. This causes the integral term to accumulate, which can lead to overshoot.
-
-To avoid this, the integral term was protected with a clamp:
-
-```cpp
-if (i_accum > I_CLAMP) i_accum = I_CLAMP;
-if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
-```
-
-To test for the effect of windup, the robot was held in place while the controller was running, allowing the integral term to build up. The robot was then released.
-
-As shown in Figure 7, with windup protection, the robot comes to the setpoint without overshoot. However, without windup protection, the accumulated integral term causes some overshoot and steady state error, as shown in Figure 8.
-
-<p align="center">
-  <img src="../img/lab6/windup_angle.png" width="30%">
-  <img src="../img/lab6/windup_error.png" width="30%">
-  <img src="../img/lab6/windup_pid.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 7:</b> Angle, Error, PID Effort with Wind Up Protection.
-</p>
-
-<p align="center">
-  <img src="../img/lab6/nowindup_angle.png" width="30%">
-  <img src="../img/lab6/nowindup_error.png" width="30%">
-  <img src="../img/lab6/nowindup_pid.png" width="30%">
-</p>
-<p align="center">
-  <b>Figure 8:</b> Angle, Error, PID Effort without Wind Up Protection.
-</p>
-
-<div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
-
-<iframe width="360" height="200"
-src="https://www.youtube.com/embed/KSUEaRIorfQ"
-frameborder="0" allowfullscreen></iframe>
-
-<iframe width="360" height="200"
-src="https://www.youtube.com/embed/IrafosLwEoY"
-frameborder="0" allowfullscreen></iframe>
-
-</div>
-
-<p style="text-align:center;">
-<b>Video 5:</b> Windup vs. No Windup Protection Controller.
 </p>
 
 <br>
