@@ -348,7 +348,7 @@ if (i_accum < -I_CLAMP) i_accum = -I_CLAMP;
 
 To test for the effect of windup, the robot was held in place while the controller was running, allowing the integral term to build up. The robot was then released.
 
-As shown in Figure 8, with windup protection, the robot comes to the setpoint without overshoot. However, without windup protection, the accumulated integral term causes some overshoot and steady state error, as shown in Figure 9.
+As shown in Figure 7, with windup protection, the robot comes to the setpoint without overshoot. However, without windup protection, the accumulated integral term causes some overshoot and steady state error, as shown in Figure 8.
 
 <p align="center">
   <img src="../img/lab6/windup_angle.png" width="30%">
@@ -356,7 +356,7 @@ As shown in Figure 8, with windup protection, the robot comes to the setpoint wi
   <img src="../img/lab6/windup_pid.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 8:</b> Angle, Error, PID Effort with Wind Up Protection.
+  <b>Figure 7:</b> Angle, Error, PID Effort with Wind Up Protection.
 </p>
 
 <p align="center">
@@ -365,7 +365,7 @@ As shown in Figure 8, with windup protection, the robot comes to the setpoint wi
   <img src="../img/lab6/nowindup_pid.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 9:</b> Angle, Error, PID Effort without Wind Up Protection.
+  <b>Figure 8:</b> Angle, Error, PID Effort without Wind Up Protection.
 </p>
 
 <div style="display:flex; justify-content:center; gap:20px; margin:30px 0; flex-wrap:wrap;">
