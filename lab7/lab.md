@@ -317,8 +317,6 @@ Video 1 below shows the result of KF PID controller. Same PID gains (from Lab 5)
   <b>Video 1:</b> PID Controller with KF.
 </p>
 
-<br>
-
 ---
 
 ## Discussion
