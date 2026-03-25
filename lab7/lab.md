@@ -104,6 +104,12 @@ The fitted curve was plotted with the measured velocity data in Figure 2.
 
 After estimating d and m from the step response, a 2 state model was built. The state vector was defined as position and velocity relative to the wall.
 
+<p align="center">
+  <img src="../img/lab7/state_space.png" width="80%">
+</p>
+<p align="center">
+</p>
+
 Using the fitted values, the A and B matrices were calculated in Python:
 
 ```cpp
@@ -120,10 +126,10 @@ B = np.array([
 C = np.array([[-1.0, 0.0]], dtype=float)
 ```
 
-The model was then discretized. A sampling time of Delta_T = 0.033s was used, which is the approximate TOF update period.
+The model was then discretized. A sampling time of Delta_T = 1/150 = 0.0067s was used, which is the PID control loop frequency measured in Lab 5. This allows the filter to run faster than the sensor and estimate the system state between measurements.
 
 ```cpp
-Delta_T = 0.033
+Delta_T = 0.067
 
 Ad = np.eye(2) + Delta_T * A
 Bd = Delta_T * B
@@ -159,6 +165,10 @@ Sigma_u = np.array([
 ], dtype=float)
 ```
 
+During tuning, the measurement noise (sigma 3) had the most noticeable effect. Increasing sigma 3 resulted in smoother estimates by reducing the influence of noisy measurements, while decreasing sigma 3 caused the filter to closely follow the raw sensor data.
+
+In contrast, changing the process noise terms (sigma 1 and sigma 2) had a smaller effect on the position estimate. This is likely because the system model was already a reasonable approximation and measurements were incorporated frequently.
+
 These values determine how much the filter trusts the model vs. the measurements. Larger process noise increases reliance on measurements, while larger measurement noise increases reliance on the model.
 
 ---
@@ -167,28 +177,55 @@ These values determine how much the filter trusts the model vs. the measurements
 
 Finally, the Kalman Filter was implemented, including the prediction step, Kalman gain computation, and measurement update.
 
+The Kalman Filter was implemented such that prediction is performed at every control loop iteration, while measurement updates are only applied when a new TOF sample is available. This allows the model to estimate system behavior between sensor readings.
+
+The code for Kalman Filter was separated into prediction and update functions:
+
 ```cpp
-def kf(mu, sigma, u, y):
-    mu_p = Ad.dot(mu) + Bd.dot([[u]])
-    sigma_p = Ad.dot(sigma).dot(Ad.T) + Sigma_u
+def kf_predict(mu, sigma, u):
+    mu_p = Ad.dot(mu) + Bd.dot(u)
+    sigma_p = Ad.dot(sigma.dot(Ad.transpose())) + Sigma_u
 
-    sigma_m = C.dot(sigma_p).dot(C.T) + Sigma_z
-    kkf_gain = sigma_p.dot(C.T).dot(np.linalg.inv(sigma_m))
+    return mu_p, sigma_p
 
-    y_m = np.array([[y]]) - C.dot(mu_p)
+def kf_update(mu_p, sigma_p, y):
+    sigma_m = C.dot(sigma_p.dot(C.transpose())) + Sigma_z
+    kkf_gain = sigma_p.dot(C.transpose().dot(np.linalg.inv(sigma_m)))
+    y_m = np.array(y) - C.dot(mu_p)
     mu = mu_p + kkf_gain.dot(y_m)
     sigma = (np.eye(2) - kkf_gain.dot(C)).dot(sigma_p)
 
     return mu, sigma
 ```
 
-This completed the initialization of the Kalman Filter in Python. The next step was to run this filter over the recorded step response data and compare the estimated distance and velocity against the raw sensor data.
+The filter was run using a higher rate time vector that matches the control loop. At each step, it first predicts the next state using the model. When a new TOF measurement becomes available, the filter updates the estimate using that measurement.
+
+```cpp
+for tk in t_kf:
+    u_now = u_step if tk < 2 else 0.0
+
+    # prediction
+    mu_p, Sigma_p = kf_predict(mu, Sigma, u_now)
+
+    # update only when measurements are available
+    while meas_idx < n_meas and t_meas[meas_idx] <= tk:
+        y_now = z_meas[meas_idx]
+        mu_p, Sigma_p, _ = kf_update(mu_p, Sigma_p, y_now)
+        meas_idx += 1
+
+    mu = mu_p
+    Sigma = Sigma_p
+```
+
+The estimated states were saved and used to compute the distance and velocity. The results were compared with the raw TOF distance data. The Kalman Filter produced a smoother estimate, while still following the overall trend of the measurements.
+
+Small jumps can be seen in the estimated trajectory whenever a new TOF measurement is used. This is expected, since the filter corrects its prediction when new data arrives.
 
 <p align="center">
-  <img src="../img/lab6/gyro_sensor.png" width="80%">
+  <img src="../img/lab7/kf_dist_new.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> ICM-20948 Datasheet, Gyroscope Angular Velocity.
+  <b>Figure 3:</b> KF Distance vs. Raw TOF Distance.
 </p>
 
 ---
