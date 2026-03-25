@@ -126,7 +126,7 @@ B = np.array([
 C = np.array([[-1.0, 0.0]], dtype=float)
 ```
 
-The model was then discretized. A sampling time of Delta_T = 1/150 = 0.0067s was used, which is the PID control loop frequency measured in Lab 5. This allows the filter to run faster than the sensor and estimate the system state between measurements.
+The model was then discretized. A sampling time of Delta_T = 1/150 = 0.0067s was used, which is the PID control loop frequency measured in Lab 5. This allows the filter to run faster than the sensor and estimate the system between measurements.
 
 ```cpp
 Delta_T = 0.067
@@ -135,9 +135,9 @@ Ad = np.eye(2) + Delta_T * A
 Bd = Delta_T * B
 ```
 
-The initial state was set using the first TOF measurement. Position was initialized as the negative distance from the wall, and the initial velocity was set to zero.
+The initial state was set using the first TOF measurement. Position was initialized as the distance from wall, and the initial velocity was set to zero.
 
-The state covariance matrix was initialized next. A relatively large uncertainty in both position and velocity was used at the beginning, since the exact initial state is not known accurately.
+The state covariance matrix was initialized next. A relatively large uncertainty in both position and velocity was used at the beginning, since the exact initial state is not known yet.
 
 ```cpp
 Sigma = np.array([
@@ -165,19 +165,17 @@ Sigma_u = np.array([
 ], dtype=float)
 ```
 
-During tuning, the measurement noise (sigma 3) had the most noticeable effect. Increasing sigma 3 resulted in smoother estimates by reducing the influence of noisy measurements, while decreasing sigma 3 caused the filter to closely follow the raw sensor data.
+These values determine how much the filter trusts the model vs. the measurements. Larger process noise trusts measurements more, while larger measurement noise trusts the model more.
 
-In contrast, changing the process noise terms (sigma 1 and sigma 2) had a smaller effect on the position estimate. This is likely because the system model was already a reasonable approximation and measurements were incorporated frequently.
+During tuning, the measurement noise (sigma 3) had the most noticeable effect. Increasing sigma 3 caused smoother estimates by reducing the effect of noisy data, while decreasing sigma 3 caused the filter to follow the sensor data.
 
-These values determine how much the filter trusts the model vs. the measurements. Larger process noise increases reliance on measurements, while larger measurement noise increases reliance on the model.
+However, changing the process noise terms (sigma 1 and sigma 2) had a smaller effect. This is likely because the model was already a reasonable approximation and measurements were frequent enough.
 
 ---
 
 ## KF Implementation on Jupyter
 
-Finally, the Kalman Filter was implemented, including the prediction step, Kalman gain computation, and measurement update.
-
-The Kalman Filter was implemented such that prediction is performed at every control loop iteration, while measurement updates are only applied when a new TOF sample is available. This allows the model to estimate system behavior between sensor readings.
+The Kalman Filter was implemented such that prediction is computed at every loop, while measurement updates are only used when a new TOF sample is ready.
 
 The code for Kalman Filter was separated into prediction and update functions:
 
@@ -198,7 +196,7 @@ def kf_update(mu_p, sigma_p, y):
     return mu, sigma
 ```
 
-The filter was run using a higher rate time vector that matches the control loop. At each step, it first predicts the next state using the model. When a new TOF measurement becomes available, the filter updates the estimate using that measurement.
+At each step, it first predicts the next state using the model. When a new TOF measurement becomes ready, the filter updates the estimate using that measurement.
 
 ```cpp
 for tk in t_kf:
@@ -217,9 +215,7 @@ for tk in t_kf:
     Sigma = Sigma_p
 ```
 
-The estimated states were saved and used to compute the distance and velocity. The results were compared with the raw TOF distance data. The Kalman Filter produced a smoother estimate, while still following the overall trend of the measurements.
-
-Small jumps can be seen in the estimated trajectory whenever a new TOF measurement is used. This is expected, since the filter corrects its prediction when new data arrives.
+The estimated states were saved and used to compute the distance and velocity. The results were compared with the raw TOF distance data. KF produced a smoother estimate, while still following the overall shape of the measurements.
 
 <p align="center">
   <img src="../img/lab7/kf_dist_new.png" width="80%">
@@ -232,11 +228,11 @@ Small jumps can be seen in the estimated trajectory whenever a new TOF measureme
 
 ## KF Implementation on the Robot
 
-Kalman Filter was added to the distance PID controller on the Artemis. The linear extrapolation from the previous lab was removed and replaced with the Kalman Filter estimate. The filter runs every loop, and only updates with a measurement when a new TOF reading comes in.
+Kalman Filter was added to the distance PID controller on the Artemis. The linear extrapolation from the previous lab was removed and replaced. The filter runs every loop, and only updates with a measurement when a new TOF reading comes in.
 
-The same model and noise values from Python were copied into the Artemis code. The state was stored as negative distance from the wall and velocity toward the wall. The covariance matrix, process noise, and measurement noise were also initialized using the same values.
+The same model and noise values from Python were copied into the Artemis code.
 
-At the start of a run, the filter was initialized using the new TOF reading, with the initial velocity set to zero.
+At the start of a run, the filter was initialized using the new TOF reading, and the initial velocity was set to zero.
 
 ```cpp
 void kf_init(float dist_mm)
@@ -253,7 +249,7 @@ void kf_init(float dist_mm)
 }
 ```
 
-In each loop, the TOF reading was updated first, then the Kalman Filter prediction ran using the previous motor command. If a new TOF measurement was available, the correction step was applied. The estimated distance was then converted back to a positive value and used to calculate the PID error.
+In each loop, the TOF reading was updated first, then the Kalman Filter prediction ran using the previous pwm. The estimated distance was then used to calculate the PID error.
 
 ```cpp
 int raw_dist = last_dist_mm;
@@ -288,8 +284,7 @@ void kf_step(float u_pwm, bool has_meas, float y_dist_mm)
         P = P_pred
 ```
 
-When the raw TOF data and the Kalman Filter estimate were plotted on the same graph, the estimated distance followed the same overall trend but was much smoother, making it better for control. This showed that the Kalman Filter was successfully added to the Artemis controller and replaced the linear extrapolation method from the previous lab.
-
+When the raw TOF data and KF estimate were plotted on the same graph, the estimated distance followed the same overall shape but was smoother. This showed that the Kalman Filter was successfully added.
 
 <p align="center">
   <img src="../img/lab7/kf_dist_run.png" width="80%">
@@ -307,7 +302,7 @@ When the raw TOF data and the Kalman Filter estimate were plotted on the same gr
   <b>Figure 5:</b> KF Error, PWM, and PID.
 </p>
 
-Video 1 below shows the result of KF PID controller. Same PID gains (Lab 5) of Kp = 0.1, Ki = 0.001, and Kd = 0.001 were used.
+Video 1 below shows the result of KF PID controller. Same PID gains (from Lab 5) of Kp = 0.1, Ki = 0.001, and Kd = 0.001 were used.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -328,7 +323,7 @@ Video 1 below shows the result of KF PID controller. Same PID gains (Lab 5) of K
 
 ## Discussion
 
-This lab provided experience implementing a Kalman Filter on the robot and integrating it with a closed-loop distance controller. Overall, it improved understanding of state estimation, tuning process and measurement noise, and how model-based prediction can be used alongside sensor data. Using the Kalman Filter showed how combining a system model with noisy TOF measurements can produce a smoother and more reliable estimate, which is especially useful when the sensor updates slowly compared to the control loop.
+This lab provided experience implementing a Kalman Filter on the robot and integrating it with a closed loop PID controller. Overall, it improved understanding of the Kalman Filter, and how showed how combining a system model with noisy TOF measurements can produce a smoother and more reliable estimate, which is useful when the sensor updates slower compared to the main loop.
 
 ---
 
