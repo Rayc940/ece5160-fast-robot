@@ -173,7 +173,7 @@ These values determine how much the filter trusts the model vs. the measurements
 
 ---
 
-## KF Implementation on Jupyter TODO
+## KF Implementation on Jupyter
 
 Finally, the Kalman Filter was implemented, including the prediction step, Kalman gain computation, and measurement update.
 
@@ -232,42 +232,82 @@ Small jumps can be seen in the estimated trajectory whenever a new TOF measureme
 
 ## KF Implementation on the Robot
 
-The goal of this lab was to control the robot's orientation. The robot rotates in place by driving the wheels at equal speeds in opposite directions.
+Kalman Filter was added to the distance PID controller on the Artemis. The linear extrapolation from the previous lab was removed and replaced with the Kalman Filter estimate. The filter runs every loop, and only updates with a measurement when a new TOF reading comes in.
 
-Yaw was used as the feedback signal for the controller. The orientation error was computed as the difference between the target yaw setpoint and the measured yaw.
+The same model and noise values from Python were copied into the Artemis code. The state was stored as negative distance from the wall and velocity toward the wall. The covariance matrix, process noise, and measurement noise were also initialized using the same values.
 
-```cpp
-float err = wrap_angle_deg(setpoint_deg - yaw);
-```
-
-The wrap_angle_deg() function ensures the controller always takes the shortest rotational path by keeping the error between −180° and 180°.
-
-<br>
-
-#### PID Control
-
-Next, a derivative term was added to help reduce overshoot. Instead of calculating the derivative of the error, the gyroscope angular velocity was used directly since angular velocity is the derivative of orientation.
+At the start of a run, the filter was initialized using the new TOF reading, with the initial velocity set to zero.
 
 ```cpp
-float d = -Kd_yaw * gz_dps;
+void kf_init(float dist_mm)
+{
+    kf_x = -dist_mm;
+    kf_v = 0.0f;
+
+    P00 = 22500.0f;
+    P01 = 0.0f;
+    P10 = 0.0f;
+    P11 = 160000.0f;
+
+    last_u_pwm_kf = 0.0f;
+}
 ```
 
-This also helps avoid derivative kick, which can occur when the setpoint changes suddenly. Because the derivative term depends on angular velocity rather than the error derivative, sudden setpoint changes do not create large spikes in the control signal.
+In each loop, the TOF reading was updated first, then the Kalman Filter prediction ran using the previous motor command. If a new TOF measurement was available, the correction step was applied. The estimated distance was then converted back to a positive value and used to calculate the PID error.
 
-Because the derivative term comes directly from the gyroscope measurement rather than the noisy angle samples, an additional low pass filter was not needed.
+```cpp
+int raw_dist = last_dist_mm;
 
-Kd of 0.3 was chosen for best response.
+kf_step(last_u_pwm_kf, new_tof_sample, (float)last_dist_mm);
+
+int dist = (int)roundf(-kf_x);
+int err = dist - setpoint_mm;
+```
+
+Inside the filter, the state was first predicted using the model. If a new TOF sample was available, the estimate was corrected using that measurement.
+
+```cpp
+void kf_step(float u_pwm, bool has_meas, float y_dist_mm)
+    x_pred = A * x + B * u
+    v_pred = A * v + B * u
+    P_pred = A * P * A^T + Q
+
+    if has_measurement:
+        S = P_pred(0,0) + R
+        K0 = -P_pred(0,0) / S
+        K1 = -P_pred(1,0) / S
+        innovation = y + x_pred
+
+        x = x_pred + K0 * innovation
+        v = v_pred + K1 * innovation
+        P = (I - K*C) * P_pred
+
+    else:
+        x = x_pred
+        v = v_pred
+        P = P_pred
+```
+
+When the raw TOF data and the Kalman Filter estimate were plotted on the same graph, the estimated distance followed the same overall trend but was much smoother, making it better for control. This showed that the Kalman Filter was successfully added to the Artemis controller and replaced the linear extrapolation method from the previous lab.
+
 
 <p align="center">
-  <img src="../img/lab6/PID_angle.png" width="30%">
-  <img src="../img/lab6/PID_error.png" width="30%">
-  <img src="../img/lab6/PID_pwm.png" width="30%">
+  <img src="../img/lab7/kf_dist_run.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 4:</b> Plots of PID Control Data.
+  <b>Figure 4:</b> KF Distance vs. Raw TOF Distance.
 </p>
 
-Video 3 below shows the result of PID controller.
+<p align="center">
+  <img src="../img/lab7/error_run.png" width="30%">
+  <img src="../img/lab7/pwm_run.png" width="30%">
+  <img src="../img/lab7/pid_run.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 5:</b> KF Error, PWM, and PID.
+</p>
+
+Video 1 below shows the result of KF PID controller. Same PID gains (Lab 5) of Kp = 0.1, Ki = 0.001, and Kd = 0.001 were used.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -279,7 +319,7 @@ Video 3 below shows the result of PID controller.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 3:</b> PID Controller.
+  <b>Video 1:</b> PID Controller with KF.
 </p>
 
 <br>
@@ -288,12 +328,12 @@ Video 3 below shows the result of PID controller.
 
 ## Discussion
 
-This lab provided experience implementing closed loop orientation control using IMU and DMP. Overall, it improved understanding of PID control, tuning controller gains, and using IMU data to tune stable orientation control. The use of the DMP for yaw estimation demonstrated how sensor fusion can reduce drift and provide more reliable orientation measurements.
+This lab provided experience implementing a Kalman Filter on the robot and integrating it with a closed-loop distance controller. Overall, it improved understanding of state estimation, tuning process and measurement noise, and how model-based prediction can be used alongside sensor data. Using the Kalman Filter showed how combining a system model with noisy TOF measurements can produce a smoother and more reliable estimate, which is especially useful when the sensor updates slowly compared to the control loop.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab6/)’s pages from last year.
+I referenced [Trevor Dales](https://trevordales.github.io/MAE4190/lab7/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
