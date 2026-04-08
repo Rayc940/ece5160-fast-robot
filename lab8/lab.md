@@ -17,7 +17,7 @@ enum FlipState {
 };
 ```
 
-The robot stays in FLIP_IDLE until the start command is sent from Python. Then it drives forward at a constant PWM. A primed condition is used to prevent early stopping due to TOF noise. Once the robot travels far enough, it becomes “primed”, and then waits until it is close enough to the wall to start the flip.
+The robot stays in FLIP_IDLE until the start command is sent from Python. Then it drives forward at a constant PWM. A primed condition is used to prevent early stopping due to TOF noise. Once the robot travels far enough, it becomes "primed", and then waits until it is close enough to the wall to start the flip.
 
 ```cpp
 case FLIP_DRIVE_TO_WALL:
@@ -147,6 +147,8 @@ The three trials are shown below.
   <b>Video 1:</b> Flip Trial 1.
 </p>
 
+<br>
+
 <p align="center">
   <img src="../img/lab8/2_dist.png" width="30%">
   <img src="../img/lab8/2_angle.png" width="30%">
@@ -168,6 +170,8 @@ The three trials are shown below.
 <p style="text-align:center;">
   <b>Video 2:</b> Flip Trial 2.
 </p>
+
+<br>
 
 <p align="center">
   <img src="../img/lab8/3_dist.png" width="30%">
@@ -205,8 +209,10 @@ The three trials are shown below.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 3:</b> Flip Blooper 1.
+  <b>Video 4:</b> Flip Blooper 1.
 </p>
+
+<br>
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -218,7 +224,7 @@ The three trials are shown below.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 3:</b> Flip Blooper 2.
+  <b>Video 5:</b> Flip Blooper 2.
 </p>
 
 ---
