@@ -231,7 +231,7 @@ The three trials are shown below.
 
 ## Discussion
 
-This lab focused on performing a fast flip using open loop control and a state machine. The robot was driven with fixed high PWM to build enough speed, so timing became the main challenge. Using the Kalman Filter estimate made this more consistent than raw TOF data. The state machine also helped organize the behavior and made tuning easier. Overall, the main difficulty was balancing speed and timing to get a reliable flip.
+This lab focused on performing a fast flip using open loop control and a state machine. The robot was driven with fixed high PWM to build enough speed, so timing became the main challenge. The state machine helped organize the behavior and made tuning easier. Overall, the main difficulty was balancing speed and timing to get a good flip.
 
 ---
 
