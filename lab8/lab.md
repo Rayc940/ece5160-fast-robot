@@ -6,7 +6,7 @@ The goal of this lab was to combine everything from the previous labs and make t
 
 ## Flip State Machine
 
-The flip was implemented using a simple state machine with three main states:
+The flip was implemented using a simple state machine with four main states:
 
 ```cpp
 enum FlipState {
@@ -17,9 +17,7 @@ enum FlipState {
 };
 ```
 
-The robot stays in FLIP_IDLE until the start command is sent from Python. When the stunt starts, all buffers and the Kalman Filter are reset, and the system enters FLIP_DRIVE_TO_WALL.
-
-In this state, the robot drives forward at a constant PWM. A primed condition is used to prevent early triggering due to noise. Once the robot travels far enough, it becomes “primed”, and then waits until it is close enough to the wall to start the flip.
+The robot stays in FLIP_IDLE until the start command is sent from Python. Then it drives forward at a constant PWM. A primed condition is used to prevent early stopping due to TOF noise. Once the robot travels far enough, it becomes “primed”, and then waits until it is close enough to the wall to start the flip.
 
 ```cpp
 case FLIP_DRIVE_TO_WALL:
@@ -42,7 +40,7 @@ case FLIP_DRIVE_TO_WALL:
 }
 ```
 
-When the robot reaches the target distance, it switches to FLIP_EXECUTE. In this state, the robot reverses at high speed for a fixed amount of time. This generates enough momentum for the flip. This part is open loop because maximum speed is needed rather than controlled motion. After flip_time_ms passed, the robot switched to FLIP_DRIVE_AWAY.
+When the robot reaches the target distance, it switches to FLIP_EXECUTE. In this state, the robot reverses at high speed for a fixed amount of time. This part is open loop because maximum speed is needed rather than controlled motion. After flip_time_ms passed, the robot switched to FLIP_DRIVE_AWAY.
 
 ```cpp
 case FLIP_EXECUTE:
@@ -65,15 +63,16 @@ Finally, in FLIP_DRIVE_AWAY, the robot drives forward and stops when it had move
 ```cpp
 case FLIP_DRIVE_AWAY:
 {
-    driveForwardCal(flip_forward_pwm, calibration_forward);
-    flip_last_u_pwm = (float)(flip_forward_pwm);
+    driveReverseCal(flip_reverse_pwm, calibration_reverse);
+    flip_last_u_pwm = (float)(-flip_reverse_pwm);
 
-    log_flip_data(now_ms, FLIP_DRIVE_AWAY, raw_dist, est_dist, flip_forward_pwm, pitch_cf, roll_cf);
+    log_flip_data(now_ms, FLIP_DRIVE_AWAY, raw_dist, est_dist, -flip_reverse_pwm, pitch_cf, roll_cf);
 
-    if (est_dist > 700) {
+    if ((now_ms - flip_state_start_ms) >= 500) {
         coastStop();
         flip_active = false;
         flip_state = FLIP_IDLE;
+        flip_last_u_pwm = 0.0f;
         recording = false;
         record_done = true;
     }
@@ -85,7 +84,7 @@ case FLIP_DRIVE_AWAY:
 
 ## Python Control
 
-On the Python side, a BLE handler was implemented to receive and parse the stunt data. These were appended into arrays for plotting, same as previous labs.
+On the Python side, a BLE handler was implemented to receive and parse the stunt data. These data were appended into arrays for plotting, same as previous labs.
 
 ```cpp
 initialize arrays
@@ -118,53 +117,120 @@ int raw_dist = last_dist_mm;
 int est_dist = (int)roundf(-kf_x);
 ```
 
-Since the TOF sensor updates slowly, using only raw distance can lead to noise and delay. The Kalman Filter provides a smoother and more responsive estimate. This matches the same idea described in the previous Lab for using the KF in closed loop control.
+Since the TOF sensor updates slowly, using only raw distance can lead to noise and delay. The Kalman Filter provides a smoother and more responsive estimate. This is the same idea described in the previous lab.
 
 ---
 
 ## Results
 
-<p align="center">
-  <img src="../img/lab7/kf_dist_run.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 4:</b> KF Distance vs. Raw TOF Distance.
-</p>
+The three trials are shown below. 
 
 <p align="center">
-  <img src="../img/lab7/error_run.png" width="30%">
-  <img src="../img/lab7/pwm_run.png" width="30%">
-  <img src="../img/lab7/pid_run.png" width="30%">
+  <img src="../img/lab8/1_dist.png" width="30%">
+  <img src="../img/lab8/1_angle.png" width="30%">
+  <img src="../img/lab8/1_fsm.png" width="30%">
 </p>
 <p align="center">
-  <b>Figure 5:</b> KF Error, PWM, and PID.
+  <b>Figure 1:</b> Flip Distance, Angle, and FSM State.
 </p>
-
-Video 1 below shows the result of KF PID controller. Same PID gains (from Lab 5) of Kp = 0.1, Ki = 0.001, and Kd = 0.001 were used.
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/ZfvJo3h3mO4"
+    src="https://www.youtube.com/embed/_zxlH9y34Yo"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> PID Controller with KF.
+  <b>Video 1:</b> Flip Trial 1.
+</p>
+
+<p align="center">
+  <img src="../img/lab8/2_dist.png" width="30%">
+  <img src="../img/lab8/2_angle.png" width="30%">
+  <img src="../img/lab8/2_fsm.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 2:</b> Flip Distance, Angle, and FSM State.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/K8BvRX5d73w"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 2:</b> Flip Trial 2.
+</p>
+
+<p align="center">
+  <img src="../img/lab8/3_dist.png" width="30%">
+  <img src="../img/lab8/3_angle.png" width="30%">
+  <img src="../img/lab8/3_fsm.png" width="30%">
+</p>
+<p align="center">
+  <b>Figure 3:</b> Flip Distance, Angle, and FSM State.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/3r3O6Sn3EDA"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 3:</b> Flip Trial 3.
+</p>
+
+---
+
+## Bloopers
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/Q9FwigFCoAA"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 3:</b> Flip Blooper 1.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/NgSK6AxTGj8"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 3:</b> Flip Blooper 2.
 </p>
 
 ---
 
 ## Discussion
 
-This lab provided experience implementing a Kalman Filter on the robot and integrating it with a closed loop PID controller. Overall, it improved understanding of the Kalman Filter, and how showed how combining a system model with noisy TOF measurements can produce a smoother and more reliable estimate, which is useful when the sensor updates slower compared to the main loop.
+This lab focused on performing a fast flip using open loop control and a state machine. The robot was driven with fixed high PWM to build enough speed, so timing became the main challenge. Using the Kalman Filter estimate made this more consistent than raw TOF data. The state machine also helped organize the behavior and made tuning easier. Overall, the main difficulty was balancing speed and timing to get a reliable flip.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Trevor Dales](https://trevordales.github.io/MAE4190/lab7/)’s pages from last year.
+I referenced [Trevor Dales](https://trevordales.github.io/MAE4190/lab8/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
