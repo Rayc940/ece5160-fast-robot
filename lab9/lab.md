@@ -209,6 +209,33 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <b>Figure 5:</b> Polar and Robot Frame at (0, 0).
 </p>
 
+After checking the local scans, the points were converted from the robot frame into the global Cartesian frame. This used the robot position for each scan, the measured yaw angle, and the sensor offset from the center of the robot, which was measured to be 7 cm.
+
+```cpp
+def new_scan_to_world(map_yaw_deg, map_dist_mm, robot_pos_ft,
+                      sensor_x_mm=70, sensor_y_mm=0,
+                      yaw_sign=1):
+    MM_TO_FT = 3.28084 / 1000.0
+
+    yaw = np.array(map_yaw_deg)
+    dist = np.array(map_dist_mm)
+
+    yaw0 = yaw[0]
+    yaw_rel = yaw - yaw0
+    theta = yaw_sign * np.deg2rad(yaw_rel)
+
+    px_mm = sensor_x_mm + dist
+    py_mm = sensor_y_mm * np.ones_like(dist)
+
+    px_mm = -px_mm
+    py_mm = -py_mm
+
+    x_world = robot_pos_ft[0] + (px_mm * np.cos(theta) - py_mm * np.sin(theta)) * MM_TO_FT
+    y_world = robot_pos_ft[1] + (px_mm * np.sin(theta) + py_mm * np.cos(theta)) * MM_TO_FT
+
+    return x_world, y_world
+```
+
 The combined global frame is shown in figure 6.
 
 <p align="center">
@@ -218,6 +245,17 @@ The combined global frame is shown in figure 6.
 <p align="center">
   <b>Figure 6:</b> Combined Global Frame.
 </p>
+
+Straight line segments were drawn on top of the scatter plot to build the line based map.
+
+```cpp
+starts = [(6.5, 5),(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -5),
+(6.5, -5),(1, -2.5),(2.5, 1.25),(2.5, -1),(4.5, -1),(4.5, 1.25),]
+
+ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),(6.5, -5),
+(6.5, 5),(1, -5),(2.5, -1),(4.5, -1),(4.5, 1.25),(2.5, 1.25),
+]
+```
 
 ---
 
