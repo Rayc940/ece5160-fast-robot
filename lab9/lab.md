@@ -1,186 +1,199 @@
 ## Objective
 
-The goal of this lab was to combine everything from the previous labs and make the robot do a fast stunt. Task A: Flip was chosen. The robot starts a few meters away from the wall, drives forward quickly, flips near the wall, and then drives back.
+The goal of this lab was to construct a map of the environment using TOF distance measurements and IMU yaw data. The robot was placed at multiple locations and performed on axis turns while collecting TOF measurements. These local scans were then combined into a global frame to generate a full map.
 
 ---
 
-## Flip State Machine
+## Mapping Control
 
-The flip was implemented using a simple state machine with four main states:
+Instead of open loop, orientation PID control from Lab 6 was reused. The mapping process was implemented using a simple state machine with four main states:
 
 ```cpp
-enum FlipState {
-    FLIP_IDLE = 0,
-    FLIP_DRIVE_TO_WALL = 1,
-    FLIP_EXECUTE = 2,
-    FLIP_DRIVE_AWAY = 3
+enum MapState {
+    MAP_IDLE = 0,
+    MAP_TURN = 1,
+    MAP_STOP = 2,
+    MAP_WAIT = 3
 };
 ```
 
-The robot stays in FLIP_IDLE until the start command is sent from Python. Then it drives forward at a constant PWM. A primed condition is used to prevent early stopping due to TOF noise. Once the robot travels far enough, it becomes "primed", and then waits until it is close enough to the wall to start the flip.
+The robot stays in MAP_IDEL until the start command is sent from Python. Then it enters MAP_TURN, which runs yaw PID to reach target angle. MAP_TURN uses DMP yaw instead of gyro integration because gyro integration accumulates drift over time, leading to large angular errors.
 
 ```cpp
-case FLIP_DRIVE_TO_WALL:
+float err = map_target_deg - yaw_unwrapped;
+float u = Kp_yaw * err + Ki_yaw * yaw_i_accum - Kd_yaw * gz_dps;
+```
+
+When there is a small error, pwm was forced to 0 to avoid oscillation:
+
+```cpp
+if (fabs(err) < 2.0f) {
+    pwm = 0;
+}
+```
+
+To ensure the turn is completed accurately, the function map_turn_reached_from_err() was used to continue to next state if there are 3 good samples.
+
+```cpp
+bool map_turn_reached_from_err(float err)
 {
-    driveForwardCal(flip_forward_pwm, calibration_forward);
-    flip_last_u_pwm = (float)flip_forward_pwm;
+    static int good_count = 0;
 
-    log_flip_data(now_ms, FLIP_DRIVE_TO_WALL, raw_dist, est_dist, flip_forward_pwm, pitch_cf, roll_cf);
+    if (fabs(err) < 3.0f) good_count++;
+    else good_count = 0;
 
-    if (est_dist >= flip_primed_distance_mm) {
-        flip_primed = true;
+    return (good_count >= 3);
+}
+```
+
+After reaching the desired angle, the robot will stop and wait to settle down for TOF measurements.
+
+```cpp
+case MAP_STOP:
+{
+    coastStop();
+    if ((now_ms - map_stop_time_ms) >= map_stop_delay_ms) {
+        map_state = MAP_WAIT;
     }
-
-    if (flip_primed && est_dist <= flip_target_mm) {
-        flip_state = FLIP_EXECUTE;
-        flip_state_start_ms = now_ms;
-    }
-
     break;
 }
 ```
 
-When the robot reaches the target distance, it switches to FLIP_EXECUTE. In this state, the robot reverses at high speed for a fixed amount of time. This part is open loop because maximum speed is needed rather than controlled motion. After flip_time_ms passed, the robot switched to FLIP_DRIVE_AWAY.
+The robot then enters MAP_WAIT, where it collects multiple TOF readings and averages them.
 
 ```cpp
-case FLIP_EXECUTE:
+case MAP_WAIT:
 {
-    driveReverseCal(flip_reverse_pwm, calibration_reverse);
-    flip_last_u_pwm = (float)(-flip_reverse_pwm);
+    coastStop();
+    if (new_tof_sample) {
+        int d = last_dist_mm;
 
-    log_flip_data(now_ms, FLIP_EXECUTE, raw_dist, est_dist, -flip_reverse_pwm, pitch_cf, roll_cf);
+        if (d <= 0 || d >= 4000) {
+            d = 4000;
+        }
 
-    if ((now_ms - flip_state_start_ms) >= (uint32_t)flip_time_ms) {
-        flip_state = FLIP_DRIVE_AWAY;
-        flip_state_start_ms = now_ms;
-    }
-    break;
+        map_dist_accum += d;
+        map_avg_count++;
+
+        if (map_avg_count >= map_avg_count_target) {
+            int avg_dist = (int)(map_dist_accum / map_avg_count);
+            log_map_data(now_ms, map_last_yaw_unwrapped, avg_dist);
+            map_samples_taken++;
+```
+
+After logging one point, the next target angle is set:
+
+```cpp
+if (map_samples_taken < map_num_samples) {
+    map_target_deg += map_step_deg;
+
+    yaw_i_accum = 0.0f;
+    yaw_prev_err = 0.0f;
+
+    map_avg_count = 0;
+    map_dist_accum = 0;
+
+    map_state = MAP_TURN;
+} else {
+    stop_map_run();
 }
 ```
 
-Finally, in FLIP_DRIVE_AWAY, the robot drives forward and stops when it had moved far enough from the wall.
+This process repeats until a full rotation is done and data is collected.
+
+#### Angle Handling
+
+Yaw from the IMU is limited to -180 to 180 degrees. This causes jumps during rotation. To fix this, an unwrap function is used:
 
 ```cpp
-case FLIP_DRIVE_AWAY:
+double angle_no_wrap(double curr_angle)
 {
-    driveReverseCal(flip_reverse_pwm, calibration_reverse);
-    flip_last_u_pwm = (float)(-flip_reverse_pwm);
-
-    log_flip_data(now_ms, FLIP_DRIVE_AWAY, raw_dist, est_dist, -flip_reverse_pwm, pitch_cf, roll_cf);
-
-    if ((now_ms - flip_state_start_ms) >= 500) {
-        coastStop();
-        flip_active = false;
-        flip_state = FLIP_IDLE;
-        flip_last_u_pwm = 0.0f;
-        recording = false;
-        record_done = true;
+    if ((curr_angle < 0) && (last_wrap_angle > 90)) {
+        curr_angle = curr_angle + 360;
     }
-    break;
+    else if ((curr_angle > 0) && (last_wrap_angle < -90)) {
+        curr_angle = curr_angle - 360;
+    }
+
+    last_wrap_angle = curr_angle;
+    return curr_angle;
 }
 ```
+
+This makes yaw continuous so the robot can rotate smoothly.
 
 ---
 
 ## Python Control
 
-On the Python side, a BLE handler was implemented to receive and parse the stunt data. These data were appended into arrays for plotting, same as previous labs.
+Python is used similar to previous labs, to start the scan and receive data for post processing.
 
 ```cpp
 initialize arrays
-def parse_flip():
+
+def parse_map():
     parse incoming data
-def flip handler:
-    append data to arrays
+
+def map_handler():
+    append data
 
 clear arrays
-start BLE notification
-send START_FLIP_STUNT
-send GET_FLIP_DATA
-wait for data
-stop BLE notification
+start BLE notify
+send START_MAP_RUN
+wait
+send GET_MAP_DATA
+wait for done
+stop notify
 plot data
 ```
-
-After the run, the logged data was sent using GET_FLIP_DATA, which sends the number of samples and then all logged values.
-
----
-
-## Kalman Filter
-
-The same Kalman Filter from Lab 7 was reused. Inside flip_step(), the Kalman Filter was updated every loop using. The raw TOF distance was stored in raw_dist, while the estimated distance used by the stunt was calculated from the Kalman Filter state:
-
-```cpp
-kf_step(flip_last_u_pwm, new_tof_sample, (float)last_dist_mm);
-
-int raw_dist = last_dist_mm;
-int est_dist = (int)roundf(-kf_x);
-```
-
-Since the TOF sensor updates slowly, using only raw distance can lead to noise and delay. The Kalman Filter provides a smoother and more responsive estimate. This is the same idea described in the previous lab.
 
 ---
 
 ## Results
 
-The three trials are shown below. 
+The mapping data was first plotted in polar coordinates for each scan location. Each polar plot shows the measured TOF distance as a function of yaw angle. 
 
 <p align="center">
-  <img src="../img/lab8/1_dist.png" width="30%">
-  <img src="../img/lab8/1_angle.png" width="30%">
-  <img src="../img/lab8/1_fsm.png" width="30%">
+  <img src="../img/lab9/scan1_polar.png" width="40%">
+  <img src="../img/lab9/scan1_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Flip Distance, Angle, and FSM State.
+  <b>Figure 1:</b> Polar and Robot Frame at (-3, -2).
 </p>
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/_zxlH9y34Yo"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 1:</b> Flip Trial 1.
-</p>
-
-<br>
 
 <p align="center">
-  <img src="../img/lab8/2_dist.png" width="30%">
-  <img src="../img/lab8/2_angle.png" width="30%">
-  <img src="../img/lab8/2_fsm.png" width="30%">
+  <img src="../img/lab9/scan2_polar.png" width="40%">
+  <img src="../img/lab9/scan2_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Flip Distance, Angle, and FSM State.
+  <b>Figure 2:</b> Polar and Robot Frame at (5, 3).
 </p>
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/K8BvRX5d73w"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 2:</b> Flip Trial 2.
-</p>
-
-<br>
 
 <p align="center">
-  <img src="../img/lab8/3_dist.png" width="30%">
-  <img src="../img/lab8/3_angle.png" width="30%">
-  <img src="../img/lab8/3_fsm.png" width="30%">
+  <img src="../img/lab9/scan3_polar.png" width="40%">
+  <img src="../img/lab9/scan3_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 3:</b> Flip Distance, Angle, and FSM State.
+  <b>Figure 3:</b> Polar and Robot Frame at (0, 3).
 </p>
+
+<p align="center">
+  <img src="../img/lab9/scan4_polar.png" width="40%">
+  <img src="../img/lab9/scan4_global.png" width="40%">
+</p>
+<p align="center">
+  <b>Figure 4:</b> Polar and Robot Frame at (5, -3).
+</p>
+
+<p align="center">
+  <img src="../img/lab9/scan5_polar.png" width="40%">
+  <img src="../img/lab9/scan5_global.png" width="40%">
+</p>
+<p align="center">
+  <b>Figure 5:</b> Polar and Robot Frame at (0, 0).
+</p>
+
+---
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -193,38 +206,6 @@ The three trials are shown below.
 </div>
 <p style="text-align:center;">
   <b>Video 3:</b> Flip Trial 3.
-</p>
-
----
-
-## Bloopers
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/Q9FwigFCoAA"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 4:</b> Flip Blooper 1.
-</p>
-
-<br>
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/NgSK6AxTGj8"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 5:</b> Flip Blooper 2.
 </p>
 
 ---
