@@ -122,6 +122,22 @@ double angle_no_wrap(double curr_angle)
 
 This makes yaw continuous so the robot can rotate smoothly.
 
+Video 1 below shows the robot performing scan.
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/3r3O6Sn3EDA"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video TODO:</b> Flip Trial 3.
+</p>
+
+
 ---
 
 ## Python Control
@@ -191,6 +207,16 @@ The mapping data was first plotted in polar coordinates for each scan location. 
 </p>
 <p align="center">
   <b>Figure 5:</b> Polar and Robot Frame at (0, 0).
+</p>
+
+The combined global frame is shown in figure 6.
+
+<p align="center">
+  <img src="../img/lab9/global.png" width="40%">
+  <img src="../img/lab9/gloabl_lines.png" width="40%">
+</p>
+<p align="center">
+  <b>Figure 6:</b> Combined Global Frame.
 </p>
 
 ---
