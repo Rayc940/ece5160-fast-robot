@@ -180,7 +180,7 @@ GET_MAP_DATA is used to allow Artemis to send data over BLE, similar to Lab 8.
 
 ## Post Processing
 
-The ToF measurements are collected in the robot's local frame, so they need to be converted into the global frame.
+The TOF measurements are collected in the robot's local frame, so they need to be converted into the global frame.
 
 First, the yaw is converted into a relative angle, which makes measurements start from the same reference direction. 
 
@@ -190,7 +190,7 @@ yaw_rel = yaw - yaw0
 theta = yaw_sign * np.deg2rad(yaw_rel)
 ```
 
-Next, the distance is converted into local Cartesian coordinates. The sensor is not at the robot center, so an offset is added:
+Next, the distance is converted into local Cartesian coordinates. The sensor is not at the robot center, so an offset of 7cm is added:
 
 ```cpp
 px_mm = sensor_x_mm + dist
