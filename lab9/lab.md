@@ -128,13 +128,13 @@ Video 1 below shows the robot performing scan.
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/3r3O6Sn3EDA"
+    src="https://www.youtube.com/embed/mDSQK26k4YE"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video TODO:</b> Flip Trial 3.
+  <b>Video 1:</b> On Axis Turn During Scanning.
 </p>
 
 
@@ -264,29 +264,16 @@ ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),
 
 ---
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/3r3O6Sn3EDA"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 3:</b> Flip Trial 3.
-</p>
-
----
-
 ## Discussion
 
-This lab focused on performing a fast flip using open loop control and a state machine. The robot was driven with fixed high PWM to build enough speed, so timing became the main challenge. The state machine helped organize the behavior and made tuning easier. Overall, the main difficulty was balancing speed and timing to get a good flip.
+This lab focused on building a map using rotation and TOF. The robot used PID control to turn to fixed angles, and using state machine helped organize the turning, stopping, and measuring steps, which made the behavior more stable.
+
+One challenge encountered was one of the motor driver stopped working for some reason, which made one side of wheel turned a lot slower than the other. I was stuck on this for awhile, and I ended up redoing Lab 4 to replace the motor drivers and the Artemis.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Trevor Dales](https://trevordales.github.io/MAE4190/lab8/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab9/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
