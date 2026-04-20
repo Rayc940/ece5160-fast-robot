@@ -101,6 +101,8 @@ if (map_samples_taken < map_num_samples) {
 
 This process repeats until a full rotation is done and data is collected.
 
+<br>
+
 #### Angle Handling
 
 Yaw from the IMU is limited to -180 to 180 degrees. This causes jumps during rotation. To fix this, an unwrap function is used:
@@ -137,6 +139,15 @@ Video 1 below shows the robot performing scan.
   <b>Video 1:</b> On Axis Turn During Scanning.
 </p>
 
+Figure 1 below shows an example of distance and yaw vs. time recorded by TOF at scan location (-3, -2), proving the PID controller worked.
+
+<p align="center">
+  <img src="../img/lab9/scan1_dist.png" width="40%">
+  <img src="../img/lab9/scan_yaw.png" width="40%">
+</p>
+<p align="center">
+  <b>Figure 1:</b> Example Distance and Yaw Recorded During Scanning.
+</p>
 
 ---
 
@@ -174,7 +185,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <img src="../img/lab9/scan1_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Polar and Robot Frame at (-3, -2).
+  <b>Figure 2:</b> Polar and Robot Frame at (-3, -2).
 </p>
 
 <p align="center">
@@ -182,7 +193,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <img src="../img/lab9/scan2_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Polar and Robot Frame at (5, 3).
+  <b>Figure 3:</b> Polar and Robot Frame at (5, 3).
 </p>
 
 <p align="center">
@@ -190,7 +201,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <img src="../img/lab9/scan3_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 3:</b> Polar and Robot Frame at (0, 3).
+  <b>Figure 4:</b> Polar and Robot Frame at (0, 3).
 </p>
 
 <p align="center">
@@ -198,7 +209,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <img src="../img/lab9/scan4_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 4:</b> Polar and Robot Frame at (5, -3).
+  <b>Figure 5:</b> Polar and Robot Frame at (5, -3).
 </p>
 
 <p align="center">
@@ -206,7 +217,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <img src="../img/lab9/scan5_global.png" width="40%">
 </p>
 <p align="center">
-  <b>Figure 5:</b> Polar and Robot Frame at (0, 0).
+  <b>Figure 6:</b> Polar and Robot Frame at (0, 0).
 </p>
 
 After checking the local scans, the points were converted from the robot frame into the global Cartesian frame. This used the robot position for each scan, the measured yaw angle, and the sensor offset from the center of the robot, which was measured to be 7 cm.
@@ -242,7 +253,7 @@ The combined global frame is shown in figure 6.
   <img src="../img/lab9/global.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 6:</b> Combined Global Frame.
+  <b>Figure 7:</b> Combined Global Frame.
 </p>
 
 Straight line segments were drawn on top of the scatter plot to build the line based map as shown in figure 7.
@@ -259,7 +270,7 @@ ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),
   <img src="../img/lab9/global_lines.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 7:</b> Combined Global Line-Based Map.
+  <b>Figure 8:</b> Combined Global Line-Based Map.
 </p>
 
 ---
