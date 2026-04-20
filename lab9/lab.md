@@ -17,7 +17,7 @@ enum MapState {
 };
 ```
 
-The robot stays in MAP_IDEL until the start command is sent from Python. Then it enters MAP_TURN, which runs yaw PID to reach target angle. MAP_TURN uses DMP yaw instead of gyro integration because gyro integration accumulates drift over time, leading to large angular errors.
+The robot stays in MAP_IDLE until the start command is sent from Python. Then it enters MAP_TURN, which runs yaw PID to reach target angle. MAP_TURN uses DMP yaw instead of gyro integration because gyro integration accumulates drift over time, leading to large angular errors.
 
 ```cpp
 float err = map_target_deg - yaw_unwrapped;
