@@ -239,23 +239,28 @@ def new_scan_to_world(map_yaw_deg, map_dist_mm, robot_pos_ft,
 The combined global frame is shown in figure 6.
 
 <p align="center">
-  <img src="../img/lab9/global.png" width="40%">
-  <img src="../img/lab9/gloabl_lines.png" width="40%">
+  <img src="../img/lab9/global.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 6:</b> Combined Global Frame.
 </p>
 
-Straight line segments were drawn on top of the scatter plot to build the line based map.
+Straight line segments were drawn on top of the scatter plot to build the line based map as shown in figure 7.
 
 ```cpp
-starts = [(6.5, 5),(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -5),
-(6.5, -5),(1, -2.5),(2.5, 1.25),(2.5, -1),(4.5, -1),(4.5, 1.25),]
+starts = [(6.5, 5),(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),
+(1, -5),(6.5, -5),(1, -2.5),(2.5, 1.25),(2.5, -1),(4.5, -1),(4.5, 1.25),]
 
-ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),(6.5, -5),
-(6.5, 5),(1, -5),(2.5, -1),(4.5, -1),(4.5, 1.25),(2.5, 1.25),
-]
+ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),
+(6.5, -5),(6.5, 5),(1, -5),(2.5, -1),(4.5, -1),(4.5, 1.25),(2.5, 1.25),]
 ```
+
+<p align="center">
+  <img src="../img/lab9/global_lines.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 7:</b> Combined Global Line-Based Map.
+</p>
 
 ---
 
