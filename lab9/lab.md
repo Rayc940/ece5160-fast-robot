@@ -174,6 +174,45 @@ stop notify
 plot data
 ```
 
+GET_MAP_DATA is used to allow Artemis to send data over BLE, similar to Lab 8.
+
+---
+
+## Post Processing
+
+The ToF measurements are collected in the robot's local frame, so they need to be converted into the global frame.
+
+First, the yaw is converted into a relative angle, which makes measurements start from the same reference direction. 
+
+```cpp
+yaw0 = yaw[0]
+yaw_rel = yaw - yaw0
+theta = yaw_sign * np.deg2rad(yaw_rel)
+```
+
+Next, the distance is converted into local Cartesian coordinates. The sensor is not at the robot center, so an offset is added:
+
+```cpp
+px_mm = sensor_x_mm + dist
+py_mm = sensor_y_mm
+```
+
+Then the frame is flipped by 180 degrees because the sensor is facing the opposite direction of the robot frame.
+
+```cpp
+px_mm = -px_mm
+py_mm = -py_mm
+```
+
+Finally, the points are rotated by the yaw angle and translated to the robot's position:
+
+```cpp
+x_world = x_robot + (px*cos(theta) - py*sin(theta))
+y_world = y_robot + (px*sin(theta) + py*cos(theta))
+```
+
+This converts all measurements into the global coordinate frame so scans from different locations can be combined.
+
 ---
 
 ## Results
@@ -220,34 +259,7 @@ The mapping data was first plotted in polar coordinates for each scan location. 
   <b>Figure 6:</b> Polar and Robot Frame at (0, 0).
 </p>
 
-After checking the local scans, the points were converted from the robot frame into the global Cartesian frame. This used the robot position for each scan, the measured yaw angle, and the sensor offset from the center of the robot, which was measured to be 7 cm.
-
-```cpp
-def new_scan_to_world(map_yaw_deg, map_dist_mm, robot_pos_ft,
-                      sensor_x_mm=70, sensor_y_mm=0,
-                      yaw_sign=1):
-    MM_TO_FT = 3.28084 / 1000.0
-
-    yaw = np.array(map_yaw_deg)
-    dist = np.array(map_dist_mm)
-
-    yaw0 = yaw[0]
-    yaw_rel = yaw - yaw0
-    theta = yaw_sign * np.deg2rad(yaw_rel)
-
-    px_mm = sensor_x_mm + dist
-    py_mm = sensor_y_mm * np.ones_like(dist)
-
-    px_mm = -px_mm
-    py_mm = -py_mm
-
-    x_world = robot_pos_ft[0] + (px_mm * np.cos(theta) - py_mm * np.sin(theta)) * MM_TO_FT
-    y_world = robot_pos_ft[1] + (px_mm * np.sin(theta) + py_mm * np.cos(theta)) * MM_TO_FT
-
-    return x_world, y_world
-```
-
-The combined global frame is shown in figure 6.
+The combined global frame is shown in figure 7.
 
 <p align="center">
   <img src="../img/lab9/global.png" width="80%">
@@ -256,7 +268,20 @@ The combined global frame is shown in figure 6.
   <b>Figure 7:</b> Combined Global Frame.
 </p>
 
-Straight line segments were drawn on top of the scatter plot to build the line based map as shown in figure 7.
+<br>
+
+#### Line-Based Map
+
+The line-based map was created by manually drawing straight lines over the scatter plot.
+
+Some errors were observed in the raw data:
+- TOF noise increases at larger distances
+- Small yaw drift causes slight rotation error
+- Robot is not perfectly on axis during turning
+
+These cause the points to spread out instead of forming perfect lines. To fix this, the line segments were adjusted to follow the main clusters of points. Outliers and noisy points were ignored. Small shifts were made so the lines better match the visible walls.
+
+The resulting start and end points are shown below:
 
 ```cpp
 starts = [(6.5, 5),(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),
