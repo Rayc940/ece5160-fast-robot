@@ -8,7 +8,7 @@ The goal of this lab was to implement grid localization using a Bayes Filter in 
 
 The localization code was divided into five main functions: compute_control(), odom_motion_model(), prediction_step(), sensor_model(), and update_step(). Each one matches one part of the Bayes Filter.
 
-#### compute-control()
+#### compute_control()
 
 This function calculates the control input between two poses. Given the previous pose and current pose, it finds the first rotation needed to face the direction of motion, the translation distance, and the second rotation needed to match the final direction.
 
@@ -49,8 +49,7 @@ def odom_motion_model(cur_pose, prev_pose, u):
 
 #### prediction_step()
 
-This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then, for every possible current grid cell, it sums contributions from every possible previous grid cell. Each contribution is previous belief at that state
-multiplied by the transition probability from motion model.
+This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then, for every possible current grid cell, it sums contributions from every possible previous grid cell. Each contribution is previous belief at that state multiplied by the transition probability from motion model.
 
 A small optimization was used. If a previous belief is less than 0.0001, it is skipped because it contributes very little but costs time to compute.
 
@@ -120,6 +119,8 @@ def update_step():
 
 ## Results
 
+The Bayes Filter was tested on a defined trajectory in the simulator. The results show that the estimated belief follows the ground truth closely, while the odometry drifts over time and is noisy.
+
 Video 1 and 2 below shows two trials of the run.
 
 <div style="text-align:center; margin:30px 0;">
@@ -164,7 +165,7 @@ Video 1 and 2 below shows two trials of the run.
 
 ---
 
-#### Most Probable States (Is needed?)
+## Most Probable States Comparison
 
 The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is generally very close to the ground truth in position, with errors typically within about 0.1 to 0.3 meters. After the update step, the belief often converges to a single grid cell with high probability (close to 1.0), showing that the sensor measurements are effective in correcting the prediction. Although the reported angle error can appear large, this is mainly due to angle wrapping (for example, 360° is equivalent to 0°), so the orientation estimate is still reasonable. Overall, the comparison shows that the Bayes filter is able to accurately track the robot’s position over time.
 
