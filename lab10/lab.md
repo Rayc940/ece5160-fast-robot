@@ -169,6 +169,10 @@ Video 1 and 2 below shows two trials of the run.
 
 The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is generally very close to the ground truth in position, with errors typically within about 0.1 to 0.3 meters. After the update step, the belief often converges to a single grid cell with high probability (close to 1.0), showing that the sensor measurements are effective in correcting the prediction. Although the reported angle error can appear large, this is mainly due to angle wrapping (for example, 360° is equivalent to 0°), so the orientation estimate is still reasonable. Overall, the comparison shows that the Bayes filter is able to accurately track the robot’s position over time.
 
+<p align="center">
+  <img src="../img/lab10/table.png" width="80%">
+</p>
+
 | t | GT (x, y) | Belief (x, y) | Error (x, y) | Prob |
 |---|----------|---------------|--------------|------|
 | 0 | (0.287, -0.087) | (0.305, 0.000) | (-0.018, -0.087) | 1.0 |
