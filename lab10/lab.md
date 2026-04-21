@@ -1,274 +1,170 @@
 ## Objective
 
-The goal of this lab was to construct a map of the environment using TOF distance measurements and IMU yaw data. The robot was placed at multiple locations and performed on axis turns while collecting TOF measurements. These local scans were then combined into a global frame to generate a full map.
+The goal of this lab was to implement grid localization using a Bayes Filter in simulation. The robot does not know its true position, so it must estimate its position using noisy motion (odometry) and sensor measurements. The objective is to show that probabilistic localization can track the robot better than raw odometry.
 
 ---
 
-## Mapping Control
+## Code Implementation
 
-Instead of open loop, orientation PID control from Lab 6 was reused. The mapping process was implemented using a simple state machine with four main states:
+The localization code was divided into five main functions: compute_control(), odom_motion_model(), prediction_step(), sensor_model(), and update_step(). Each one matches one part of the Bayes Filter.
 
-```cpp
-enum MapState {
-    MAP_IDLE = 0,
-    MAP_TURN = 1,
-    MAP_STOP = 2,
-    MAP_WAIT = 3
-};
-```
+#### compute-control()
 
-The robot stays in MAP_IDLE until the start command is sent from Python. Then it enters MAP_TURN, which runs yaw PID to reach target angle. MAP_TURN uses DMP yaw instead of gyro integration because gyro integration accumulates drift over time, leading to large angular errors.
+This function calculates the control input between two poses. Given the previous pose and current pose, it finds the first rotation needed to face the direction of motion, the translation distance, and the second rotation needed to match the final direction.
 
 ```cpp
-float err = map_target_deg - yaw_unwrapped;
-float u = Kp_yaw * err + Ki_yaw * yaw_i_accum - Kd_yaw * gz_dps;
+def compute_control(cur_pose, prev_pose):
+    cur_x, cur_y, cur_theta = cur_pose
+    prev_x, prev_y, prev_theta = prev_pose
+
+    delta_x = cur_x - prev_x
+    delta_y = cur_y - prev_y
+
+    delta_rot_1 = degrees(atan2(delta_y, delta_x)) - prev_theta
+    delta_rot_1 = loc.mapper.normalize_angle(delta_rot_1)
+
+    delta_trans = dist((cur_x, cur_y), (prev_x, prev_y))
+
+    delta_rot_2 = cur_theta - prev_theta - delta_rot_1
+    delta_rot_2 = loc.mapper.normalize_angle(delta_rot_2)
+
+    return delta_rot_1, delta_trans, delta_rot_2
 ```
 
-When there is a small error, pwm was forced to 0 to avoid oscillation:
+#### odom_motion_model()
+
+This function computes the probability of moving from one state to another given the measured control input u. First, the function computes the motion actually required to go from prev_pose to cur_pose. Then it compares that motion to the measured odometry input u. Gaussian distributions are used for the two rotations and the translation. The final transition probability is the product of those three probabilities.
 
 ```cpp
-if (fabs(err) < 2.0f) {
-    pwm = 0;
-}
+def odom_motion_model(cur_pose, prev_pose, u):
+    actual_rot_1, actual_trans, actual_rot_2 = compute_control(cur_pose, prev_pose)
+
+    prob_rot_1 = loc.gaussian(actual_rot_1 - u[0], 0, loc.odom_rot_sigma)
+    prob_trans = loc.gaussian(actual_trans - u[1], 0, loc.odom_trans_sigma)
+    prob_rot_2 = loc.gaussian(actual_rot_2 - u[2], 0, loc.odom_rot_sigma)
+
+    prob = prob_rot_1 * prob_trans * prob_rot_2
+    return prob
 ```
 
-To ensure the turn is completed accurately, the function map_turn_reached_from_err() was used to continue to next state if there are 3 good samples.
+#### prediction_step()
+
+This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then, for every possible current grid cell, it sums contributions from every possible previous grid cell. Each contribution is previous belief at that state
+multiplied by the transition probability from motion model.
+
+A small optimization was used. If a previous belief is less than 0.0001, it is skipped because it contributes very little but costs time to compute.
 
 ```cpp
-bool map_turn_reached_from_err(float err)
-{
-    static int good_count = 0;
+def prediction_step(cur_odom, prev_odom):
+    u = compute_control(cur_odom, prev_odom)
 
-    if (fabs(err) < 3.0f) good_count++;
-    else good_count = 0;
+    loc.bel_bar = np.zeros(loc.bel.shape)
 
-    return (good_count >= 3);
-}
+    for x_idx in range(loc.mapper.MAX_CELLS_X):
+        for y_idx in range(loc.mapper.MAX_CELLS_Y):
+            for a_idx in range(loc.mapper.MAX_CELLS_A):
+
+                cur_pose = loc.mapper.from_map(x_idx, y_idx, a_idx)
+                total = 0
+
+                for prev_x in range(loc.mapper.MAX_CELLS_X):
+                    for prev_y in range(loc.mapper.MAX_CELLS_Y):
+                        for prev_a in range(loc.mapper.MAX_CELLS_A):
+
+                            bel_prev = loc.bel[prev_x, prev_y, prev_a]
+
+                            if bel_prev < 0.0001:
+                                continue
+
+                            prev_pose = loc.mapper.from_map(prev_x, prev_y, prev_a)
+                            total += odom_motion_model(cur_pose, prev_pose, u) * bel_prev
+
+                loc.bel_bar[x_idx, y_idx, a_idx] = total
+
+    if np.sum(loc.bel_bar) > 0:
+        loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)
 ```
 
-After reaching the desired angle, the robot will stop and wait to settle down for TOF measurements.
+#### sensor_model()
+
+This function computes the probability of a sensor observation for one grid cell. Here, obs is the expected set of 18 measurements for a given grid cell, and loc.obs_range_data.flatten() is the actual measured sensor data from the robot. The Gaussian gives the likelihood for each individual measurement. The result is an array of 18 probabilities.
 
 ```cpp
-case MAP_STOP:
-{
-    coastStop();
-    if ((now_ms - map_stop_time_ms) >= map_stop_delay_ms) {
-        map_state = MAP_WAIT;
-    }
-    break;
-}
+def sensor_model(obs):
+    prob_array = loc.gaussian(obs, loc.obs_range_data.flatten(), loc.sensor_sigma)
+    return prob_array
 ```
 
-The robot then enters MAP_WAIT, where it collects multiple TOF readings and averages them.
+#### update_step()
+
+This function performs the update step of the Bayes Filter. It uses the measured sensor data to correct the predicted belief. For each grid cell, the expected observation is generated using mapper.get_views(). The sensor model compares that expected observation with the actual robot measurement. Since the 18 range measurements are assumed independent, the probabilities are multiplied together using np.prod(prob_array). This is then multiplied by the predicted belief loc.bel_bar to get the updated belief loc.bel. Finally, the belief is normalized again.
 
 ```cpp
-case MAP_WAIT:
-{
-    coastStop();
-    if (new_tof_sample) {
-        int d = last_dist_mm;
+def update_step():
+    for x_idx in range(loc.mapper.MAX_CELLS_X):
+        for y_idx in range(loc.mapper.MAX_CELLS_Y):
+            for a_idx in range(loc.mapper.MAX_CELLS_A):
 
-        if (d <= 0 || d >= 4000) {
-            d = 4000;
-        }
+                true_obs = loc.mapper.get_views(x_idx, y_idx, a_idx)
+                prob_array = sensor_model(true_obs)
 
-        map_dist_accum += d;
-        map_avg_count++;
+                loc.bel[x_idx, y_idx, a_idx] = np.prod(prob_array) * loc.bel_bar[x_idx, y_idx, a_idx]
 
-        if (map_avg_count >= map_avg_count_target) {
-            int avg_dist = (int)(map_dist_accum / map_avg_count);
-            log_map_data(now_ms, map_last_yaw_unwrapped, avg_dist);
-            map_samples_taken++;
+    if np.sum(loc.bel) > 0:
+        loc.bel = loc.bel / np.sum(loc.bel)
 ```
-
-After logging one point, the next target angle is set:
-
-```cpp
-if (map_samples_taken < map_num_samples) {
-    map_target_deg += map_step_deg;
-
-    yaw_i_accum = 0.0f;
-    yaw_prev_err = 0.0f;
-
-    map_avg_count = 0;
-    map_dist_accum = 0;
-
-    map_state = MAP_TURN;
-} else {
-    stop_map_run();
-}
-```
-
-This process repeats until a full rotation is done and data is collected.
 
 <br>
-
-#### Angle Handling
-
-Yaw from the IMU is limited to -180 to 180 degrees. This causes jumps during rotation. To fix this, an unwrap function is used:
-
-```cpp
-double angle_no_wrap(double curr_angle)
-{
-    if ((curr_angle < 0) && (last_wrap_angle > 90)) {
-        curr_angle = curr_angle + 360;
-    }
-    else if ((curr_angle > 0) && (last_wrap_angle < -90)) {
-        curr_angle = curr_angle - 360;
-    }
-
-    last_wrap_angle = curr_angle;
-    return curr_angle;
-}
-```
-
-This makes yaw continuous so the robot can rotate smoothly.
-
-Video 1 below shows the robot performing scan.
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/mDSQK26k4YE"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 1:</b> On Axis Turn During Scanning.
-</p>
-
-Figure 1 below shows an example of distance and yaw vs. time recorded by TOF at scan location (-3, -2), proving the PID controller worked.
-
-<p align="center">
-  <img src="../img/lab9/scan1_dist.png" width="40%">
-  <img src="../img/lab9/scan_yaw.png" width="40%">
-</p>
-<p align="center">
-  <b>Figure 1:</b> Example Distance and Yaw Recorded During Scanning.
-</p>
-
----
-
-## Python Control
-
-Python is used similar to previous labs, to start the scan and receive data for post processing.
-
-```cpp
-initialize arrays
-
-def parse_map():
-    parse incoming data
-
-def map_handler():
-    append data
-
-clear arrays
-start BLE notify
-send START_MAP_RUN
-wait
-send GET_MAP_DATA
-wait for done
-stop notify
-plot data
-```
-
-GET_MAP_DATA is used to allow Artemis to send data over BLE, similar to Lab 8.
-
----
-
-## Post Processing
-
-The TOF measurements are collected in the robot's local frame, so they need to be converted into the global frame.
-
-First, the yaw is converted into a relative angle, which makes measurements start from the same reference direction. 
-
-```cpp
-yaw0 = yaw[0]
-yaw_rel = yaw - yaw0
-theta = yaw_sign * np.deg2rad(yaw_rel)
-```
-
-Next, the distance is converted into local Cartesian coordinates. The sensor is not at the robot center, so an offset of 7cm is added:
-
-```cpp
-px_mm = sensor_x_mm + dist
-py_mm = sensor_y_mm
-```
-
-Then the frame is flipped by 180 degrees because the sensor is facing the opposite direction of the robot frame.
-
-```cpp
-px_mm = -px_mm
-py_mm = -py_mm
-```
-
-Finally, the points are rotated by the yaw angle and translated to the robot's position:
-
-```cpp
-x_world = x_robot + (px*cos(theta) - py*sin(theta))
-y_world = y_robot + (px*sin(theta) + py*cos(theta))
-```
-
-This converts all measurements into the global coordinate frame so scans from different locations can be combined.
 
 ---
 
 ## Results
 
-The mapping data was first plotted in polar coordinates for each scan location. Each polar plot shows the measured TOF distance as a function of yaw angle. 
+Video 1 and 2 below shows two trials of the run.
 
-<p align="center">
-  <img src="../img/lab9/scan1_polar.png" width="40%">
-  <img src="../img/lab9/scan1_global.png" width="40%">
-</p>
-<p align="center">
-  <b>Figure 2:</b> Polar and Robot Frame at (-3, -2).
-</p>
-
-<p align="center">
-  <img src="../img/lab9/scan2_polar.png" width="40%">
-  <img src="../img/lab9/scan2_global.png" width="40%">
-</p>
-<p align="center">
-  <b>Figure 3:</b> Polar and Robot Frame at (5, 3).
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 1:</b> Trial 1.
 </p>
 
+Figure 1 below shows an example of distance and yaw vs. time recorded by TOF at scan location (-3, -2), proving the PID controller worked.
+
 <p align="center">
-  <img src="../img/lab9/scan3_polar.png" width="40%">
-  <img src="../img/lab9/scan3_global.png" width="40%">
+  <img src="../img/lab10/trial1.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 4:</b> Polar and Robot Frame at (0, 3).
+  <b>Figure 1:</b> Trial 1 Final Plot.
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/3KCuoqqc-RI"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 2:</b> Trial 2.
 </p>
 
 <p align="center">
-  <img src="../img/lab9/scan4_polar.png" width="40%">
-  <img src="../img/lab9/scan4_global.png" width="40%">
+  <img src="../img/lab10/trial2.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 5:</b> Polar and Robot Frame at (5, -3).
+  <b>Figure 2:</b> Trial 2 Final Plot.
 </p>
 
-<p align="center">
-  <img src="../img/lab9/scan5_polar.png" width="40%">
-  <img src="../img/lab9/scan5_global.png" width="40%">
-</p>
-<p align="center">
-  <b>Figure 6:</b> Polar and Robot Frame at (0, 0).
-</p>
-
-The combined global frame is shown in figure 7.
-
-<p align="center">
-  <img src="../img/lab9/global.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 7:</b> Combined Global Frame.
-</p>
-
-<br>
+---
 
 #### Line-Based Map
 
