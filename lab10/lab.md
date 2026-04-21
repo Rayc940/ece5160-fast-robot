@@ -1,6 +1,6 @@
 ## Objective
 
-The goal of this lab was to implement grid localization using a Bayes Filter in simulation. The robot does not know its true position, so it must estimate its position using noisy motion (odometry) and sensor measurements. The objective is to show that probabilistic localization can track the robot better than raw odometry.
+The goal of this lab was to implement grid localization using a Bayes Filter in simulation. The robot does not know its actual position, so it must estimate its position using odometry and sensor measurements. The objective is to show that probabilistic localization can track the robot better than odometry.
 
 ---
 
@@ -33,7 +33,7 @@ def compute_control(cur_pose, prev_pose):
 
 #### odom_motion_model()
 
-This function computes the probability of moving from one state to another given the measured control input u. First, the function computes the motion actually required to go from prev_pose to cur_pose. Then it compares that motion to the measured odometry input u. Gaussian distributions are used for the two rotations and the translation. The final transition probability is the product of those three probabilities.
+This function calculates the probability of moving from one state to another given the measured control input u. First, the function computes the motion actually required to go from prev_pose to cur_pose. Then it compares that motion to the measured odometry input u. Gaussian distributions are used for the two rotations and the translation. The final transition probability is the product of the three probabilities.
 
 ```cpp
 def odom_motion_model(cur_pose, prev_pose, u):
@@ -49,9 +49,9 @@ def odom_motion_model(cur_pose, prev_pose, u):
 
 #### prediction_step()
 
-This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then, for every possible current grid cell, it sums contributions from every possible previous grid cell. Each contribution is previous belief at that state multiplied by the transition probability from motion model.
+This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then for every possible current grid cell, it adds contributions from all possible previous grid cell. Each contribution is previous belief at that state multiplied by the transition probability from motion model.
 
-A small optimization was used. If a previous belief is less than 0.0001, it is skipped because it contributes very little but costs time to compute.
+A small optimization was used. If a previous belief is less than 0.0001, it is skipped because it contributes very little but costs time.
 
 ```cpp
 def prediction_step(cur_odom, prev_odom):
@@ -86,7 +86,7 @@ def prediction_step(cur_odom, prev_odom):
 
 #### sensor_model()
 
-This function computes the probability of a sensor observation for one grid cell. Here, obs is the expected set of 18 measurements for a given grid cell, and loc.obs_range_data.flatten() is the actual measured sensor data from the robot. The Gaussian gives the likelihood for each individual measurement. The result is an array of 18 probabilities.
+This function calculates the probability of a sensor observation for one grid cell. obs is the expected set of measurements for a grid cell, and loc.obs_range_data.flatten() is the actual measured sensor data. The Gaussian gives the likelihood for each individual measurement. The result is an array of 18 probabilities.
 
 ```cpp
 def sensor_model(obs):
@@ -96,7 +96,7 @@ def sensor_model(obs):
 
 #### update_step()
 
-This function performs the update step of the Bayes Filter. It uses the measured sensor data to correct the predicted belief. For each grid cell, the expected observation is generated using mapper.get_views(). The sensor model compares that expected observation with the actual robot measurement. Since the 18 range measurements are assumed independent, the probabilities are multiplied together using np.prod(prob_array). This is then multiplied by the predicted belief loc.bel_bar to get the updated belief loc.bel. Finally, the belief is normalized again.
+This function performs the update step of the Bayes Filter. It uses the measured sensor data to correct the predicted belief. For each grid cell, the expected observation is generated using mapper.get_views(). The sensor model compares the expected observation with the actual measurement. The probabilities are multiplied together using np.prod(prob_array). This is then multiplied by the predicted belief loc.bel_bar to get the updated belief loc.bel.
 
 ```cpp
 def update_step():
@@ -167,7 +167,9 @@ Video 1 and 2 below shows two trials of the run.
 
 ## Most Probable States Comparison
 
-The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is generally very close to the ground truth in position, with errors typically within about 0.1 to 0.3 meters. After the update step, the belief often converges to a single grid cell with high probability (close to 1.0), showing that the sensor measurements are effective in correcting the prediction. Although the reported angle error can appear large, this is mainly due to angle wrapping (for example, 360° is equivalent to 0°), so the orientation estimate is still reasonable. Overall, the comparison shows that the Bayes filter is able to accurately track the robot’s position over time.
+The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is very close to the ground truth in position, with errors typically within about 0.1 to 0.3m. 
+
+After the update step, the belief often converges to a single grid cell with high probability, showing that the sensor measurements are effective in correcting the prediction. Although the angle error can appear large, this is likely due to angle wrapping, so the orientation estimate is still reasonable.
 
 <p align="center">
   <img src="../img/lab10/table.png" width="80%">
@@ -196,7 +198,7 @@ The most probable state after each iteration of the Bayes filter was compared wi
 
 ## Discussion
 
-This lab focused on using a Bayes Filter to estimate the robot's position. The robot uses odometry for motion, but it is noisy and causes error over time. The prediction step spreads the belief, while the update step uses sensor measurements to correct it. The two steps together make the estimate more accurate. Overall, the Bayes filter works well and is able to track the robot much better than odometry alone.
+This lab focused on using a Bayes Filter to estimate the robot's position. The robot uses odometry for motion, but it is noisy and causes error over time. The prediction step spreads the belief, while the update step uses sensor measurements to correct it. The two steps together make the estimate more accurate.
 
 ---
 
