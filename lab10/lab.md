@@ -191,14 +191,12 @@ The most probable state after each iteration of the Bayes filter was compared wi
 
 ## Discussion
 
-This lab focused on building a map using rotation and TOF. The robot used PID control to turn to fixed angles, and using state machine helped organize the turning, stopping, and measuring steps, which made the behavior more stable.
-
-One challenge encountered was one of the motor driver stopped working for some reason, which made one side of wheel turned a lot slower than the other. I was stuck on this for awhile, and I ended up redoing Lab 4 to replace the motor drivers and the Artemis.
+This lab focused on using a Bayes Filter to estimate the robot's position. The robot uses odometry for motion, but it is noisy and causes error over time. The prediction step spreads the belief, while the update step uses sensor measurements to correct it. The two steps together make the estimate more accurate. Overall, the Bayes filter works well and is able to track the robot much better than odometry alone.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab9/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab10/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
