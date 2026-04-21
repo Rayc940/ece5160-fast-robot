@@ -135,8 +135,6 @@ Video 1 and 2 below shows two trials of the run.
   <b>Video 1:</b> Trial 1.
 </p>
 
-Figure 1 below shows an example of distance and yaw vs. time recorded by TOF at scan location (-3, -2), proving the PID controller worked.
-
 <p align="center">
   <img src="../img/lab10/trial1.png" width="80%">
 </p>
@@ -166,33 +164,28 @@ Figure 1 below shows an example of distance and yaw vs. time recorded by TOF at 
 
 ---
 
-#### Line-Based Map
+#### Most Probable States (Is needed?)
 
-The line-based map was created by manually drawing straight lines over the scatter plot.
+The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is generally very close to the ground truth in position, with errors typically within about 0.1 to 0.3 meters. After the update step, the belief often converges to a single grid cell with high probability (close to 1.0), showing that the sensor measurements are effective in correcting the prediction. Although the reported angle error can appear large, this is mainly due to angle wrapping (for example, 360° is equivalent to 0°), so the orientation estimate is still reasonable. Overall, the comparison shows that the Bayes filter is able to accurately track the robot’s position over time.
 
-Some errors were observed in the raw data:
-- TOF noise increases at larger distances
-- Small yaw drift causes slight rotation error
-- Robot is not perfectly on axis during turning
-
-These cause the points to spread out instead of forming perfect lines. To fix this, the line segments were adjusted to follow the main clusters of points. Outliers and noisy points were ignored. Small shifts were made so the lines better match the visible walls.
-
-The resulting start and end points are shown below:
-
-```cpp
-starts = [(6.5, 5),(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),
-(1, -5),(6.5, -5),(1, -2.5),(2.5, 1.25),(2.5, -1),(4.5, -1),(4.5, 1.25),]
-
-ends = [(-2.5, 5),(-2.5, 0),(-6, 0),(-6, -5),(-1, -5),(-1, -2.5),(1, -2.5),
-(6.5, -5),(6.5, 5),(1, -5),(2.5, -1),(4.5, -1),(4.5, 1.25),(2.5, 1.25),]
-```
-
-<p align="center">
-  <img src="../img/lab9/global_lines.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 8:</b> Combined Global Line-Based Map.
-</p>
+| t | GT (x, y) | Belief (x, y) | Error (x, y) | Prob |
+|---|----------|---------------|--------------|------|
+| 0 | (0.287, -0.087) | (0.305, 0.000) | (-0.018, -0.087) | 1.0 |
+| 1 | (0.520, -0.539) | (0.610, -0.610) | (-0.090, 0.071) | 1.0 |
+| 2 | (0.520, -0.539) | (0.610, -0.610) | (-0.090, 0.071) | 1.0 |
+| 3 | (0.548, -0.951) | (0.305, -0.914) | (0.244, -0.037) | 1.0 |
+| 4 | (0.814, -1.091) | (0.914, -0.914) | (-0.101, -0.177) | 1.0 |
+| 5 | (1.608, -0.915) | (1.524, -0.914) | (0.084, -0.001) | 1.0 |
+| 6 | (1.682, -0.522) | (1.524, -0.610) | (0.158, 0.087) | 1.0 |
+| 7 | (1.750, -0.162) | (1.829, -0.305) | (-0.079, 0.142) | 1.0 |
+| 8 | (1.743, 0.337) | (1.829, 0.000) | (-0.086, 0.337) | 0.79 |
+| 9 | (1.736, 0.673) | (1.829, 0.914) | (-0.093, -0.241) | 1.0 |
+| 10 | (1.310, 0.935) | (1.219, 0.914) | (0.091, 0.020) | 1.0 |
+| 11 | (0.421, 0.791) | (0.610, 0.914) | (-0.188, -0.124) | 1.0 |
+| 12 | (0.296, 0.142) | (0.305, 0.000) | (-0.008, 0.142) | 1.0 |
+| 13 | (0.072, -0.189) | (0.000, -0.305) | (0.072, 0.116) | 1.0 |
+| 14 | (-0.292, -0.372) | (-0.305, -0.305) | (0.013, -0.067) | 1.0 |
+| 15 | (-0.698, -0.395) | (-0.610, -0.305) | (-0.088, -0.091) | 0.75 |
 
 ---
 
