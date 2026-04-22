@@ -198,10 +198,6 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 | Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (1.829, -0.305, 30) | |
 | Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (1.524, 0.61, -10) | |
 
-The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is very close to the ground truth in position, with errors typically within about 0.1 to 0.3m. 
-
-After the update step, the belief often converges to a single grid cell with high probability, showing that the sensor measurements are effective in correcting the prediction. Although the angle error can appear large, this is likely due to angle wrapping, so the orientation estimate is still reasonable.
-
 <p align="center">
   <img src="../img/lab10/table.png" width="80%">
 </p>
@@ -210,12 +206,12 @@ After the update step, the belief often converges to a single grid cell with hig
 
 ## Discussion
 
-This lab focused on using a Bayes Filter to estimate the robot's position. The robot uses odometry for motion, but it is noisy and causes error over time. The prediction step spreads the belief, while the update step uses sensor measurements to correct it. The two steps together make the estimate more accurate.
+This lab focused on using the update step of a Bayes Filter to estimate the robot's position. The robot performs a 360° scan using the TOF sensor, and the update step compares these measurements with the map to determine the most likely pose. The real robot results are less accurate due to sensor noise, bias, and imperfect rotation, which introduce errors in the localization.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab10/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab11/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
