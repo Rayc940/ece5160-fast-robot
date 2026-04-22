@@ -1,127 +1,115 @@
 ## Objective
 
-The goal of this lab was to implement grid localization using a Bayes Filter in simulation. The robot does not know its actual position, so it must estimate its position using odometry and sensor measurements. The objective is to show that probabilistic localization can track the robot better than odometry.
+The goal of this lab was to perform localization on the real robot using the Bayes filter. Unlike Lab 10, which used both prediction and update steps in simulation, this lab uses only the update step due to noisy motion. The robot performs a 360° scan using the TOF sensor and compares the measurements against the map to estimate its pose.
+
+---
+
+## Simulation Result
+
+The notebook lab11_sim.ipynb was ran to verify the Bayes filter implementation on virtual robot, and figure 1 below shows successful implementation as the belief is relatively close to ground truth.
+
+<p align="center">
+  <img src="../img/lab11/sim.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 1:</b> Simulation Result.
+</p>
 
 ---
 
 ## Code Implementation
 
-The localization code was divided into five main functions: compute_control(), odom_motion_model(), prediction_step(), sensor_model(), and update_step(). Each one matches one part of the Bayes Filter.
+The Bayes filter implementation from Lab 10 was reused. In Lab 10, the localization included prediction and update steps using motion and sensor models. For this lab, only the update step is used.
 
-#### compute_control()
+The main modification was implementing the function:
 
-This function calculates the control input between two poses. Given the previous pose and current pose, it finds the first rotation needed to face the direction of motion, the translation distance, and the second rotation needed to match the final direction.
+#### perform_observation_loop()
 
-```cpp
-def compute_control(cur_pose, prev_pose):
-    cur_x, cur_y, cur_theta = cur_pose
-    prev_x, prev_y, prev_theta = prev_pose
-
-    delta_x = cur_x - prev_x
-    delta_y = cur_y - prev_y
-
-    delta_rot_1 = degrees(atan2(delta_y, delta_x)) - prev_theta
-    delta_rot_1 = loc.mapper.normalize_angle(delta_rot_1)
-
-    delta_trans = dist((cur_x, cur_y), (prev_x, prev_y))
-
-    delta_rot_2 = cur_theta - prev_theta - delta_rot_1
-    delta_rot_2 = loc.mapper.normalize_angle(delta_rot_2)
-
-    return delta_rot_1, delta_trans, delta_rot_2
-```
-
-#### odom_motion_model()
-
-This function calculates the probability of moving from one state to another given the measured control input u. First, the function computes the motion actually required to go from prev_pose to cur_pose. Then it compares that motion to the measured odometry input u. Gaussian distributions are used for the two rotations and the translation. The final transition probability is the product of the three probabilities.
+This function commands the robot to rotate and collects TOF measurements at fixed angles. The robot measures 18 measurements at 20° increments, starting from 0 degree. All the code was reused from Lab 9, with no important changes. 
 
 ```cpp
-def odom_motion_model(cur_pose, prev_pose, u):
-    actual_rot_1, actual_trans, actual_rot_2 = compute_control(cur_pose, prev_pose)
+def perform_observation_loop(self, rot_vel=120):
+    map_time = []
+    map_yaw = []
+    map_dist = []
+    map_expected = None
+    map_done = False
 
-    prob_rot_1 = loc.gaussian(actual_rot_1 - u[0], 0, loc.odom_rot_sigma)
-    prob_trans = loc.gaussian(actual_trans - u[1], 0, loc.odom_trans_sigma)
-    prob_rot_2 = loc.gaussian(actual_rot_2 - u[2], 0, loc.odom_rot_sigma)
+    def parse_map(line: str):
+        parts = line.split("|")
+        if len(parts) != 3:
+            return None
+        t_ms = int(parts[0])
+        yaw_deg = float(parts[1])
+        dist_mm = int(parts[2])
+        return t_ms / 1000.0, yaw_deg, dist_mm
 
-    prob = prob_rot_1 * prob_trans * prob_rot_2
-    return prob
-```
+    def map_data_handler(_uuid, response: bytearray):
+        nonlocal map_expected, map_done
 
-#### prediction_step()
+        s = response.decode().strip()
 
-This function performs the prediction step of the Bayes Filter. It updates loc.bel_bar, which is the predicted belief before using new sensor data. The function first gets the odometry control input from the previous and current odometry poses. Then for every possible current grid cell, it adds contributions from all possible previous grid cell. Each contribution is previous belief at that state multiplied by the transition probability from motion model.
+        if s.startswith("MAP_HDR"):
+            map_expected = int(s.split(",")[1])
+            return
 
-A small optimization was used. If a previous belief is less than 0.0001, it is skipped because it contributes very little but costs time.
+        if s == "MAP_DONE":
+            map_done = True
+            return
 
-```cpp
-def prediction_step(cur_odom, prev_odom):
-    u = compute_control(cur_odom, prev_odom)
+        parsed = parse_map(s)
+        if parsed is None:
+            return
 
-    loc.bel_bar = np.zeros(loc.bel.shape)
+        t, yaw_deg, dist_mm = parsed
+        map_time.append(t)
+        map_yaw.append(yaw_deg)
+        map_dist.append(dist_mm)
 
-    for x_idx in range(loc.mapper.MAX_CELLS_X):
-        for y_idx in range(loc.mapper.MAX_CELLS_Y):
-            for a_idx in range(loc.mapper.MAX_CELLS_A):
+    self.ble.start_notify(self.ble.uuid["RX_STRING"], map_data_handler)
+    self.ble.send_command(CMD.START_MAP_RUN, "")
+    time.sleep(20.0)
 
-                cur_pose = loc.mapper.from_map(x_idx, y_idx, a_idx)
-                total = 0
+    map_done = False
+    map_expected = None
+    self.ble.send_command(CMD.GET_MAP_DATA, "")
 
-                for prev_x in range(loc.mapper.MAX_CELLS_X):
-                    for prev_y in range(loc.mapper.MAX_CELLS_Y):
-                        for prev_a in range(loc.mapper.MAX_CELLS_A):
+    t0 = time.time()
+    while not map_done and (time.time() - t0) < 30:
+        time.sleep(0.05)
 
-                            bel_prev = loc.bel[prev_x, prev_y, prev_a]
+    self.ble.stop_notify(self.ble.uuid["RX_STRING"])
 
-                            if bel_prev < 0.0001:
-                                continue
+    if len(map_dist) == 0:
+        raise RuntimeError("No observation data received from robot.")
 
-                            prev_pose = loc.mapper.from_map(prev_x, prev_y, prev_a)
-                            total += odom_motion_model(cur_pose, prev_pose, u) * bel_prev
-
-                loc.bel_bar[x_idx, y_idx, a_idx] = total
-
-    if np.sum(loc.bel_bar) > 0:
-        loc.bel_bar = loc.bel_bar / np.sum(loc.bel_bar)
-```
-
-#### sensor_model()
-
-This function calculates the probability of a sensor observation for one grid cell. obs is the expected set of measurements for a grid cell, and loc.obs_range_data.flatten() is the actual measured sensor data. The Gaussian gives the likelihood for each individual measurement. The result is an array of 18 probabilities.
-
-```cpp
-def sensor_model(obs):
-    prob_array = loc.gaussian(obs, loc.obs_range_data.flatten(), loc.sensor_sigma)
-    return prob_array
-```
-
-#### update_step()
-
-This function performs the update step of the Bayes Filter. It uses the measured sensor data to correct the predicted belief. For each grid cell, the expected observation is generated using mapper.get_views(). The sensor model compares the expected observation with the actual measurement. The probabilities are multiplied together using np.prod(prob_array). This is then multiplied by the predicted belief loc.bel_bar to get the updated belief loc.bel.
-
-```cpp
-def update_step():
-    for x_idx in range(loc.mapper.MAX_CELLS_X):
-        for y_idx in range(loc.mapper.MAX_CELLS_Y):
-            for a_idx in range(loc.mapper.MAX_CELLS_A):
-
-                true_obs = loc.mapper.get_views(x_idx, y_idx, a_idx)
-                prob_array = sensor_model(true_obs)
-
-                loc.bel[x_idx, y_idx, a_idx] = np.prod(prob_array) * loc.bel_bar[x_idx, y_idx, a_idx]
-
-    if np.sum(loc.bel) > 0:
-        loc.bel = loc.bel / np.sum(loc.bel)
+    sensor_ranges = (np.array(map_dist)[np.newaxis].T) / 1000.0
+    sensor_bearings = np.empty((1, 1))
+    return sensor_ranges, sensor_bearings
 ```
 
 <br>
 
 ---
 
-## Results
+## Localization Results
 
-The Bayes Filter was tested on a defined trajectory in the simulator. The results show that the estimated belief follows the ground truth closely, while the odometry drifts over time and is noisy.
+The robot was placed at the four marked poses:
+- (-3 ft, -2 ft)
+- (0 ft, 3 ft)
+- (5 ft, -3 ft)
+- (5 ft, 3 ft)
 
-Video 1 and 2 below shows two trials of the run.
+For each pose, a uniform belief was initialized, a 360° scan was performed, and the update step was applied. The resulting belief corresponds to the most probable pose.
+
+
+<p align="center">
+  <img src="../img/lab11/pos1.png" width="80%">
+  <img src="../img/lab11/pos1_data.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 2:</b> Localization at (-3, -2)
+</p>
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
@@ -133,34 +121,70 @@ Video 1 and 2 below shows two trials of the run.
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Trial 1.
+  <b>Video 1:</b> Localization at (-3, -2)
 </p>
 
 <p align="center">
-  <img src="../img/lab10/trial1.png" width="80%">
+  <img src="../img/lab11/pos2.png" width="80%">
+  <img src="../img/lab11/pos2_data.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 1:</b> Trial 1 Final Plot.
+  <b>Figure 3:</b> Localization at (0, 3)
 </p>
 
 <div style="text-align:center; margin:30px 0;">
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/3KCuoqqc-RI"
+    src="https://www.youtube.com/embed/KfRxgFy2JuE"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 2:</b> Trial 2.
+  <b>Video 1:</b> Localization at (-3, -2)
 </p>
 
 <p align="center">
-  <img src="../img/lab10/trial2.png" width="80%">
+  <img src="../img/lab11/pos2.png" width="80%">
+  <img src="../img/lab11/pos2_data.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Trial 2 Final Plot.
+  <b>Figure 4:</b> Localization at (5, -3)
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 1:</b> Localization at (-3, -2)
+</p>
+
+<p align="center">
+  <img src="../img/lab11/pos2.png" width="80%">
+  <img src="../img/lab11/pos2_data.png" width="80%">
+</p>
+<p align="center">
+  <b>Figure 5:</b> Localization at (5, 3)
+</p>
+
+<div style="text-align:center; margin:30px 0;">
+  <iframe
+    width="560"
+    height="315"
+    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    frameborder="0"
+    allowfullscreen>
+  </iframe>
+</div>
+<p style="text-align:center;">
+  <b>Video 1:</b> Localization at (-3, -2)
 </p>
 
 ---
