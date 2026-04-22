@@ -191,12 +191,12 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 ## Ground Truth vs Bayes Filter Result
 
-| Test Pose | Ground Truth (ft, ft, deg) | Ground Truth (m, m, deg) | Bayes Belief (m, m, deg) | Position Error (m) | Notes |
+| Test Pose | Ground Truth (ft, ft, deg) | Ground Truth (m, m, deg) | Bayes Belief (m, m, deg) | Notes |
 |---|---:|---:|---:|---:|---|
-| Pose 1 | (-3, -2, 0) | (-0.914, -0.610, 0) | (-0.914, -0.914, 10) | 0.305 | x is accurate, y is about 1 ft low |
-| Pose 2 | (0, 3, 0) | (0.000, 0.914, 0) | (fill in) | (fill in) | |
-| Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (fill in) | (fill in) | |
-| Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (fill in) | (fill in) | |
+| Pose 1 | (-3, -2, 0) | (-0.914, -0.610, 0) | (-0.914, -0.914, 10) | x is accurate, y is about 1 ft low |
+| Pose 2 | (0, 3, 0) | (0.000, 0.914, 0) | (fill in) | |
+| Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (fill in) | |
+| Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (fill in) | |
 
 The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is very close to the ground truth in position, with errors typically within about 0.1 to 0.3m. 
 
