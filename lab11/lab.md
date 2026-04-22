@@ -105,7 +105,7 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 <p align="center">
   <img src="../img/lab11/pos1.png" width="80%">
-  <img src="../img/lab11/pos1_data.png" width="80%">
+  <img src="../img/lab11/pos1 data.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 2:</b> Localization at (-3, -2)
@@ -126,7 +126,7 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 <p align="center">
   <img src="../img/lab11/pos2.png" width="80%">
-  <img src="../img/lab11/pos2_data.png" width="80%">
+  <img src="../img/lab11/pos2 data.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 3:</b> Localization at (0, 3)
@@ -146,8 +146,8 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 </p>
 
 <p align="center">
-  <img src="../img/lab11/pos2.png" width="80%">
-  <img src="../img/lab11/pos2_data.png" width="80%">
+  <img src="../img/lab11/pos3.png" width="80%">
+  <img src="../img/lab11/pos3 data.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 4:</b> Localization at (5, -3)
@@ -167,8 +167,8 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 </p>
 
 <p align="center">
-  <img src="../img/lab11/pos2.png" width="80%">
-  <img src="../img/lab11/pos2_data.png" width="80%">
+  <img src="../img/lab11/pos4.png" width="80%">
+  <img src="../img/lab11/pos4 data.png" width="80%">
 </p>
 <p align="center">
   <b>Figure 5:</b> Localization at (5, 3)
@@ -189,7 +189,14 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 ---
 
-## Most Probable States Comparison
+## Ground Truth vs Bayes Filter Result
+
+| Test Pose | Ground Truth (ft, ft, deg) | Ground Truth (m, m, deg) | Bayes Belief (m, m, deg) | Position Error (m) | Notes |
+|---|---:|---:|---:|---:|---|
+| Pose 1 | (-3, -2, 0) | (-0.914, -0.610, 0) | (-0.914, -0.914, 10) | 0.305 | x is accurate, y is about 1 ft low |
+| Pose 2 | (0, 3, 0) | (0.000, 0.914, 0) | (fill in) | (fill in) | |
+| Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (fill in) | (fill in) | |
+| Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (fill in) | (fill in) | |
 
 The most probable state after each iteration of the Bayes filter was compared with the ground truth pose. From the results, the estimated belief state is very close to the ground truth in position, with errors typically within about 0.1 to 0.3m. 
 
