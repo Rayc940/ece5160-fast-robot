@@ -192,7 +192,7 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 ## Ground Truth vs Bayes Filter Result
 
 | Test Pose | Ground Truth (ft, ft, deg) | Ground Truth (m, m, deg) | Bayes Belief (m, m, deg) |
-|---|---:|---:|---|
+|---|---:|---:|---:|
 | Pose 1 | (-3, -2, 0) | (-0.914, -0.610, 0) | (-0.914, -0.914, 10) |
 | Pose 2 | (0, 3, 0) | (0.000, 0.914, 0) | (0.305, 1.219, -10) |
 | Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (1.829, -0.305, 30) |
