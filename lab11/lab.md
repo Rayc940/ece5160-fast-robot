@@ -1,6 +1,6 @@
 ## Objective
 
-The goal of this lab was to perform localization on the real robot using the Bayes filter. Unlike Lab 10, which used both prediction and update steps in simulation, this lab uses only the update step due to noisy motion. The robot performs a 360° scan using the TOF sensor and compares the measurements against the map to estimate its pose.
+The goal of this lab was to perform localization on the real robot using the Bayes filter. Unlike Lab 10, which used both prediction and update steps in simulation, this lab uses only the update step due to noisy motion. The robot performs a 360° scan using the TOF sensor and compares the measurements with the map to estimate its pose.
 
 ---
 
@@ -37,8 +37,6 @@ def perform_observation_loop(self, rot_vel=120):
 
     def parse_map(line: str):
         parts = line.split("|")
-        if len(parts) != 3:
-            return None
         t_ms = int(parts[0])
         yaw_deg = float(parts[1])
         dist_mm = int(parts[2])
@@ -80,15 +78,10 @@ def perform_observation_loop(self, rot_vel=120):
 
     self.ble.stop_notify(self.ble.uuid["RX_STRING"])
 
-    if len(map_dist) == 0:
-        raise RuntimeError("No observation data received from robot.")
-
     sensor_ranges = (np.array(map_dist)[np.newaxis].T) / 1000.0
     sensor_bearings = np.empty((1, 1))
     return sensor_ranges, sensor_bearings
 ```
-
-<br>
 
 ---
 
@@ -197,11 +190,11 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 | Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (1.829, -0.305, 30) |
 | Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (1.524, 0.61, -10) |
 
-These results show moderate accuracy, though not as good as in simulation. In most cases, the estimated beliefs are within roughly one grid cell of the ground truth. The largest errors appear in the y values for Pose 3. These errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. 
+These results show moderate accuracy, but not as good as in simulation. In most cases, the estimated beliefs are within one grid cell of the ground truth. The largest errors appear in the y values for Pose 3. 
 
-Additionally, small angular inaccuracies during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations. The angle estimates also show noticeable deviations, particularly in Pose 3, which may be due to similar-looking environments under slight rotations, making it difficult for the filter to distinguish between nearby orientations. 
+These errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
 
-Overall, while the localization is not perfectly accurate, the results are still reasonable given the limitations of real-world sensor noise and robot motion.
+Overall, while the localization is not perfect, the results are still reasonable given the limitations of TOF noise and robot motion.
 
 <p align="center">
   <img src="../img/lab10/table.png" width="80%">
