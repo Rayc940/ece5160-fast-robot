@@ -183,13 +183,6 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 ## Ground Truth vs Bayes Filter Result
 
-| Test Pose | Ground Truth (ft, ft, deg) | Ground Truth (m, m, deg) | Bayes Belief (m, m, deg) |
-|---|---:|---:|---:|
-| Pose 1 | (-3, -2, 0) | (-0.914, -0.610, 0) | (-0.914, -0.914, 10) |
-| Pose 2 | (0, 3, 0) | (0.000, 0.914, 0) | (0.305, 1.219, -10) |
-| Pose 3 | (5, -3, 0) | (1.524, -0.914, 0) | (1.829, -0.305, 30) |
-| Pose 4 | (5, 3, 0) | (1.524, 0.914, 0) | (1.524, 0.61, -10) |
-
 These results show moderate accuracy, but not as good as in simulation. In most cases, the estimated beliefs are within one grid cell of the ground truth. The largest errors appear in the y values for Pose 3. 
 
 These errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
@@ -197,7 +190,7 @@ These errors are likely due to systematic bias in the TOF sensor, which tends to
 Overall, while the localization is not perfect, the results are still reasonable given the limitations of TOF noise and robot motion.
 
 <p align="center">
-  <img src="../img/lab10/table.png" width="80%">
+  <img src="../img/lab11/table.png" width="80%">
 </p>
 
 ---
