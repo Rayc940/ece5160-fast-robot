@@ -102,7 +102,6 @@ The robot was placed at the four marked poses:
 
 For each pose, a uniform belief was initialized, a 360° scan was performed, and the update step was applied. The resulting belief corresponds to the most probable pose.
 
-
 <p align="center">
   <img src="../img/lab11/pos1.png" width="80%">
   <img src="../img/lab11/pos1 data.png" width="80%">
@@ -115,7 +114,7 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    src="https://www.youtube.com/embed/_5FneRv3r0o"
     frameborder="0"
     allowfullscreen>
   </iframe>
@@ -136,13 +135,13 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    src="https://www.youtube.com/embed/W8puRusIhho"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Localization at (-3, -2)
+  <b>Video 2:</b> Localization at (0, 3)
 </p>
 
 <p align="center">
@@ -157,13 +156,13 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    src="https://www.youtube.com/embed/94_pBgbZYv8"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Localization at (-3, -2)
+  <b>Video 3:</b> Localization at (5, -3)
 </p>
 
 <p align="center">
@@ -178,13 +177,13 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
   <iframe
     width="560"
     height="315"
-    src="https://www.youtube.com/embed/KfRxgFy2JuE"
+    src="https://www.youtube.com/embed/Uhod3lpUIwY"
     frameborder="0"
     allowfullscreen>
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Localization at (-3, -2)
+  <b>Video 4:</b> Localization at (5, 3)
 </p>
 
 ---
