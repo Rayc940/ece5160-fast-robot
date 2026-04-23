@@ -187,7 +187,7 @@ These results show moderate accuracy, but not as good as in simulation. In most 
 
 Pose 4 appears to localize more accurately, likely because it's closer to more features (walls), which provides more information.
 
-These errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
+The errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
 
 Overall, while the localization is not perfect, the results are still reasonable given the limitations of TOF noise and robot motion.
 
