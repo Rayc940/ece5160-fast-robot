@@ -183,7 +183,9 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
 
 ## Ground Truth vs Bayes Filter Result
 
-These results show moderate accuracy, but not as good as in simulation. In most cases, the estimated beliefs are within one grid cell of the ground truth. The largest errors appear in the y values for Pose 3. 
+These results show moderate accuracy, but not as good as in simulation. In most cases, the estimated beliefs are within one grid cell of the ground truth. The largest errors appear in the y values for Pose 3.
+
+Pose 4 appears to localize more accurately, likely because it's closer to more features (walls), which provides more information.
 
 These errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
 
