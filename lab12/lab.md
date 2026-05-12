@@ -21,7 +21,7 @@ The idea was to localize the robot using the Bayes filter, calculate the distanc
 
 ## Path Planning Method
 
-A local waypoint planning method was used since the required path was already given. At each step, the robot used the most probable pose from the Bayes filter as its current position. The next waypoint was then selected from the waypoint list. The angle and distance to the next waypoint were calculated using the difference in x and y position.
+A local waypoint-to-waypoint planning method was used since the required path was already given. At each step, the robot used the most probable pose from the Bayes filter as its current position. The next waypoint was then selected from the waypoint list. The angle and distance to the next waypoint were calculated using the difference in x and y position.
 
 ```cpp
 curr_pose, curr_prob, curr_idx = get_max_belief()
@@ -135,13 +135,15 @@ def lab12_step():
     return next_pose_idx >= len(waypoints)
 ```
 
+This is called in a while loop so it keeps stepping into next waypoints.
+
 On the Artemis side, a new command was added for Lab 12 navigation:
 
 ```cpp
 EXECUTE_TRAJECTORY
 ```
 
-When Python sends this command, the Artemis extracts the distance and angle, then calls start_nav_target().
+When Python sends this command, the Artemis gets the distance and angle, then calls start_nav_target().
 
 ```cpp
 case EXECUTE_TRAJECTORY:
@@ -162,33 +164,22 @@ case EXECUTE_TRAJECTORY:
 }
 ```
 
-The start_nav_target() function stores the desired movement and initializes the turning state. The robot first turns toward the target direction before moving forward.
+The start_nav_target() function stores the desired movement and initializes the turning state. The robot first turns toward the target direction, then moves forward.
 
 ```cpp
 void start_nav_target(int dist_mm, float angle_deg) {
-    map_active = true;
-    map_state = MAP_TURN;
+    save commanded distance and angle
+    stop robot
 
-    nav_target_dist_mm = dist_mm;
-    nav_target_angle = angle_deg;
+    reset yaw PID
+    read current yaw
+    reset angle unwrap
 
-    coastStop();
+    target_yaw = current_yaw + commanded_angle
 
-    yaw_i_accum = 0;
-    yaw_prev_err = 0;
-    yaw_prev_us = 0;
-
-    float yaw_raw = dmp_ok ? yaw_dmp : wrap_angle_deg(yaw_gyro);
-    float yaw0 = wrap_angle_deg(yaw_raw - yaw_zero_offset);
-
-    last_wrap_angle = yaw0;
-    num_wraps = 0;
-
-    map_target_deg = yaw0 + nav_target_angle;
-    reset_turn_good_count();
-
-    nav_active = true;
-    nav_state = NAV_TURN;
+    reset turn check counter
+    enable navigation
+    state = NAV_TURN
 }
 ```
 
@@ -237,14 +228,13 @@ The final movement was handled by the existing translational PID function from L
 
 ## Navigation Results
 
-The robot was able to complete the full waypoint sequence. The full run was recorded on video, and the plotter was used to show the Bayes filter belief updates during the run.
+The robot was able to complete the full waypoint sequence. The full run was recorded in Video 1, and the Figure 1 below shows the Bayes filter belief updates during the run.
 
 <p align="center">
-  <img src="../img/lab11/pos1.png" width="80%">
-  <img src="../img/lab11/pos1 data.png" width="80%">
+  <img src="../img/lab12/final_path.png" width="80%">
 </p>
 <p align="center">
-  <b>Figure 2:</b> Localization at (-3, -2)
+  <b>Figure 1:</b> Full Execution Belief (Blue) vs. Ideal (Green)
 </p>
 
 <div style="text-align:center; margin:30px 0;">
@@ -257,7 +247,7 @@ The robot was able to complete the full waypoint sequence. The full run was reco
   </iframe>
 </div>
 <p style="text-align:center;">
-  <b>Video 1:</b> Localization at (-3, -2)
+  <b>Video 1:</b> Run 1
 </p>
 
 During the run, the robot localized after each waypoint movement. The Bayes filter result after each update step was recorded. The table below shows the target waypoint, the movement command sent to the robot, and the most likely belief after localization.
