@@ -252,16 +252,9 @@ The robot was able to complete the full waypoint sequence. The full run was reco
 
 During the run, the robot localized after each waypoint movement. The Bayes filter result after each update step was recorded. The table below shows the target waypoint, the movement command sent to the robot, and the most likely belief after localization.
 
-| Waypoint | Target (ft) |     Command Sent | Belief After Update (ft, ft, deg) | Probability |
-| -------- | ----------: | ---------------: | --------------------------------: | ----------: |
-| 1        |    (-2, -1) |    862 mm, 45.0° |                     (-2, -2, 50°) |      0.9995 |
-| 2        |     (1, -1) |   963 mm, -31.6° |                       (1, 0, 30°) |      1.0000 |
-| 3        |     (2, -3) |  963 mm, -101.6° |                     (2, -3, -70°) |      1.0000 |
-| 4        |     (5, -3) |    914 mm, 70.0° |                       (6, 0, 70°) |      1.0000 |
-| 5        |     (5, -2) |   681 mm, 173.4° |                    (5, -3, -110°) |      0.9017 |
-| 6        |      (5, 3) | 1828 mm, -160.0° |                       (5, 2, 90°) |      1.0000 |
-| 7        |      (0, 3) |   1554 mm, 78.7° |                     (0, 2, -150°) |      1.0000 |
-| 8        |      (0, 0) |    609 mm, 60.0° |                     (1, 2, -110°) |      0.9999 |
+<p align="center">
+  <img src="../img/lab12/table1.png" width="80%">
+</p>
 
 From the table, most of the beliefs were close to the target waypoint. The robot localized exactly at waypoint 3, and several other positions were within around one grid cell. The largest error occurred around waypoint 4, where the target was (5, -3) but the belief after update was (6, 0). Even with this error, the robot was still able to continue navigating and complete the full path.
 
@@ -271,25 +264,28 @@ Overall, the robot successfully moved through the full path and reached the fina
 
 ## Ground Truth vs. Bayes Filter Result
 
-The robot visually completed the full path in the arena. After each movement, the robot performed another 360 degree scan and updated its belief using the Bayes filter. The result was not always exactly at the target waypoint, but most of the beliefs were close enough for the robot to continue the run.
+The robot visually completed the full path. After each movement, the robot performed another 360 degree scan and updated its belief using the Bayes filter. The result was not always exactly at the target waypoint, but most of the beliefs were close enough for the robot to continue the run.
 
 For the first few waypoints, the belief was mostly within about one grid cell of the target. For waypoint 1, the target was (-2, -1), while the belief after update was (-2, -2). For waypoint 2, the target was (1, -1), while the belief was (1, 0). Waypoint 3 gave the best result, where the belief matched the target exactly at (2, -3).
 
-The largest localization error happened at waypoint 4. The target was (5, -3), but the belief after update was (6, 0). This was likely caused by a movement error before the scan, or by the ToF readings matching a nearby pose better than the true pose. Even though the belief was off at this step, the robot was still able to continue navigating after the next localization updates.
+The largest localization error happened at waypoint 4. The target was (5, -3), but the belief after update was (6, 0). This was likely caused by a movement error before the scan, or by the TOF readings matching a nearby pose better than the true pose. Even though the belief was off at this step, the robot was still able to continue navigating after the next localization updates.
 
-The final waypoint also had some error. The target was (0, 0), while the final belief was (1, 2). From the video, the robot still reached the final region of the map and completed the path, but the final Bayes filter estimate was shifted from the target.
+The final waypoint also had some error. The target was (0, 0), while the final belief was (1, 2). From the video, the robot stopped early before (0, 0), suggesting that the robot matched a nearby pose better than the true pose.
 
-Overall, the Bayes filter result was good enough for navigation. The localization was not perfect, but repeated localization after each movement helped the robot recover from errors and continue moving through the waypoint sequence.
+Several sources of error likely affected the final result. One major source of error was translational movement. The robot used the front TOF sensor to estimate how far it should move after each turn. If the robot was angled slightly, the TOF sensor could measure a different part of the wall than expected. This could make the robot stop too early or too late.
+
+Another source of error was yaw drift and imperfect rotation. During each localization scan, the robot needed to rotate and collect TOF readings. If the yaw estimate drifted or the robot did not rotate exactly, the measured scan could be shifted compared to the expected scan. This would cause the Bayes filter to choose a nearby pose instead of the true pose.
+
+Overall, the Bayes filter result was good enough for navigation. The localization was not perfect, but repeated localization after each movement helped the robot recover from errors and continue moving through the waypoints.
 
 ---
 
 ## Discussion
 
-This lab was much harder than only doing localization because the robot had to physically move through the arena before each update step. Any small error in turning or translation could affect the next waypoint command. Because of this, the result depended on both the localization accuracy and the movement accuracy.
-One major issue was translational movement. At first, timed open-loop movement was tested, but the distance traveled changed depending on the battery level. This made the robot inconsistent, especially for longer movements. To improve this, the robot used the front ToF sensor during translation. After turning toward the waypoint, the robot measured the distance to the wall, calculated a stopping setpoint, and used translational control to move forward.
-This ToF-based movement was more consistent than timed movement, but it was still not perfect. If the robot was not perfectly straight, the ToF sensor could point at a slightly different part of the wall. This could make the robot stop too early or too late. This likely contributed to some of the error seen in the belief results.
-Another source of error was the 360 degree localization scan. The robot had to rotate, stop, and collect ToF measurements at multiple angles. If the yaw angle drifted or the robot did not rotate perfectly in place, the measured scan would not match the expected scan exactly. This could cause the Bayes filter to choose a nearby grid cell instead of the true position.
-Grid quantization also affected the result. The Bayes filter estimates position on a discrete grid, so even if the robot is physically close to the correct waypoint, the belief may appear one grid cell away. This explains why many of the results were close, but not exactly equal to the target.
+This lab was much harder than only doing localization because the robot had to physically move before each update step. Any small error in turning or translation could affect the next waypoint command.
+
+One major issue was translational movement. At first, timed open loop movement was tested, but the distance traveled changed depending on the battery level. This made the robot inconsistent, especially for longer movements. To improve this, the robot used the front TOF sensor during translation. This was more consistent.
+
 Overall, the full path was completed successfully. The localization was not perfect, but repeated Bayes filter updates after each waypoint helped the robot recover from movement error and continue through the waypoint sequence.
 
 ---
