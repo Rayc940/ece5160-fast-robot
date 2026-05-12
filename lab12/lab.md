@@ -1,99 +1,243 @@
 ## Objective
 
-The goal of this lab was to perform localization on the real robot using the Bayes filter. Unlike Lab 10, which used both prediction and update steps in simulation, this lab uses only the update step due to noisy motion. The robot performs a 360° scan using the TOF sensor and compares the measurements with the map to estimate its pose.
+The goal of this lab was to combine the previous parts of the labs into one complete path planning and execution lab. The robot used localization from Lab 11, yaw control from Lab 6, and translational control from Labs 5 and 7 to move through the given waypoints.
+
+The robot was required to move through the following waypoints:
+```cpp
+(-4, -3)
+(-2, -1)
+(1, -1)
+(2, -3)
+(5, -3)
+(5, -2)
+(5, 3)
+(0, 3)
+(0, 0)
+```
+
+The idea was to localize the robot using the Bayes filter, calculate the distance and angle to the next waypoint, turn toward that waypoint, move forward, and then localize again. PID control were used for both turning and moving.
 
 ---
 
-## Simulation Result
+## Path Planning Method
 
-The notebook lab11_sim.ipynb was ran to verify the Bayes filter implementation on virtual robot, and figure 1 below shows successful implementation as the belief is relatively close to ground truth.
+A local waypoint planning method was used since the required path was already given. At each step, the robot used the most probable pose from the Bayes filter as its current position. The next waypoint was then selected from the waypoint list. The angle and distance to the next waypoint were calculated using the difference in x and y position.
 
-<p align="center">
-  <img src="../img/lab11/sim.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 1:</b> Simulation Result.
-</p>
+```cpp
+curr_pose, curr_prob, curr_idx = get_max_belief()
 
----
+target_x, target_y = waypoints[next_pose_idx]
+
+dx = target_x - curr_pose[0]
+dy = target_y - curr_pose[1]
+
+desired_heading = math.degrees(math.atan2(dy, dx))
+angle_deg = normalize_angle(desired_heading - curr_pose[2])
+
+dist_m = math.sqrt(dx**2 + dy**2)
+dist_mm = int(dist_m * 1000)
+```
+
+The angle command was calculated relative to the robot's current heading. This allowed the robot to turn toward the next waypoint before moving forward. The distance command was calculated as the straight line distance between the current belief and the target waypoint.
+
+After calculating the angle and distance, the command was sent to the robot:
+
+```cpp
+robot.execute_trajectory(dist_mm, angle_deg)
+```
+
+On the robot side, this command was executed by turning and moving. The robot first used yaw control (Lab 6) to rotate toward the target direction. After the turn was complete, the robot used the front TOF sensor and translational control to move forward (Lab 5, 7).
+
+After the robot finished the command, the Python code ran the prediction step and then performed another localization update:
+
+```cpp
+next_pose = (target_x, target_y, desired_heading)
+loc.prediction_step(next_pose, curr_pose)
+
+loc.get_observation_data()
+loc.update_step()
+loc.plot_update_step_data(plot_data=True)
+```
+
+--- 
 
 ## Code Implementation
 
-The Bayes filter implementation from Lab 10 was reused. In Lab 10, the localization included prediction and update steps using motion and sensor models. For this lab, only the update step is used.
+The implementation reused the Bayes filter localization code from Lab 11. The robot still performed a 360 degree scan with the TOF sensor, and Python used the update step to estimate the most likely pose.
 
-The main modification was implementing the function:
+Similar to previous labs, a RealRobot class was first defined. This class is used by the localization code to collect TOF observations from the real robot and to send trajectory commands.
 
-#### perform_observation_loop()
-
-This function commands the robot to rotate and collects TOF measurements at fixed angles. The robot measures 18 measurements at 20° increments, starting from 0 degree. All the code was reused from Lab 9, with no important changes. 
+The perform_observation_loop() function commands the robot to perform a 360 degree scan and then receives the TOF measurements from the Artemis. These measurements are returned to the Bayes filter as sensor_ranges.
 
 ```cpp
 def perform_observation_loop(self, rot_vel=120):
-    map_time = []
-    map_yaw = []
-    map_dist = []
-    map_expected = None
-    map_done = False
+    initialize lists
 
     def parse_map(line: str):
-        parts = line.split("|")
-        t_ms = int(parts[0])
-        yaw_deg = float(parts[1])
-        dist_mm = int(parts[2])
-        return t_ms / 1000.0, yaw_deg, dist_mm
+        parse incoming data
 
     def map_data_handler(_uuid, response: bytearray):
-        nonlocal map_expected, map_done
-
         s = response.decode().strip()
-
-        if s.startswith("MAP_HDR"):
-            map_expected = int(s.split(",")[1])
-            return
-
-        if s == "MAP_DONE":
-            map_done = True
-            return
-
+        if s is header return
         parsed = parse_map(s)
-        if parsed is None:
-            return
-
         t, yaw_deg, dist_mm = parsed
-        map_time.append(t)
-        map_yaw.append(yaw_deg)
-        map_dist.append(dist_mm)
+        append data
 
     self.ble.start_notify(self.ble.uuid["RX_STRING"], map_data_handler)
+
     self.ble.send_command(CMD.START_MAP_RUN, "")
-    time.sleep(20.0)
-
-    map_done = False
-    map_expected = None
+    time.sleep(30.0)
     self.ble.send_command(CMD.GET_MAP_DATA, "")
-
-    t0 = time.time()
-    while not map_done and (time.time() - t0) < 30:
-        time.sleep(0.05)
-
+    wait for GET_MAP_DATA to finish
     self.ble.stop_notify(self.ble.uuid["RX_STRING"])
 
     sensor_ranges = (np.array(map_dist)[np.newaxis].T) / 1000.0
     sensor_bearings = np.empty((1, 1))
+
     return sensor_ranges, sensor_bearings
 ```
 
+The execute_trajectory() function sends a distance and angle command to the robot. The robot executes the turn and translation on the Artemis, then sends "done" back to Python when the movement is finished.
+
+The main function is lab12_step(). Each call moves the robot from the current belief to the next waypoint. The function calculates the required turn angle and distance, sends the command to the robot, runs the prediction step, and then localizes again.
+
+```cpp
+def lab12_step():
+    global next_pose_idx
+    # Current pose from Bayes filter
+    curr_pose, curr_prob, curr_idx = get_max_belief()
+    target_x, target_y = waypoints[next_pose_idx]
+
+    # Turn and distance
+    dx = target_x - curr_pose[0]
+    dy = target_y - curr_pose[1]
+
+    desired_heading = math.degrees(math.atan2(dy, dx))
+    angle_deg = normalize_angle(desired_heading - curr_pose[2])
+
+    dist_m = math.sqrt(dx**2 + dy**2)
+    dist_mm = int(dist_m * 1000)
+
+    # Send command to robot
+    robot.execute_trajectory(dist_mm, angle_deg)
+
+    # Prediction step
+    next_pose = (target_x, target_y, desired_heading)
+    loc.prediction_step(next_pose, curr_pose)
+
+    # Localization update after movement
+    loc.get_observation_data()
+    loc.update_step()
+    loc.plot_update_step_data(plot_data=True)
+
+    new_pose, new_prob, new_idx = get_max_belief()
+    next_pose_idx += 1
+    return next_pose_idx >= len(waypoints)
+```
+
+On the Artemis side, a new command was added for Lab 12 navigation:
+
+```cpp
+EXECUTE_TRAJECTORY
+```
+
+When Python sends this command, the Artemis extracts the distance and angle, then calls start_nav_target().
+
+```cpp
+case EXECUTE_TRAJECTORY:
+{
+    int dist_mm;
+    float angle_deg;
+
+    success = robot_cmd.get_next_value(dist_mm);
+    if (!success) return;
+
+    success = robot_cmd.get_next_value(angle_deg);
+    if (!success) return;
+
+    start_nav_target(dist_mm, angle_deg);
+
+    tx_characteristic_string.writeValue("NAV_STARTED");
+    break;
+}
+```
+
+The start_nav_target() function stores the desired movement and initializes the turning state. The robot first turns toward the target direction before moving forward.
+
+```cpp
+void start_nav_target(int dist_mm, float angle_deg) {
+    map_active = true;
+    map_state = MAP_TURN;
+
+    nav_target_dist_mm = dist_mm;
+    nav_target_angle = angle_deg;
+
+    coastStop();
+
+    yaw_i_accum = 0;
+    yaw_prev_err = 0;
+    yaw_prev_us = 0;
+
+    float yaw_raw = dmp_ok ? yaw_dmp : wrap_angle_deg(yaw_gyro);
+    float yaw0 = wrap_angle_deg(yaw_raw - yaw_zero_offset);
+
+    last_wrap_angle = yaw0;
+    num_wraps = 0;
+
+    map_target_deg = yaw0 + nav_target_angle;
+    reset_turn_good_count();
+
+    nav_active = true;
+    nav_state = NAV_TURN;
+}
+```
+
+The main navigation state machine is implemented in nav_step(). It contains four main states:
+
+```cpp
+NAV_TURN      → turn toward waypoint
+NAV_TURN_WAIT → wait for robot to settle
+NAV_MEASURE   → average front TOF readings
+NAV_DRIVE     → run translational PID
+```
+
+```cpp
+NAV_TURN:
+    run yaw PID
+    if turn reached:
+        stop
+        reset averaging
+        state = NAV_TURN_WAIT
+
+NAV_TURN_WAIT:
+    wait 500 ms for robot to settle
+    state = NAV_MEASURE
+
+NAV_MEASURE:
+    collect 5 valid TOF readings
+    avg_distance = average(readings)
+    setpoint_mm = avg_distance - target_distance - sensor_offset
+    reset PID and KF
+    start translational PID
+    state = NAV_DRIVE
+
+NAV_DRIVE:
+    run translational PID
+    if PID finished:
+        stop
+        reset nav/map state
+}
+```
+
+The translation control used the front TOF sensor. After the turn, the robot averaged several TOF readings to estimate the current distance to the wall. Then it calculated a new setpoint based on how far the robot needed to move.
+
+The final movement was handled by the existing translational PID function from Lab 5 and 7.
+
 ---
 
-## Localization Results
+## Navigation Results
 
-The robot was placed at the four marked poses:
-- (-3 ft, -2 ft)
-- (0 ft, 3 ft)
-- (5 ft, -3 ft)
-- (5 ft, 3 ft)
-
-For each pose, a uniform belief was initialized, a 360° scan was performed, and the update step was applied. The resulting belief corresponds to the most probable pose.
+The robot was able to complete the full waypoint sequence. The full run was recorded on video, and the plotter was used to show the Bayes filter belief updates during the run.
 
 <p align="center">
   <img src="../img/lab11/pos1.png" width="80%">
@@ -116,95 +260,52 @@ For each pose, a uniform belief was initialized, a 360° scan was performed, and
   <b>Video 1:</b> Localization at (-3, -2)
 </p>
 
-<p align="center">
-  <img src="../img/lab11/pos2.png" width="80%">
-  <img src="../img/lab11/pos2 data.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 3:</b> Localization at (0, 3)
-</p>
+During the run, the robot localized after each waypoint movement. The Bayes filter result after each update step was recorded. The table below shows the target waypoint, the movement command sent to the robot, and the most likely belief after localization.
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/W8puRusIhho"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 2:</b> Localization at (0, 3)
-</p>
+| Waypoint | Target (ft) |     Command Sent | Belief After Update (ft, ft, deg) | Probability |
+| -------- | ----------: | ---------------: | --------------------------------: | ----------: |
+| 1        |    (-2, -1) |    862 mm, 45.0° |                     (-2, -2, 50°) |      0.9995 |
+| 2        |     (1, -1) |   963 mm, -31.6° |                       (1, 0, 30°) |      1.0000 |
+| 3        |     (2, -3) |  963 mm, -101.6° |                     (2, -3, -70°) |      1.0000 |
+| 4        |     (5, -3) |    914 mm, 70.0° |                       (6, 0, 70°) |      1.0000 |
+| 5        |     (5, -2) |   681 mm, 173.4° |                    (5, -3, -110°) |      0.9017 |
+| 6        |      (5, 3) | 1828 mm, -160.0° |                       (5, 2, 90°) |      1.0000 |
+| 7        |      (0, 3) |   1554 mm, 78.7° |                     (0, 2, -150°) |      1.0000 |
+| 8        |      (0, 0) |    609 mm, 60.0° |                     (1, 2, -110°) |      0.9999 |
 
-<p align="center">
-  <img src="../img/lab11/pos3.png" width="80%">
-  <img src="../img/lab11/pos3 data.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 4:</b> Localization at (5, -3)
-</p>
+From the table, most of the beliefs were close to the target waypoint. The robot localized exactly at waypoint 3, and several other positions were within around one grid cell. The largest error occurred around waypoint 4, where the target was (5, -3) but the belief after update was (6, 0). Even with this error, the robot was still able to continue navigating and complete the full path.
 
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/94_pBgbZYv8"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 3:</b> Localization at (5, -3)
-</p>
-
-<p align="center">
-  <img src="../img/lab11/pos4.png" width="80%">
-  <img src="../img/lab11/pos4 data.png" width="80%">
-</p>
-<p align="center">
-  <b>Figure 5:</b> Localization at (5, 3)
-</p>
-
-<div style="text-align:center; margin:30px 0;">
-  <iframe
-    width="560"
-    height="315"
-    src="https://www.youtube.com/embed/Uhod3lpUIwY"
-    frameborder="0"
-    allowfullscreen>
-  </iframe>
-</div>
-<p style="text-align:center;">
-  <b>Video 4:</b> Localization at (5, 3)
-</p>
+Overall, the robot successfully moved through the full path and reached the final region of the map. The localization was not perfect, but repeated Bayes filter updates allowed the robot to keep correcting its estimated pose throughout the run.
 
 ---
 
-## Ground Truth vs Bayes Filter Result
+## Ground Truth vs. Bayes Filter Result
 
-These results show moderate accuracy, but not as good as in simulation. In most cases, the estimated beliefs are within one grid cell of the ground truth. The largest errors appear in the y values for Pose 3.
+The robot visually completed the full path in the arena. After each movement, the robot performed another 360 degree scan and updated its belief using the Bayes filter. The result was not always exactly at the target waypoint, but most of the beliefs were close enough for the robot to continue the run.
 
-Pose 4 appears to localize more accurately, likely because it's closer to more features (walls), which provides more information.
+For the first few waypoints, the belief was mostly within about one grid cell of the target. For waypoint 1, the target was (-2, -1), while the belief after update was (-2, -2). For waypoint 2, the target was (1, -1), while the belief was (1, 0). Waypoint 3 gave the best result, where the belief matched the target exactly at (2, -3).
 
-The errors are likely due to systematic bias in the TOF sensor, which tends to underestimate distances, causing the filter to shift the belief away from the true position. Additionally, small angular error during the rotation can accumulate over the scan, leading to mismatches between expected and measured observations.
+The largest localization error happened at waypoint 4. The target was (5, -3), but the belief after update was (6, 0). This was likely caused by a movement error before the scan, or by the ToF readings matching a nearby pose better than the true pose. Even though the belief was off at this step, the robot was still able to continue navigating after the next localization updates.
 
-Overall, while the localization is not perfect, the results are still reasonable given the limitations of TOF noise and robot motion.
+The final waypoint also had some error. The target was (0, 0), while the final belief was (1, 2). From the video, the robot still reached the final region of the map and completed the path, but the final Bayes filter estimate was shifted from the target.
 
-<p align="center">
-  <img src="../img/lab11/table.png" width="80%">
-</p>
+Overall, the Bayes filter result was good enough for navigation. The localization was not perfect, but repeated localization after each movement helped the robot recover from errors and continue moving through the waypoint sequence.
 
 ---
 
 ## Discussion
 
-This lab focused on using the update step of a Bayes Filter to estimate the robot's position. The robot performs a 360° scan using the TOF sensor, and the update step compares these measurements with the map to determine the most likely pose. The real robot results are less accurate due to sensor noise, bias, and imperfect rotation, which introduce errors in the localization.
+This lab was much harder than only doing localization because the robot had to physically move through the arena before each update step. Any small error in turning or translation could affect the next waypoint command. Because of this, the result depended on both the localization accuracy and the movement accuracy.
+One major issue was translational movement. At first, timed open-loop movement was tested, but the distance traveled changed depending on the battery level. This made the robot inconsistent, especially for longer movements. To improve this, the robot used the front ToF sensor during translation. After turning toward the waypoint, the robot measured the distance to the wall, calculated a stopping setpoint, and used translational control to move forward.
+This ToF-based movement was more consistent than timed movement, but it was still not perfect. If the robot was not perfectly straight, the ToF sensor could point at a slightly different part of the wall. This could make the robot stop too early or too late. This likely contributed to some of the error seen in the belief results.
+Another source of error was the 360 degree localization scan. The robot had to rotate, stop, and collect ToF measurements at multiple angles. If the yaw angle drifted or the robot did not rotate perfectly in place, the measured scan would not match the expected scan exactly. This could cause the Bayes filter to choose a nearby grid cell instead of the true position.
+Grid quantization also affected the result. The Bayes filter estimates position on a discrete grid, so even if the robot is physically close to the correct waypoint, the belief may appear one grid cell away. This explains why many of the results were close, but not exactly equal to the target.
+Overall, the full path was completed successfully. The localization was not perfect, but repeated Bayes filter updates after each waypoint helped the robot recover from movement error and continue through the waypoint sequence.
 
 ---
 
 ## Acknowledgment
 
-I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab11/)’s pages from last year.
+I referenced [Aidan McNay](https://aidan-mcnay.github.io/fast-robots-docs/lab12/)’s pages from last year.
 
 Parts of this report and website formatting were assisted by AI tools (ChatGPT) for grammar checking and webpage structuring. All code was written, tested, and validated by the author.
